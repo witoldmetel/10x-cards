@@ -29,7 +29,7 @@ create policy "Users can update their own data" on users
 
 -- Create flashcards table with partitioning
 create table flashcards (
-    id serial primary key,
+    id serial,
     user_id uuid not null references users(id) on delete cascade,
     question text not null,
     answer text not null,
@@ -42,7 +42,8 @@ create table flashcards (
     sm2_interval integer default 0,
     sm2_efactor numeric default 2.5,
     sm2_due_date timestamp with time zone,
-    created_at timestamp with time zone default current_timestamp
+    created_at timestamp with time zone default current_timestamp,
+    primary key (id, created_at)
 ) partition by range (created_at);
 
 -- Create default partition
