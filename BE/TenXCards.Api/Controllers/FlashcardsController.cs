@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Supabase;
 using System.Threading.Tasks;
+using TenXCards.Api.Models;
 
 namespace TenXCards.Api.Controllers
 {

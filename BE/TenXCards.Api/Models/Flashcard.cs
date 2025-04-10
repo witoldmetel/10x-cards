@@ -45,5 +45,8 @@ namespace TenXCards.Api.Models
 
         [Column("user_id")]
         public string UserId { get; set; }
+
+        [Column("updated_at")]
+        public DateTime? UpdatedAt { get; set; }
     }
 } 
