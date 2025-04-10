@@ -27,9 +27,9 @@ create policy "Users can view their own data" on users
 create policy "Users can update their own data" on users
     for update using (auth.uid() = id);
 
--- Create flashcards table with partitioning
+-- Create flashcards table
 create table flashcards (
-    id serial,
+    id serial primary key,
     user_id uuid not null references users(id) on delete cascade,
     question text not null,
     answer text not null,
@@ -42,12 +42,8 @@ create table flashcards (
     sm2_interval integer default 0,
     sm2_efactor numeric default 2.5,
     sm2_due_date timestamp with time zone,
-    created_at timestamp with time zone default current_timestamp,
-    primary key (id, created_at)
-) partition by range (created_at);
-
--- Create default partition
-create table flashcards_default partition of flashcards default;
+    created_at timestamp with time zone default current_timestamp
+);
 
 -- Enable RLS on flashcards table
 alter table flashcards enable row level security;
