@@ -1,140 +1,140 @@
-# Dokument wymagań produktu (PRD) - 10x-cards
+# Product Requirements Document (PRD) - 10x-cards
 
-## 1. Przegląd produktu
+## 1. Product Overview
 
-Aplikacja webowa do generowania i zarządzania fiszkami edukacyjnymi z wykorzystaniem AI. Główne funkcje:
+A web application for generating and managing educational flashcards using AI. Main features:
 
-- Automatyczne tworzenie fiszek Q&A z tekstu źródłowego via OpenRouter.ai
-- Manualna edycja i organizacja fiszek
-- System powtórek spaced repetition z algorytmem SM-2
-- Konta użytkowników z historią postępów
+- Automatic creation of Q&A flashcards from source text via OpenRouter.ai
+- Manual editing and organization of flashcards
+- Spaced repetition system with SM-2 algorithm
+- User accounts with progress history
 
-## 2. Problem użytkownika
+## 2. User Problem
 
-Manualne przygotowanie wysokiej jakości fiszek:
+Manual preparation of high-quality flashcards:
 
-- Średni czas tworzenia 1 fiszki ręcznie: 3-5 minut
-- 68% studentów rezygnuje z metody spaced repetition z powodu nakładu czasowego
-- Brak narzędzi łączących AI z algorytmami powtórek w jednej platformie
+- Average time to create 1 flashcard manually: 3-5 minutes
+- 68% of students give up on spaced repetition due to time investment
+- Lack of tools combining AI with repetition algorithms in one platform
 
-## 3. Wymagania funkcjonalne
+## 3. Functional Requirements
 
-### 3.1 Generowanie fiszek przez AI
+### 3.1 AI Flashcard Generation
 
-- Obsługa tekstu do 50k znaków (Uzytkownik wkleja dowolny tekst)
-- Aplikacja wysyła tekst do OpenRouter.ai i generuje fiszki
-- Możliwość podania własnego klucza API OpenRouter
-- Model LLM proponuje zestaw fiszek (pytania i odpowiedzi)
+- Support for text up to 50k characters (User pastes any text)
+- Application sends text to OpenRouter.ai and generates flashcards
+- Option to provide own OpenRouter API key
+- LLM model suggests a set of flashcards (questions and answers)
 
-### 3.2 Zarządzanie fiszkami
+### 3.2 Flashcard Management
 
-- Mozliwosc storzenia recznie zestawu fiszek
-- Edycja metadanych (kategorie, tagi)
-- Archiwizacja bez utraty danych historycznych
+- Ability to manually create flashcard sets
+- Metadata editing (categories, tags)
+- Archiving without losing historical data
 
-### 3.3 System powtórek
+### 3.3 Repetition System
 
-- Implementacja algorytmu SM-2 z biblioteką opensource
-- Automatyczne planowanie sesji powtórkowych
-- Wskaźnik postępu nauki w dashboardzie
-- Mechanizm pomijania fiszek na 24h
+- Implementation of SM-2 algorithm with opensource library
+- Automatic scheduling of review sessions
+- Learning progress indicator in dashboard
+- 24h flashcard skip mechanism
 
-### 3.4 Konta użytkowników
+### 3.4 User Accounts
 
-- Rejestracja przez email + hasło
-- Automatyczne wylogowanie po 7 dniach nieaktywności
-- Reset hasła via email
-- Usuwanie konta z potwierdzeniem
+- Registration via email + password
+- Automatic logout after 7 days of inactivity
+- Password reset via email
+- Account deletion with confirmation
 
-### 3.5 Bezpieczeństwo
+### 3.5 Security
 
-- Hashowanie haseł bcrypt z salt 12
-- Rate limiting 5 żądań/minutę
-- Sesje JWT z ważnością 7 dni
-- Sanityzacja wszystkich inputów użytkownika
+- Password hashing with bcrypt using salt 12
+- Rate limiting 5 requests/minute
+- JWT sessions valid for 7 days
+- Sanitization of all user inputs
 
-### 3.6 Interfejs recenzji
+### 3.6 Review Interface
 
-- Filtrowanie fiszek po statusie (nowe/do poprawki)
-- Wyszukiwanie po frazach w pytaniach
-- Podświetlanie dopasowań w długich tekstach
+- Filtering flashcards by status (new/to correct)
+- Search by phrases in questions
+- Highlighting matches in long texts
 
-## 4. Granice produktu
+## 4. Product Boundaries
 
-### Nie obejmuje MVP:
+### Not included in MVP:
 
-- Import plików PDF/DOCX
-- Współdzielenie zestawów między użytkownikami
-- Integracje z zewnętrznymi platformami (np. Moodle)
-- Niestandardowe algorytmy spaced repetition
-- Aplikacje mobilne
-- Generowanie fiszek z materiałów audio/wideo
+- PDF/DOCX file import
+- Sharing sets between users
+- Integration with external platforms (e.g., Moodle)
+- Custom spaced repetition algorithms
+- Mobile applications
+- Flashcard generation from audio/video materials
 
-### Ograniczenia techniczne:
+### Technical Limitations:
 
-- Maks. 3 równoległe generacje AI na użytkownika
-- Czas przetwarzania AI: do 10 minut na 50k znaków
-- Maks. 10k aktywnych fiszek na konto
+- Max 3 parallel AI generations per user
+- AI processing time: up to 10 minutes for 50k characters
+- Max 10k active flashcards per account
 
-## 5. Historyjki użytkowników
+## 5. User Stories
 
-### US-001: Generowanie fiszek z tekstu
+### US-001: Generating Flashcards from Text
 
-**Opis**: Jako uczący się chcę wkleić tekst, aby otrzymać fiszki w ciągu 10 minut  
-**Kryteria akceptacji**:
+**Description**: As a learner, I want to paste text to receive flashcards within 10 minutes  
+**Acceptance Criteria**:
 
-1. System wyświetla postęp generacji w czasie rzeczywistym
-2. Powiadomienie email przy generacji >5 minut
-3. Limit 50k znaków z podglądem liczby znaków
+1. System displays generation progress in real-time
+2. Email notification for generations >5 minutes
+3. 50k character limit with character count preview
 
-### US-002: Recenzja fiszek
+### US-002: Flashcard Review
 
-**Opis**: Jako użytkownik chcę szybko poprawiać fiszki AI  
-**Kryteria akceptacji**:
+**Description**: As a user, I want to quickly correct AI flashcards  
+**Acceptance Criteria**:
 
-1. Batch selection 10+ fiszek jednocześnie
-2. Odrzucenie z opcją "Zablokuj podobne"
-3. Autozapis zmian co 30 sekund
+1. Batch selection of 10+ flashcards simultaneously
+2. Rejection with "Block similar" option
+3. Auto-save changes every 30 seconds
 
-### US-003: Planowanie powtórek
+### US-003: Review Planning
 
-**Opis**: Jako student potrzebuję powtarzać materiały w optymalnych odstępach  
-**Kryteria akceptacji**:
+**Description**: As a student, I need to review materials at optimal intervals  
+**Acceptance Criteria**:
 
-1. Algorytm SM-2 z możliwością ręcznej korekty interwałów
-2. Widok kalendarza z zaplanowanymi sesjami
-3. Eksport harmonogramu do iCalendar
+1. SM-2 algorithm with manual interval adjustment option
+2. Calendar view with planned sessions
+3. Schedule export to iCalendar
 
-### US-004: Zarządzanie kontem
+### US-004: Account Management
 
-**Opis**: Jako użytkownik chcę bezpiecznie zarządzać danymi konta  
-**Kryteria akceptacji**:
+**Description**: As a user, I want to securely manage account data  
+**Acceptance Criteria**:
 
-1. Wymagania hasła: 12 znaków, 1 cyfra, 1 znak specjalny
-2. 2FA dostępny opcjonalnie
-3. Pełne usunięcie danych w 48h
+1. Password requirements: 12 characters, 1 number, 1 special character
+2. 2FA available optionally
+3. Complete data deletion within 48h
 
-### US-005: Archiwizacja fiszek
+### US-005: Flashcard Archiving
 
-**Opis**: Jako użytkownik chcę ukryć nieaktualne fiszki bez utraty historii  
-**Kryteria akceptacji**:
+**Description**: As a user, I want to hide outdated flashcards without losing history  
+**Acceptance Criteria**:
 
-1. Filtrowanie "pokazuj tylko aktywne"
-2. Automatyczna archiwizacja po 90 dniach nieużycia
-3. Statystyki skuteczności dla fiszek archiwalnych
+1. "Show active only" filtering
+2. Automatic archiving after 90 days of non-use
+3. Effectiveness statistics for archived flashcards
 
-### US-006: Obsługa błędów AI
+### US-006: AI Error Handling
 
-**Opis**: Jako użytkownik chcę rozumieć przyczyny nieudanych generacji  
-**Kryteria akceptacji**:
+**Description**: As a user, I want to understand the reasons for failed generations  
+**Acceptance Criteria**:
 
-1. Komunikaty błędów z kodem referencyjnym
-2. Sugestie poprawy formatu tekstu źródłowego
-3. Historia ostatnich 10 prób generacji
+1. Error messages with reference code
+2. Suggestions for improving source text format
+3. History of last 10 generation attempts
 
-## 6. Metryki sukcesu
+## 6. Success Metrics
 
-| Wskaźnik             | Cel  | Sposób pomiaru                          |
-| -------------------- | ---- | --------------------------------------- |
-| Akceptacja fiszek AI | ≥75% | Stosunek zaakceptowanych/wygenerowanych |
-| Wykorzystanie AI     | ≥75% | % fiszek stworzonych via AI             |
+| Indicator               | Goal | Measurement Method                |
+| ----------------------- | ---- | --------------------------------- |
+| AI Flashcard Acceptance | ≥75% | Ratio of accepted/generated cards |
+| AI Usage                | ≥75% | % of flashcards created via AI    |

@@ -1,24 +1,24 @@
 Frontend:
 
-- React 19 zapewni interaktywność tam, gdzie jest potrzebna
-- TypeScript 5 dla statycznego typowania kodu i lepszego wsparcia IDE
-- Tailwind 4 pozwala na wygodne stylowanie aplikacji
-- Shadcn/ui zapewnia bibliotekę dostępnych komponentów React, na których oprzemy UI
+- React 19 provides interactivity where needed
+- TypeScript 5 for static typing and better IDE support
+- Tailwind 4 enables convenient application styling
+- Shadcn/ui provides a library of accessible React components on which we'll base our UI
 
 Backend:
 
 - .NET 8 (LTS)
-- PostgreSQL - Struktura i relacje: Idealna dla danych użytkowników, transakcji, logiki biznesowej.AI Integracja: Wsparcie dla pgvector (przechowuj embeddingi z modeli AI i wykonuj wyszukiwanie semantyczne).
-- Redis - Cache API: Przechowuj odpowiedzi z OpenRouter.ai, aby uniknąć ponownych zapytań do modeli (np. cache na 24h).
-  Sesje użytkowników: Przechowuj JWT tokeny lub dane sesji w Redis (czas dostępu: ~1 ms).
-  Kolejki: Możliwość obsługi background tasks (np. wysyłanie emaili).
+- PostgreSQL - Structure and relationships: Perfect for user data, transactions, business logic. AI Integration: Support for pgvector (store embeddings from AI models and perform semantic search).
+- Redis - API Cache: Store responses from OpenRouter.ai to avoid repeated model queries (e.g., 24h cache).
+  User sessions: Store JWT tokens or session data in Redis (access time: ~1 ms).
+  Queues: Ability to handle background tasks (e.g., sending emails).
 
-AI - Komunikacja z modelami przez usługę Openrouter.ai:
+AI - Communication with models through Openrouter.ai service:
 
-- Dostęp do szerokiej gamy modeli (OpenAI, Anthropic, Google i wiele innych), które pozwolą nam znaleźć rozwiązanie zapewniające wysoką efektywność i niskie koszta
-- Pozwala na ustawianie limitów finansowych na klucze API
+- Access to a wide range of models (OpenAI, Anthropic, Google, and many others) that will help us find a solution providing high efficiency and low costs
+- Allows setting financial limits on API keys
 
-CI/CD i Hosting:
+CI/CD and Hosting:
 
-- Github Actions do tworzenia pipeline’ów CI/CD
-- Render (Free Tier) dla stacku React + .NET
+- Github Actions for creating CI/CD pipelines
+- Render (Free Tier) for React + .NET stack
