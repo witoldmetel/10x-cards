@@ -19,7 +19,7 @@
 - **archived_at**: TIMESTAMP WITH TIME ZONE
 - **archived**: BOOLEAN DEFAULT FALSE
 - **tags**: TEXT[]
-- **categories**: TEXT[]
+- **category**: TEXT[]
 - **sm2_repetitions**: INTEGER
 - **sm2_interval**: INTEGER
 - **sm2_efactor**: NUMERIC

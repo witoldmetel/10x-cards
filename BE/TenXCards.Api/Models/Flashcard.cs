@@ -16,37 +16,37 @@ namespace TenXCards.Api.Models
         [Column("answer")]
         public string Answer { get; set; }
 
-        [Column("category")]
-        public string Category { get; set; }
+        [Column("review_status")]
+        public string ReviewStatus { get; set; }
 
-        [Column("tags")]
-        public string[] Tags { get; set; }
+        [Column("archived_at")]
+        public DateTime? ArchivedAt { get; set; }
+
+        [Column("archived")]
+        public bool Archived { get; set; }
+
+        [Column("tag")]
+        public string[] Tag { get; set; }
+
+        [Column("category")]
+        public string[] Category { get; set; }
+
+        [Column("sm2_repetitions")]
+        public int Sm2Repetitions { get; set; }
+
+        [Column("sm2_interval")]
+        public int Sm2Interval { get; set; }
+
+        [Column("sm2_efactor")]
+        public decimal Sm2Efactor { get; set; } = 2.5m;
+
+        [Column("sm2_due_date")]
+        public DateTime? Sm2DueDate { get; set; }
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; }
 
-        [Column("last_reviewed_at")]
-        public DateTime? LastReviewedAt { get; set; }
-
-        [Column("next_review_at")]
-        public DateTime? NextReviewAt { get; set; }
-
-        [Column("repetition_count")]
-        public int RepetitionCount { get; set; }
-
-        [Column("easiness_factor")]
-        public float EasinessFactor { get; set; } = 2.5f;
-
-        [Column("interval")]
-        public int Interval { get; set; }
-
-        [Column("is_archived")]
-        public bool IsArchived { get; set; }
-
         [Column("user_id")]
         public string UserId { get; set; }
-
-        [Column("updated_at")]
-        public DateTime? UpdatedAt { get; set; }
     }
 } 
