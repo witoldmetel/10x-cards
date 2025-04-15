@@ -35,11 +35,5 @@ namespace TenXCards.Api.Controllers
                 return StatusCode(503, $"Database connection error: {ex.Message}");
             }
         }
-
-        [HttpGet("test")]
-        public IActionResult Test()
-        {
-            return Ok("Hello World");
-        }
     }
 } 

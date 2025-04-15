@@ -28,11 +28,16 @@ builder.Services.AddSwaggerGen(c =>
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("Development", builder =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        builder
+            .WithOrigins(
+                "http://localhost:3000",    // Client default port
+                "http://localhost:5001"     // API port
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -43,19 +48,32 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors("Development"); // Use the development CORS policy
+}
+else 
+{
+    app.UseCors("AllowAll"); // Fallback to the default policy
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created and migrations are applied
-using (var scope = app.Services.CreateScope())
+// Try to ensure database is created and migrations are applied
+try
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate();
+    }
+}
+catch (Exception ex)
+{
+    // Log the error but don't prevent the application from starting
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating the database.");
 }
 
 app.Run();
