@@ -42,27 +42,50 @@ Follow these steps to set up the project on your local machine:
    cd 10x-cards
    ```
 
-2. **Set up Node version:**
-   Ensure you are using the Node.js version specified in the [.nvmrc](.nvmrc) file.
+2. **Start the API and Database:**
+
+   The API and SQL Server database run in Docker containers. Make sure you have Docker installed, then:
 
    ```bash
-   nvm use
+   docker-compose up -d
    ```
 
-3. **Install dependencies:**
+   This will start:
+
+   - Azure SQL Edge (SQL Server compatible) on port 1433
+   - .NET API on port 5001
+
+   The API will be available at `http://localhost:5001`
+
+   API Endpoints:
+
+   - GET /api/flashcards - Get all flashcards
+   - GET /api/flashcards/{id} - Get a specific flashcard
+   - POST /api/flashcards - Create a new flashcard
+   - PUT /api/flashcards/{id} - Update a flashcard
+   - DELETE /api/flashcards/{id} - Delete a flashcard
+   - GET /api/test - Test endpoint returning "Hello world"
+
+   Swagger documentation is available at `http://localhost:5001/swagger`
+
+3. **Start the Client:**
 
    ```bash
+   cd Client
    npm install
+   npm run dev
    ```
 
-4. **Run the development server:**
-   ```bash
-   npm run start
-   ```
-   For production build:
-   ```bash
-   npm run build
-   ```
+   The client will be available at `http://localhost:5173`
+
+4. **Database Connection Details:**
+
+   If you need to connect to the database directly:
+
+   - Server: localhost,1433
+   - Database: TenXCardsDb
+   - Username: sa
+   - Password: YourStrong!Passw0rd
 
 ## Available Scripts
 

@@ -2,13 +2,18 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
-using Supabase;
+using Microsoft.EntityFrameworkCore;
+using TenXCards.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Configure Entity Framework
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Swagger
 builder.Services.AddSwaggerGen(c =>
@@ -18,22 +23,6 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for managing flashcards with AI integration"
     });
-});
-
-// Configure Supabase Client as a Singleton
-builder.Services.AddSingleton(provider =>
-{
-    var configuration = provider.GetRequiredService<IConfiguration>();
-    var url = configuration["Supabase:Url"];
-    var key = configuration["Supabase:Key"];
-
-    var options = new SupabaseOptions
-    {
-        AutoRefreshToken = true,
-        AutoConnectRealtime = true
-    };
-
-    return new Client(url, key, options);
 });
 
 // Configure CORS
@@ -60,5 +49,13 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
+
+// Ensure database is created and migrations are applied
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    context.Database.Migrate();
+}
 
 app.Run();

@@ -8,16 +8,16 @@ namespace TenXCards.Api.Models
     public class Flashcard : BaseModel
     {
         [PrimaryKey("id", false)]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [Column("question")]
-        public string Question { get; set; }
+        public string? Question { get; set; }
 
         [Column("answer")]
-        public string Answer { get; set; }
+        public string? Answer { get; set; }
 
         [Column("review_status")]
-        public string ReviewStatus { get; set; }
+        public string? ReviewStatus { get; set; }
 
         [Column("archived_at")]
         public DateTime? ArchivedAt { get; set; }
@@ -26,10 +26,10 @@ namespace TenXCards.Api.Models
         public bool Archived { get; set; }
 
         [Column("tag")]
-        public string[] Tag { get; set; }
+        public string[]? Tag { get; set; }
 
         [Column("category")]
-        public string[] Category { get; set; }
+        public string[]? Category { get; set; }
 
         [Column("sm2_repetitions")]
         public int Sm2Repetitions { get; set; }
@@ -47,6 +47,9 @@ namespace TenXCards.Api.Models
         public DateTime CreatedAt { get; set; }
 
         [Column("user_id")]
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
+
+        [Column("updated_at")]
+        public DateTime UpdatedAt { get; set; }
     }
 } 
