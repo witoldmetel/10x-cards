@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["API/TenXCards.Api/TenXCards.Api.csproj", "API/TenXCards.Api/"]
+COPY ["API/TenXCards.sln", "API/"]
 RUN dotnet restore "API/TenXCards.Api/TenXCards.Api.csproj"
 COPY . .
 WORKDIR "/src/API/TenXCards.Api"

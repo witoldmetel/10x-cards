@@ -6,18 +6,20 @@ export const TestComponent = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/test")
+    fetch("/api/test")
       .then((response) => {
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          throw new Error(`Network response was not ok: ${response.status}`);
         }
         return response.text();
       })
       .then((data) => {
+        console.log("Response data:", data);
         setMessage(data);
         setLoading(false);
       })
       .catch((error) => {
+        console.error("Error:", error);
         setError(error.message);
         setLoading(false);
       });

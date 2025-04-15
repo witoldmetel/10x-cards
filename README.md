@@ -42,18 +42,22 @@ Follow these steps to set up the project on your local machine:
    cd 10x-cards
    ```
 
-2. **Start the API and Database:**
+2. **Start the Database:**
 
-   The API and SQL Server database run in Docker containers. Make sure you have Docker installed, then:
+   First, start the SQL Server database in Docker. Make sure you have Docker installed:
 
    ```bash
-   docker-compose up -d
+   docker-compose up -d db
    ```
 
-   This will start:
+3. **Start the API:**
 
-   - Azure SQL Edge (SQL Server compatible) on port 1433
-   - .NET API on port 5001
+   Navigate to the API directory and run the .NET application:
+
+   ```bash
+   cd API/TenXCards.Api
+   dotnet run
+   ```
 
    The API will be available at `http://localhost:5001`
 
@@ -68,7 +72,9 @@ Follow these steps to set up the project on your local machine:
 
    Swagger documentation is available at `http://localhost:5001/swagger`
 
-3. **Start the Client:**
+4. **Start the Client:**
+
+   In a new terminal, navigate to the Client directory and start the frontend:
 
    ```bash
    cd Client
@@ -76,16 +82,24 @@ Follow these steps to set up the project on your local machine:
    npm run dev
    ```
 
-   The client will be available at `http://localhost:5173`
+   The client will be available at `http://localhost:3000`
 
-4. **Database Connection Details:**
+5. **Docker Commands (Optional):**
 
-   If you need to connect to the database directly:
+   If you need to rebuild or manage Docker containers:
 
-   - Server: localhost,1433
-   - Database: TenXCardsDb
-   - Username: sa
-   - Password: YourStrong!Passw0rd
+   ```bash
+   # Stop all containers
+   docker-compose down
+
+   # Rebuild and start all containers
+   docker-compose up -d --build
+
+   # View container logs
+   docker-compose logs
+   ```
+
+_Note: Make sure to start the services in the order listed above (Database → API → Client) to avoid connection issues._
 
 ## Available Scripts
 
