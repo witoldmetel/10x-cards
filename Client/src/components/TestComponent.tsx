@@ -11,10 +11,10 @@ export const TestComponent = () => {
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.status}`);
         }
+
         return response.text();
       })
       .then((data) => {
-        console.log("Response data:", data);
         setMessage(data);
         setLoading(false);
       })
