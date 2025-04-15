@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TenXCards.Api.Data;
 
 namespace TenXCards.Api.Controllers

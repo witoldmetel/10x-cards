@@ -4,12 +4,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using TenXCards.Api.Data;
+using TenXCards.Api.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Configure AutoMapper
+builder.Services.AddAutoMapper(typeof(FlashcardProfile));
 
 // Configure Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
