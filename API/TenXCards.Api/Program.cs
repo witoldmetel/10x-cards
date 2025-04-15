@@ -3,21 +3,55 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using FluentValidation;
+using MediatR;
+using System.Reflection;
 using TenXCards.Api.Data;
 using TenXCards.Api.Mapping;
+using TenXCards.Api.Middleware;
+using TenXCards.Api.Behaviors;
+using TenXCards.Api.Features.Flashcards.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Add cache profiles
+    options.CacheProfiles.Add("Default30",
+        new CacheProfile
+        {
+            Duration = 30,
+            Location = ResponseCacheLocation.Any
+        });
+});
+
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddResponseCaching();
+builder.Services.AddMemoryCache();
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(FlashcardProfile));
 
-// Configure Entity Framework
+// Configure MediatR with validation pipeline
+builder.Services.AddMediatR(cfg => 
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+});
+
+// Configure FluentValidation
+builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+// Configure Entity Framework with PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsql => npgsql.EnableRetryOnFailure(3)
+    );
+});
 
 // Configure Swagger
 builder.Services.AddSwaggerGen(c =>
@@ -27,6 +61,14 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for managing flashcards with AI integration"
     });
+    
+    // Include XML comments in Swagger
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 // Configure CORS
@@ -52,30 +94,40 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("Development"); // Use the development CORS policy
+    app.UseCors("Development");
 }
 else 
 {
-    app.UseCors("AllowAll"); // Fallback to the default policy
+    app.UseHsts();
+    app.UseCors("AllowAll");
 }
 
+// Middleware pipeline (order is important)
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseResponseCaching();
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
-// Try to ensure database is created and migrations are applied
+// Database migration
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        
+        logger.LogInformation("Attempting to migrate database...");
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Database migration completed successfully.");
     }
 }
 catch (Exception ex)
 {
-    // Log the error but don't prevent the application from starting
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogError(ex, "An error occurred while migrating the database.");
 }
