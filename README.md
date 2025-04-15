@@ -25,8 +25,8 @@
 ## Tech Stack
 
 - **Frontend:** React 19 with TypeScript 5, Tailwind 4, and Shadcn/ui components
-- **Backend:** .NET 8 (LTS)
-- **Databases:** PostgreSQL for data storage, Redis for caching
+- **Backend:** .NET 8 (LTS) with Entity Framework Core
+- **Database:** Azure SQL Edge (SQL Server compatible)
 - **AI Integration:** OpenRouter.ai API
 
 _Note: For detailed technology specifications, please refer to the [tech-stack.md](.ai/tech-stack.md) file._
@@ -42,27 +42,82 @@ Follow these steps to set up the project on your local machine:
    cd 10x-cards
    ```
 
-2. **Set up Node version:**
-   Ensure you are using the Node.js version specified in the [.nvmrc](.nvmrc) file.
+2. **Start the Database:**
+
+   First, start the Azure SQL Edge database in Docker. Make sure you have Docker installed:
 
    ```bash
-   nvm use
+   docker-compose up -d db
    ```
 
-3. **Install dependencies:**
+   Database connection details:
+
+   - Server: localhost,1433
+   - Database: TenXCardsDb
+   - Username: sa
+   - Password: (set in .env file)
+
+3. **Environment Setup:**
+
+   Copy the `.env.example` file to `.env` and update the values:
 
    ```bash
+   cp .env.example .env
+   # Edit .env with your preferred text editor and set appropriate values
+   ```
+
+4. **Start the API:**
+
+   Navigate to the API directory and run the .NET application:
+
+   ```bash
+   cd API/TenXCards.Api
+   dotnet restore  # Install dependencies
+   dotnet run      # Start the API
+   ```
+
+   The API will be available at `http://localhost:5001`
+
+   API Endpoints:
+
+   - GET /api/flashcards - Get all flashcards
+   - GET /api/flashcards/{id} - Get a specific flashcard
+   - POST /api/flashcards - Create a new flashcard
+   - PUT /api/flashcards/{id} - Update a flashcard
+   - DELETE /api/flashcards/{id} - Delete a flashcard
+   - GET /api/test - Test endpoint returning "Hello world"
+   - GET /api/health/db - Check database connection status
+
+   Swagger documentation is available at `http://localhost:5001/swagger`
+
+5. **Start the Client:**
+
+   In a new terminal, navigate to the Client directory and start the frontend:
+
+   ```bash
+   cd Client
    npm install
+   npm run dev
    ```
 
-4. **Run the development server:**
+   The client will be available at `http://localhost:3000`
+
+6. **Docker Commands (Optional):**
+
+   If you need to rebuild or manage Docker containers:
+
    ```bash
-   npm run start
+   # Stop all containers
+   docker-compose down
+
+   # Rebuild and start all containers
+   docker-compose up -d --build
+
+   # View container logs
+   docker-compose logs
    ```
-   For production build:
-   ```bash
-   npm run build
-   ```
+
+_Note: Make sure to start the services in the order listed above (Database → API → Client) to avoid connection issues. The API requires a working database connection to start properly._
 
 ## Available Scripts
 
