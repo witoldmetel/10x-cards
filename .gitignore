@@ -21,6 +21,8 @@ appsettings.Staging.json
 *.Production.json
 *.Staging.json
 .env
+.env.local
+.env.*.local
 
 # IDE
 .idea/

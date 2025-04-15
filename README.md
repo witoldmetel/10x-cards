@@ -25,8 +25,8 @@
 ## Tech Stack
 
 - **Frontend:** React 19 with TypeScript 5, Tailwind 4, and Shadcn/ui components
-- **Backend:** .NET 8 (LTS)
-- **Databases:** PostgreSQL for data storage, Redis for caching
+- **Backend:** .NET 8 (LTS) with Entity Framework Core
+- **Database:** Azure SQL Edge (SQL Server compatible)
 - **AI Integration:** OpenRouter.ai API
 
 _Note: For detailed technology specifications, please refer to the [tech-stack.md](.ai/tech-stack.md) file._
@@ -44,19 +44,36 @@ Follow these steps to set up the project on your local machine:
 
 2. **Start the Database:**
 
-   First, start the SQL Server database in Docker. Make sure you have Docker installed:
+   First, start the Azure SQL Edge database in Docker. Make sure you have Docker installed:
 
    ```bash
    docker-compose up -d db
    ```
 
-3. **Start the API:**
+   Database connection details:
+
+   - Server: localhost,1433
+   - Database: TenXCardsDb
+   - Username: sa
+   - Password: (set in .env file)
+
+3. **Environment Setup:**
+
+   Copy the `.env.example` file to `.env` and update the values:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your preferred text editor and set appropriate values
+   ```
+
+4. **Start the API:**
 
    Navigate to the API directory and run the .NET application:
 
    ```bash
    cd API/TenXCards.Api
-   dotnet run
+   dotnet restore  # Install dependencies
+   dotnet run      # Start the API
    ```
 
    The API will be available at `http://localhost:5001`
@@ -69,10 +86,11 @@ Follow these steps to set up the project on your local machine:
    - PUT /api/flashcards/{id} - Update a flashcard
    - DELETE /api/flashcards/{id} - Delete a flashcard
    - GET /api/test - Test endpoint returning "Hello world"
+   - GET /api/health/db - Check database connection status
 
    Swagger documentation is available at `http://localhost:5001/swagger`
 
-4. **Start the Client:**
+5. **Start the Client:**
 
    In a new terminal, navigate to the Client directory and start the frontend:
 
@@ -84,7 +102,7 @@ Follow these steps to set up the project on your local machine:
 
    The client will be available at `http://localhost:3000`
 
-5. **Docker Commands (Optional):**
+6. **Docker Commands (Optional):**
 
    If you need to rebuild or manage Docker containers:
 
@@ -99,7 +117,7 @@ Follow these steps to set up the project on your local machine:
    docker-compose logs
    ```
 
-_Note: Make sure to start the services in the order listed above (Database → API → Client) to avoid connection issues._
+_Note: Make sure to start the services in the order listed above (Database → API → Client) to avoid connection issues. The API requires a working database connection to start properly._
 
 ## Available Scripts
 
