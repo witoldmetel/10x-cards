@@ -1,67 +1,121 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using System;
-using System.Collections.Generic;
+using AutoMapper;
 using TenXCards.Api.Data;
-using TenXCards.Api.Data.Models;
+using TenXCards.Api.Models;
+using TenXCards.Api.DTOs;
 
 namespace TenXCards.Api.Controllers
 {
+    /// <summary>
+    /// Controller for managing flashcards
+    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class FlashcardsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public FlashcardsController(ApplicationDbContext context)
+        public FlashcardsController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        // GET: api/flashcards
+        /// <summary>
+        /// Retrieves all flashcards with optional filtering
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Card>>> GetCards()
+        public async Task<ActionResult<IEnumerable<FlashcardResponse>>> GetFlashcards([FromQuery] FlashcardFilterRequest filter)
         {
-            return await _context.Cards.ToListAsync();
+            // Start with base query
+            var query = _context.Flashcards.AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(filter.ReviewStatus))
+            {
+                query = query.Where(f => f.ReviewStatus == filter.ReviewStatus);
+            }
+
+            if (filter.IncludeArchived.HasValue)
+            {
+                query = query.Where(f => f.Archived == filter.IncludeArchived.Value);
+            }
+
+            if (filter.Tags?.Any() == true)
+            {
+                query = query.Where(f => f.Tag != null && f.Tag.Any(t => filter.Tags.Contains(t)));
+            }
+
+            if (filter.Categories?.Any() == true)
+            {
+                query = query.Where(f => f.Category != null && f.Category.Any(c => filter.Categories.Contains(c)));
+            }
+
+            if (filter.DueDateFrom.HasValue)
+            {
+                query = query.Where(f => f.Sm2DueDate >= filter.DueDateFrom.Value);
+            }
+
+            if (filter.DueDateTo.HasValue)
+            {
+                query = query.Where(f => f.Sm2DueDate <= filter.DueDateTo.Value);
+            }
+
+            var flashcards = await query.ToListAsync();
+            return _mapper.Map<List<FlashcardResponse>>(flashcards);
         }
 
-        // GET: api/flashcards/{id}
+        /// <summary>
+        /// Retrieves a specific flashcard by ID
+        /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<Card>> GetCard(int id)
+        public async Task<ActionResult<FlashcardResponse>> GetFlashcard(string id)
         {
-            var card = await _context.Cards.FindAsync(id);
+            var flashcard = await _context.Flashcards.FindAsync(id);
 
-            if (card == null)
+            if (flashcard == null)
             {
                 return NotFound();
             }
 
-            return card;
+            return _mapper.Map<FlashcardResponse>(flashcard);
         }
 
-        // POST: api/flashcards
+        /// <summary>
+        /// Creates a new flashcard
+        /// </summary>
         [HttpPost]
-        public async Task<ActionResult<Card>> CreateCard([FromBody] Card card)
+        public async Task<ActionResult<FlashcardResponse>> CreateFlashcard([FromBody] CreateFlashcardRequest request)
         {
-            card.CreatedAt = DateTime.UtcNow;
-            _context.Cards.Add(card);
+            var flashcard = _mapper.Map<Flashcard>(request);
+            
+            _context.Flashcards.Add(flashcard);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCard), new { id = card.Id }, card);
+            return CreatedAtAction(
+                nameof(GetFlashcard),
+                new { id = flashcard.Id },
+                _mapper.Map<FlashcardResponse>(flashcard)
+            );
         }
 
-        // PUT: api/flashcards/{id}
+        /// <summary>
+        /// Updates an existing flashcard
+        /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCard(int id, [FromBody] Card card)
+        public async Task<IActionResult> UpdateFlashcard(string id, [FromBody] UpdateFlashcardRequest request)
         {
-            if (id != card.Id)
+            var flashcard = await _context.Flashcards.FindAsync(id);
+
+            if (flashcard == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(card).State = EntityState.Modified;
-            _context.Entry(card).Property(x => x.CreatedAt).IsModified = false;
+            // Map update request to entity, preserving unchanged values
+            _mapper.Map(request, flashcard);
 
             try
             {
@@ -69,7 +123,7 @@ namespace TenXCards.Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CardExists(id))
+                if (!FlashcardExists(id))
                 {
                     return NotFound();
                 }
@@ -79,25 +133,27 @@ namespace TenXCards.Api.Controllers
             return NoContent();
         }
 
-        // DELETE: api/flashcards/{id}
+        /// <summary>
+        /// Deletes a flashcard
+        /// </summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCard(int id)
+        public async Task<IActionResult> DeleteFlashcard(string id)
         {
-            var card = await _context.Cards.FindAsync(id);
-            if (card == null)
+            var flashcard = await _context.Flashcards.FindAsync(id);
+            if (flashcard == null)
             {
                 return NotFound();
             }
 
-            _context.Cards.Remove(card);
+            _context.Flashcards.Remove(flashcard);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CardExists(int id)
+        private bool FlashcardExists(string id)
         {
-            return _context.Cards.Any(e => e.Id == id);
+            return _context.Flashcards.Any(e => e.Id == id);
         }
     }
 } 
