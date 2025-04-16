@@ -1,11 +1,11 @@
 ---
 description: 
-globs: 
+globs: API/TenXCards.Api/*
 alwaysApply: false
 ---
 ## BACKEND
 
-### Guidelines for DOTNET
+### Guidelines for .NET
 
 #### ASP_NET
 

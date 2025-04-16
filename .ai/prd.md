@@ -34,7 +34,7 @@ Manual preparation of high-quality flashcards:
 
 ### 3.3 Repetition System
 
-- Implementation of SM-2 algorithm with opensource library
+- Implementation of SM-2 algorithm with open source library
 - Automatic scheduling of review sessions
 - Learning progress indicator in dashboard
 - 24h flashcard skip mechanism
@@ -52,6 +52,8 @@ Manual preparation of high-quality flashcards:
 - Rate limiting 5 requests/minute
 - JWT sessions valid for 7 days
 - Sanitization of all user inputs
+- - User API keys (e.g., for OpenRouter) will be stored securely by encrypting them using ASP.NET Core Data Protection APIs to avoid any plaintext exposure. In addition, for higher security, dedicated key management solutions like Azure Key Vault can be integrated.
+- - The application will adopt ASP.NET Core Identity to handle user registration, login, and session management in line with current ASP.NET standards. For API interactions, JWT tokens will be employed to enhance security, ensuring token validity for 7 days and seamless reauthentication.
 
 ### 3.6 Review Interface
 
