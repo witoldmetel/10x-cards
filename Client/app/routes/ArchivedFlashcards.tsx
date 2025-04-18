@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { FlashcardList } from "../components/FlashcardList";
 import { Navbar } from "../components/Navbar";
 import { useAuth } from "../contexts/AuthContext";
-import { Flashcard } from "../db/database.types";
 
 export default function ArchivedFlashcards() {
   const { session } = useAuth();
-  const [archivedCards, setArchivedCards] = useState<Flashcard[]>([]);
+  const [archivedCards, setArchivedCards] = useState<any[]>([]);
 
   useEffect(() => {
     // In a real app, we would fetch archived cards from the API

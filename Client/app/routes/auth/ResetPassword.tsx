@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { TextInput } from "../components/TextInput";
-import { useAuth } from "../contexts/AuthContext";
+import { TextInput } from "../../components/TextInput";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");

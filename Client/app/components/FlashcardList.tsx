@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Flashcard } from "../db/database.types";
 
 interface FlashcardListProps {
-  flashcards: Flashcard[];
+  flashcards: any[];
 }
 
 export function FlashcardList({ flashcards }: FlashcardListProps) {

@@ -1,6 +1,14 @@
 import { Brain, CheckCircle } from "lucide-react";
 
 import { Link } from "react-router";
+import type { Route } from "../+types/root";
+
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "New React Router App" },
+    { name: "description", content: "Welcome to React Router!" },
+  ];
+}
 
 export default function LandingPage() {
   return (
