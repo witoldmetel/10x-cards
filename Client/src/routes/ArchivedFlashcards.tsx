@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { FlashcardList } from '../components/FlashcardList';
-import { Navbar } from '../components/Navbar';
-import { useAuth } from '../contexts/AuthContext';
-import { Flashcard } from '../db/database.types';
+import React, { useState, useEffect } from "react";
+import { FlashcardList } from "../components/FlashcardList";
+import { Navbar } from "../components/Navbar";
+import { useAuth } from "../contexts/AuthContext";
+import { Flashcard } from "../db/database.types";
 
 export default function ArchivedFlashcards() {
   const { session } = useAuth();
@@ -15,12 +15,14 @@ export default function ArchivedFlashcards() {
   }, []);
 
   return (
-    <div className='min-h-screen bg-gray-50'>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className='container mx-auto px-4 py-8'>
-        <div className='max-w-4xl mx-auto'>
-          <h1 className='text-3xl font-bold text-gray-900 mb-6'>Archived Flashcards</h1>
-          <div className='bg-white rounded-lg shadow-sm p-6'>
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">
+            Archived Flashcards
+          </h1>
+          <div className="bg-white rounded-lg shadow-sm p-6">
             <FlashcardList flashcards={archivedCards} />
           </div>
         </div>
