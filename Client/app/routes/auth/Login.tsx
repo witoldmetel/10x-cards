@@ -36,17 +36,6 @@ export async function action({ request }: Route.ActionArgs) {
       };
     }
 
-    // Store in localStorage
-    const session = {
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-      },
-      token: data.token,
-    };
-
-    localStorage.setItem("flashcards_auth", JSON.stringify(session));
-
     return { ok: true };
   } catch (error) {
     return {
@@ -61,6 +50,8 @@ export default function Login() {
   const navigation = useNavigation();
   const actionData = useActionData<{ ok: boolean; error?: string }>();
   const isLoading = navigation.state === "submitting";
+
+  console.log("actionData", actionData);
 
   // Redirect on successful login
   React.useEffect(() => {

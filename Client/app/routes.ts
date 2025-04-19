@@ -8,7 +8,6 @@ import {
 
 export default [
   index("routes/LandingPage.tsx"),
-  // route("about", "routes/about.tsx"),
 
   layout("routes/AuthLayout.tsx", [
     route("login", "routes/auth/Login.tsx"),
@@ -17,9 +16,8 @@ export default [
     route("reset-password", "routes/auth/ResetPassword.tsx"),
   ]),
 
-  // ...prefix("concerts", [
-  //   index("routes/concerts/home.tsx"),
-  //   route(":city", "routes/concerts/city.tsx"),
-  //   route("trending", "routes/concerts/trending.tsx"),
-  // ]),
+  ...prefix("dashboard", [
+    index("routes/Dashboard.tsx"),
+    route("archive", "routes/ArchivedFlashcards.tsx"),
+  ]),
 ] satisfies RouteConfig;

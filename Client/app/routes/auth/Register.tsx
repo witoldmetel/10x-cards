@@ -1,51 +1,100 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { useAuth } from "../../contexts/AuthContext";
-import { ArrowLeft, Mail, Lock } from "lucide-react";
+import React from "react";
+import {
+  Link,
+  useNavigate,
+  useNavigation,
+  useActionData,
+  Form,
+} from "react-router";
+import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import type { Route } from "./+types/Register";
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirm-password") as string;
+
+  // Client-side validation
+  if (password !== confirmPassword) {
+    return {
+      ok: false,
+      error: "Passwords do not match",
+    };
+  }
+
+  if (password.length < 6) {
+    return {
+      ok: false,
+      error: "Password must be at least 6 characters",
+    };
+  }
+
+  try {
+    const response = await fetch("http://localhost:5001/api/users/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    console.log("Registration response:", data); // Debug log
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: data.message || "Failed to create account",
+      };
+    }
+
+    // Store in localStorage - handle both response formats
+    const session = {
+      user: {
+        id: data.id || data.user?.id,
+        email: data.email || data.user?.email,
+      },
+      token: data.token,
+    };
+
+    // Validate required data
+    if (!session.user.id || !session.user.email || !session.token) {
+      console.error("Invalid response data:", data);
+      return {
+        ok: false,
+        error: "Invalid response from server",
+      };
+    }
+
+    localStorage.setItem("flashcards_auth", JSON.stringify(session));
+    return { ok: true };
+  } catch (error) {
+    console.error("Registration error:", error); // Debug log
+    return {
+      ok: false,
+      error:
+        error instanceof Error ? error.message : "Failed to create account",
+    };
+  }
+}
 
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const navigation = useNavigation();
+  const actionData = useActionData<{ ok: boolean; error?: string }>();
+  const isLoading = navigation.state === "submitting";
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match");
-    }
-
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters");
-    }
-
-    try {
-      setError("");
-      setLoading(true);
-      await signUp(email, password);
+  // Redirect on successful registration
+  React.useEffect(() => {
+    if (actionData?.ok) {
       navigate("/dashboard");
-    } catch (err) {
-      console.error("Registration error:", err);
-      setError("Failed to create an account. Please try again.");
-    } finally {
-      setLoading(false);
     }
-  }
+  }, [actionData, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -73,14 +122,14 @@ export default function Register() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card>
           <CardHeader>
-            {error && (
+            {actionData?.error && (
               <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-                {error}
+                {actionData.error}
               </div>
             )}
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <Form method="post" className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <div className="relative">
@@ -89,9 +138,8 @@ export default function Register() {
                   </div>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     placeholder="you@example.com"
                     required
@@ -107,9 +155,8 @@ export default function Register() {
                   </div>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
                     minLength={6}
                     required
@@ -125,9 +172,8 @@ export default function Register() {
                   </div>
                   <Input
                     id="confirm-password"
+                    name="confirm-password"
                     type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pl-10"
                     minLength={6}
                     required
@@ -137,12 +183,12 @@ export default function Register() {
 
               <Button
                 type="submit"
-                disabled={loading}
                 className="w-full"
-                size="lg">
-                {loading ? "Creating account..." : "Create account"}
+                size="lg"
+                disabled={isLoading}>
+                {isLoading ? "Creating account..." : "Create account"}
               </Button>
-            </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
