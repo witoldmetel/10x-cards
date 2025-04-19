@@ -28,10 +28,10 @@ const AUTH_STORAGE_KEY = "flashcards_auth";
 // API endpoints
 const API_BASE_URL = "http://localhost:5001/api"; // Make sure this matches your backend URL
 const API_ENDPOINTS = {
-  login: `${API_BASE_URL}/auth/login`,
-  register: `${API_BASE_URL}/auth/register`,
-  resetPassword: `${API_BASE_URL}/auth/forgot-password`,
-  updatePassword: `${API_BASE_URL}/auth/reset-password`,
+  login: `${API_BASE_URL}/users/login`,
+  register: `${API_BASE_URL}/users/register`,
+  resetPassword: `${API_BASE_URL}/users/forgot-password`,
+  updatePassword: `${API_BASE_URL}/users/reset-password`,
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -50,37 +50,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     console.log("Making login request to:", API_ENDPOINTS.login);
+    console.log("Request payload:", { email, password: "***" });
 
-    const response = await fetch(API_ENDPOINTS.login, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch(API_ENDPOINTS.login, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    console.log("Login response status:", response.status);
+      console.log("Login response status:", response.status);
+      console.log(
+        "Login response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error("Login error:", error);
-      throw new Error(error.message || "Failed to sign in");
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Login error response:", error);
+        throw new Error(error.message || "Failed to sign in");
+      }
+
+      const data = await response.json();
+      console.log("Login successful, received data:", {
+        ...data,
+        token: "***",
+      });
+
+      const newSession = {
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+        },
+        token: data.token,
+      };
+
+      setSession(newSession);
+      setUser(newSession.user);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
+    } catch (error) {
+      console.error("Login request failed:", error);
+      throw error;
     }
-
-    const data = await response.json();
-    console.log("Login successful, received data:", { ...data, token: "***" });
-
-    const newSession = {
-      user: {
-        id: data.user.id,
-        email: data.user.email,
-      },
-      token: data.token,
-    };
-
-    setSession(newSession);
-    setUser(newSession.user);
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
   };
 
   const signUp = async (email: string, password: string) => {

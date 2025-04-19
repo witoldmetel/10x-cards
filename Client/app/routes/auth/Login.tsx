@@ -1,50 +1,73 @@
-import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../../contexts/AuthContext";
+import React from "react";
+import {
+  Link,
+  useNavigate,
+  useNavigation,
+  useActionData,
+  Form,
+} from "react-router";
 import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import type { Route } from "./+types/Login";
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    const response = await fetch("http://localhost:5001/api/users/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: data.message || "Failed to sign in",
+      };
+    }
+
+    // Store in localStorage
+    const session = {
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+      },
+      token: data.token,
+    };
+
+    localStorage.setItem("flashcards_auth", JSON.stringify(session));
+
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to sign in",
+    };
+  }
+}
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const message = location.state?.message;
+  const navigation = useNavigation();
+  const actionData = useActionData<{ ok: boolean; error?: string }>();
+  const isLoading = navigation.state === "submitting";
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    console.log("Attempting to sign in..."); // Debug log
-
-    try {
-      setError("");
-      setLoading(true);
-      await signIn(email, password);
-      console.log("Sign in successful"); // Debug log
+  // Redirect on successful login
+  React.useEffect(() => {
+    if (actionData?.ok) {
       navigate("/dashboard");
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to sign in. Please check your credentials."
-      );
-    } finally {
-      setLoading(false);
     }
-  }
+  }, [actionData, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -72,20 +95,14 @@ export default function Login() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card>
           <CardHeader>
-            {message && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
-                {message}
-              </div>
-            )}
-
-            {error && (
+            {actionData?.error && (
               <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
-                {error}
+                {actionData.error}
               </div>
             )}
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <Form method="post" className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <div className="relative">
@@ -94,9 +111,8 @@ export default function Login() {
                   </div>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     placeholder="you@example.com"
                     required
@@ -112,9 +128,8 @@ export default function Login() {
                   </div>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
                     required
                   />
@@ -131,12 +146,12 @@ export default function Login() {
 
               <Button
                 type="submit"
-                disabled={loading}
                 className="w-full"
-                size="lg">
-                {loading ? "Signing in..." : "Sign in"}
+                size="lg"
+                disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
-            </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
