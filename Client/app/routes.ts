@@ -10,5 +10,11 @@ export default [
     route('reset-password', 'routes/auth/ResetPassword.tsx'),
   ]),
 
-  ...prefix('dashboard', [index('routes/Dashboard.tsx'), route('archived', 'routes/ArchivedFlashcards.tsx')]),
+  layout('routes/ProtectedLayout.tsx', [
+    ...prefix('dashboard', [
+      index('routes/Dashboard.tsx'),
+      route('archived', 'routes/ArchivedFlashcards.tsx')
+    ]),
+    route('settings', 'routes/UserSettings.tsx')
+  ])
 ] satisfies RouteConfig;

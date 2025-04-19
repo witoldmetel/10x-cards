@@ -3,36 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { FlashcardList } from '../components/FlashcardList';
 import { Navbar } from '../components/Navbar';
 import { TextInput } from '../components/TextInput';
-import { useAuth } from '../services/auth.service';
+import { useAuth } from '../contexts/AuthContext';
 import type { Flashcard } from '../db/database.types';
 
 export default function Dashboard() {
-  const { session } = useAuth();
+  const { token } = useAuth();
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function loadFlashcards() {
-      try {
-        const response = await fetch('http://localhost:3000/api/flashcards');
-        if (!response.ok) {
-          throw new Error('Failed to load flashcards');
-        }
-        const { flashcards: data } = await response.json();
-        setFlashcards(data || []);
-      } catch (err) {
-        console.error('Error loading flashcards:', err);
-        setError('Failed to load flashcards');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (session) {
-      loadFlashcards();
-    }
-  }, [session]);
 
   const handleSubmit = async (text: string) => {
     setIsLoading(true);

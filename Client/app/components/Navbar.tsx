@@ -1,19 +1,9 @@
 import { Archive, LayoutDashboard, LogOut, Settings } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
-import { useAuth } from '../services/auth.service';
+import { Link } from 'react-router';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Navbar() {
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+  const { onLogout } = useAuth();
 
   return (
     <nav className='bg-white shadow-sm'>
@@ -34,7 +24,7 @@ export function Navbar() {
               <Settings className='w-5 h-5 mr-2' />
               Settings
             </Link>
-            <button onClick={handleSignOut} className='flex items-center px-4 text-gray-900 hover:text-blue-600'>
+            <button onClick={onLogout} className='flex items-center px-4 text-gray-900 hover:text-blue-600'>
               <LogOut className='w-5 h-5 mr-2' />
               Logout
             </button>

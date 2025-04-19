@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router';
-import { useAuth } from '../../services/auth.service';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

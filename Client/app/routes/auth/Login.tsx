@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Route } from './+types/Login';
 
 // Cannot use hooks in action function
@@ -31,12 +32,12 @@ export async function action({ request }: Route.ActionArgs) {
       };
     }
 
-    if (data.token) {
-      // Store token in localStorage directly
-      localStorage.setItem('flashcards_auth_token', data.token);
-    }
+    return redirect('/dashboard', {
+      headers: {
+        'Set-Cookie': `token=${data.token}; Path=/; HttpOnly`,
+      },
+    });
 
-    return redirect('/dashboard');
   } catch (error) {
     return {
       ok: false,
@@ -46,12 +47,20 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Login() {
+  const { token, setToken } = useAuth();
   const navigate = useNavigate();
   const navigation = useNavigation();
-  const actionData = useActionData<{ ok: boolean; error?: string }>();
+  const actionData = useActionData<{ ok: boolean; error?: string; data?: Route.LoginResponse }>();
   const isLoading = navigation.state === 'submitting';
 
-  console.log('actionData', actionData);
+  // Handle successful login
+  React.useEffect(() => {
+    if (actionData?.ok && actionData.data) {
+      const { token } = actionData.data;
+      setToken(token);
+      navigate('/dashboard');
+    }
+  }, [actionData, setToken, navigate]);
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8'>

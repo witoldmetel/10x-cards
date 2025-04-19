@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FlashcardList } from '../components/FlashcardList';
 import { Navbar } from '../components/Navbar';
-import { useAuth } from '../services/auth.service';
+
 
 export default function ArchivedFlashcards() {
-  const { session } = useAuth();
+
   const [archivedCards, setArchivedCards] = useState<any[]>([]);
 
   useEffect(() => {

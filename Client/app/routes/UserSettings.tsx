@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from '../services/auth.service';
 import { Navbar } from '../components/Navbar';
 import { Save } from 'lucide-react';
 
