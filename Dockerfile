@@ -15,4 +15,8 @@ RUN dotnet publish "TenXCards.API.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+ENV ASPNETCORE_URLS=http://+:5001
+EXPOSE 5001
+
 ENTRYPOINT ["dotnet", "TenXCards.API.dll"] 

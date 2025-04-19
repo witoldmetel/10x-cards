@@ -36,14 +36,62 @@ The solution follows Clean Architecture principles and is divided into three mai
 - Entity Framework Core for ORM
 - MediatR for CQRS pattern implementation
 
+## Getting Started
+
+### Prerequisites
+
+- .NET 8.0 SDK or higher
+- Docker Desktop
+- PostgreSQL (via Docker)
+
+### Running the Application
+
+1. **Start the Database (Option 1 - Docker Compose)**
+
+   ```bash
+   # From the root directory
+   docker-compose up db -d
+   ```
+
+   **Start the Database (Option 2 - Docker)**
+
+   ```bash
+   # Run PostgreSQL container directly
+   docker run --name tenxcards-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=TenX@2024!SecurePass -e POSTGRES_DB=ten_x_cards_db -p 5432:5432 -d postgres:16-alpine
+   ```
+
+2. **Run the API**
+
+   ```bash
+   # From the API/TenXCards.API directory
+   dotnet restore
+   dotnet run
+   ```
+
+   The API will be available at:
+
+   - Main API: http://localhost:5001
+   - Swagger UI: http://localhost:5001/swagger
+
+### Port Configuration
+
+- API: 5001
+- Database: 5432
+- Client (Frontend): 3000
+
+### Available Endpoints
+
+- GET /api/test - Test endpoint
+- GET /api/health/status - Health check endpoint
+- More endpoints coming soon...
+
+### Development Notes
+
+- CORS is configured to allow requests from http://localhost:3000
+- Database connection is automatically checked on startup
+- Swagger UI is available in development mode
+
 ## Project Setup Decisions
-
-### Why Minimal APIs?
-
-- Reduced boilerplate code
-- Perfect for simple CRUD operations
-- Better performance due to reduced overhead
-- Modern approach recommended for .NET 8+
 
 ### Why Clean Architecture?
 
@@ -53,41 +101,29 @@ The solution follows Clean Architecture principles and is divided into three mai
 - Dependencies flow inward
 - Domain entities at the center
 
-## Getting Started
+### Why PostgreSQL?
 
-1. Prerequisites
+- Open-source and reliable
+- Excellent performance
+- Rich feature set
+- Great community support
+- Docker-friendly
 
-   - .NET 8.0 SDK or higher
-   - PostgreSQL database
+## Troubleshooting
 
-2. Database Setup
+1. **Database Connection Issues**
 
-   - Connection string configuration in appsettings.json
-   - Run migrations: `dotnet ef database update`
+   - Ensure PostgreSQL container is running: `docker ps`
+   - Check logs: `docker logs tenxcards-db`
+   - Verify connection string in appsettings.json
 
-3. Running the Application
-   ```bash
-   cd TenXCards.API
-   dotnet run
-   ```
+2. **Port Conflicts**
+   - Ensure no other services are using ports 5001 or 5432
+   - Check running services: `lsof -i :5001` or `lsof -i :5432`
 
-## Authentication Flow
+## Next Steps
 
-The application uses a simple but secure authentication mechanism:
-
-- JWT (JSON Web Token) based authentication
-- Token expiration: 7 days
-- Basic user registration and login flow
-
-## Development Roadmap
-
-1. Current Phase:
-
-   - Basic project structure ✅
-   - Initial setup ✅
-   - Test and Health endpoints ✅
-
-2. Next Steps:
-   - User authentication implementation
-   - Database context and migrations
-   - Core domain models
+- [ ] Implement user authentication
+- [ ] Set up database migrations
+- [ ] Add request validation
+- [ ] Implement logging middleware

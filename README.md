@@ -26,7 +26,7 @@
 
 - **Frontend:** React 19 with TypeScript 5, Tailwind 4, and Shadcn/ui components
 - **Backend:** .NET 8 (LTS) with Entity Framework Core
-- **Database:** Azure SQL Edge (SQL Server compatible)
+- **Database:** PostgreSQL 16
 - **AI Integration:** OpenRouter.ai API
 
 _Note: For detailed technology specifications, please refer to the [tech-stack.md](.ai/tech-stack.md) file._
@@ -42,57 +42,49 @@ Follow these steps to set up the project on your local machine:
    cd 10x-cards
    ```
 
-2. **Start the Database:**
-
-   First, start the Azure SQL Edge database in Docker. Make sure you have Docker installed:
-
-   ```bash
-   docker-compose up -d db
-   ```
-
-   Database connection details:
-
-   - Server: localhost,1433
-   - Database: TenXCardsDb
-   - Username: sa
-   - Password: (set in .env file)
-
-3. **Environment Setup:**
+2. **Environment Setup:**
 
    Copy the `.env.example` file to `.env` and update the values:
 
    ```bash
    cp .env.example .env
-   # Edit .env with your preferred text editor and set appropriate values
+   # Edit .env with your preferred text editor
    ```
+
+3. **Start the Database:**
+
+   Start PostgreSQL using Docker:
+
+   ```bash
+   docker-compose up db -d
+   ```
+
+   Database connection details:
+
+   - Host: localhost
+   - Port: 5432
+   - Database: ten_x_cards_db
+   - Username: postgres
+   - Password: (set in .env file)
 
 4. **Start the API:**
 
    Navigate to the API directory and run the .NET application:
 
    ```bash
-   cd API/TenXCards.Api
-   dotnet restore  # Install dependencies
-   dotnet run      # Start the API
+   cd API/TenXCards.API
+   dotnet restore
+   dotnet run
    ```
 
-   The API will be available at `http://localhost:5001`
+   The API will be available at:
 
-   API Endpoints:
-
-   - GET /api/flashcards - Get all flashcards
-   - GET /api/flashcards/{id} - Get a specific flashcard
-   - POST /api/flashcards - Create a new flashcard
-   - PUT /api/flashcards/{id} - Update a flashcard
-   - DELETE /api/flashcards/{id} - Delete a flashcard
-   - GET /api/test - Test endpoint returning "Hello world"
-   - GET /api/health/db - Check database connection status
-
-   Swagger documentation is available at `http://localhost:5001/swagger`
+   - Main API: http://localhost:5001
+   - Swagger UI: http://localhost:5001/swagger
 
 5. **Start the Client:**
 
-   In a new terminal, navigate to the Client directory and start the frontend:
+   In a new terminal, navigate to the Client directory:
 
    ```bash
    cd Client
@@ -100,58 +92,61 @@ Follow these steps to set up the project on your local machine:
    npm run dev
    ```
 
-   The client will be available at `http://localhost:3000`
+   The client will be available at http://localhost:3000
 
-6. **Docker Commands (Optional):**
+### Port Configuration
 
-   If you need to rebuild or manage Docker containers:
+All services use fixed ports for consistency:
 
-   ```bash
-   # Stop all containers
-   docker-compose down
+- Frontend (Client): 3000
+- Backend (API): 5001
+- Database: 5432
 
-   # Rebuild and start all containers
-   docker-compose up -d --build
+### Docker Commands
 
-   # View container logs
-   docker-compose logs
-   ```
+```bash
+# Start all services
+docker-compose up -d
 
-_Note: Make sure to start the services in the order listed above (Database → API → Client) to avoid connection issues. The API requires a working database connection to start properly._
+# Start only database
+docker-compose up db -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+```
 
 ## Available Scripts
 
-Below are some of the key scripts defined in the project:
+In the Client directory:
 
-- **npm run start:** Runs the application using Vite
-- **npm run build:** Builds the production-ready application with TypeScript compilation
-- **npm run lint:** Checks code using Biome
-- **npm run format:** Formats code using Biome
-- **npm run validate:** Runs TypeScript checks and linting
+- **npm run dev:** Start development server
+- **npm run build:** Build for production
+- **npm run lint:** Run linter
+- **npm run format:** Format code
 
-_For a complete list of scripts, please check the [package.json](package.json) file._
+In the API directory:
+
+- **dotnet restore:** Install dependencies
+- **dotnet run:** Start the API
+- **dotnet test:** Run tests
+- **dotnet build:** Build the project
 
 ## Project Scope
 
 The MVP scope includes:
 
-- AI-powered flashcard generation from text (up to 50k characters)
-- Flashcard management with metadata editing
-- Spaced repetition system with SM-2 algorithm
-- User account management with email authentication
-- Review interface with filtering and search capabilities
-
-Currently out of scope:
-
-- PDF/DOCX file import
-- Sharing sets between users
-- Mobile applications
-- Custom spaced repetition algorithms
-- External platform integrations
+- AI-powered flashcard generation from text
+- Flashcard management with metadata
+- Spaced repetition system
+- User account management
+- Review interface with filtering
 
 ## Project Status
 
-The project is currently in active development. For detailed requirements and specifications, see the [PRD](.ai/prd.md).
+Currently in active development. See [PRD](.ai/prd.md) for details.
 
 ## License
 
