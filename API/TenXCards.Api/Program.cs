@@ -113,6 +113,40 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Check database connection on startup
+var logger = app.Logger;
+
+try
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+
+    logger.LogInformation("Checking database connection...");
+
+    bool canConnect = await context.Database.CanConnectAsync();
+
+    if (canConnect)
+    {
+        logger.LogInformation("✅ Successfully connected to the database");
+        await context.Database.EnsureCreatedAsync();
+        logger.LogInformation("✅ Database is ready");
+    }
+    else
+    {
+        logger.LogError("❌ Failed to connect to the database");
+    }
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "❌ An error occurred while checking the database connection");
+}
+
+// Print API information
+logger.LogInformation("🚀 API is running on:");
+logger.LogInformation("   - Main API: http://localhost:5001");
+logger.LogInformation("   - Swagger UI: http://localhost:5001/swagger");
+
 // User endpoints
 app.MapPost("/api/users/register", async (IUserService userService, UserRegistrationRequest request) =>
 {
