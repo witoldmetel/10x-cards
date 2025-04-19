@@ -1,6 +1,6 @@
-@TenXCards.Api_HostAddress = http://localhost:5230
+@TenXCards.API_HostAddress = http://localhost:5125
 
-GET {{TenXCards.Api_HostAddress}}/weatherforecast/
+GET {{TenXCards.API_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

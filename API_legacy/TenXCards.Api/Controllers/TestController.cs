@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace TenXCards.API.Controllers
+namespace TenXCards.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

@@ -1,20 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TenXCards.Infrastructure.Data;
+using TenXCards.Api.Data;
 
-namespace TenXCards.API.Controllers
+namespace TenXCards.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class HealthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<HealthController> _logger;
 
-        public HealthController(ApplicationDbContext context, ILogger<HealthController> logger)
+        public HealthController(ApplicationDbContext context)
         {
             _context = context;
-            _logger = logger;
         }
 
         [HttpGet("db")]
@@ -27,16 +24,13 @@ namespace TenXCards.API.Controllers
                 
                 if (canConnect)
                 {
-                    _logger.LogInformation("Database connection check successful");
                     return Ok("Database connection is healthy");
                 }
                 
-                _logger.LogWarning("Database connection check failed");
                 return StatusCode(503, "Database connection failed");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Database connection error occurred");
                 return StatusCode(503, $"Database connection error: {ex.Message}");
             }
         }

@@ -14,7 +14,7 @@ services:
     volumes:
       - ~/.aspnet/https:/root/.aspnet/https:ro
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
-      - ./API/TenXCards.Api:/src/API/TenXCards.Api
+      - ./API/TenXCards.API:/src/API/TenXCards.API
     depends_on:
       db:
         condition: service_healthy
