@@ -53,7 +53,7 @@ The solution follows Clean Architecture principles and is divided into three mai
 docker-compose up db -d
 
 # Option 2: Using Docker directly
-docker run --name tenxcards-db \
+docker run --name db \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=TenX@2024!SecurePass \
   -e POSTGRES_DB=ten_x_cards_db \
@@ -62,7 +62,7 @@ docker run --name tenxcards-db \
 
 # Check database status
 docker ps
-docker logs tenxcards-db
+docker logs db
 
 # Stop database
 docker-compose stop db
@@ -83,7 +83,7 @@ docker-compose stop db
    ```bash
    # From root directory
    docker-compose up api -d
-   docker logs tenxcards-api
+   docker logs api
    ```
 
 3. **Building and Testing**
@@ -117,9 +117,62 @@ docker-compose stop db
 
 ### Available Endpoints
 
-- GET /api/test - Test endpoint
-- GET /api/health/status - Health check endpoint
-- More endpoints coming soon...
+#### Authentication
+
+- POST /api/users/register - Register new user
+- POST /api/users/login - User login
+
+All endpoints support:
+
+- Rate limiting (5 requests per minute)
+- CORS (configurable origins)
+
+### API Features
+
+1. **Authentication & Authorization**
+
+   - JWT-based authentication
+   - Secure password hashing with BCrypt
+   - Token-based API key system
+
+2. **Security**
+
+   - Rate limiting protection
+   - CORS policy configuration
+   - Global exception handling
+   - Request validation middleware
+
+3. **Database**
+   - PostgreSQL with Entity Framework Core
+   - Clean architecture implementation
+   - Repository pattern
+   - Proper entity configurations
+
+### Configuration
+
+1. **JWT Settings** (appsettings.json)
+
+   ```json
+   {
+     "Jwt": {
+       "Key": "your-secret-key",
+       "Issuer": "your-issuer",
+       "Audience": "your-audience"
+     }
+   }
+   ```
+
+2. **CORS Configuration**
+
+   ```json
+   {
+     "AllowedOrigins": "http://localhost:3000,https://your-production-domain.com"
+   }
+   ```
+
+3. **Rate Limiting**
+   - Default: 5 requests per minute per endpoint
+   - Configurable in Program.cs
 
 ### Troubleshooting Guide
 
@@ -128,10 +181,10 @@ docker-compose stop db
    ```bash
    # Check if database is running
    docker ps
-   docker logs tenxcards-db
+   docker logs db
 
    # Check connection
-   docker exec -it tenxcards-db psql -U postgres -d ten_x_cards_db
+   docker exec -it db psql -U postgres -d ten_x_cards_db
 
    # Verify connection string in appsettings.json
    ```
@@ -140,7 +193,7 @@ docker-compose stop db
 
    ```bash
    # Check API logs
-   docker logs tenxcards-api
+   docker logs api
 
    # Check port availability
    lsof -i :5001

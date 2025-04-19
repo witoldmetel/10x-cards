@@ -11,6 +11,7 @@
 - [Project Scope](#project-scope)
 - [Project Status](#project-status)
 - [License](#license)
+- [Features](#features)
 
 ## Project Description
 
@@ -239,3 +240,52 @@ Currently in active development. See [PRD](.ai/prd.md) for details.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Features
+
+### Authentication & Security
+
+- User registration and login with JWT authentication
+- Secure password hashing using BCrypt
+- Rate limiting protection (5 requests/minute)
+- CORS security with configurable origins
+
+### API Endpoints
+
+- POST /api/users/register - Create new account
+- POST /api/users/login - Authenticate user
+- More endpoints coming soon...
+
+### Configuration Files
+
+1. **Environment Variables** (.env)
+
+   ```env
+   # Database
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=your-secure-password
+   POSTGRES_DB=ten_x_cards_db
+
+   # JWT Authentication
+   JWT_KEY=your-secret-key
+   JWT_ISSUER=your-issuer
+   JWT_AUDIENCE=your-audience
+
+   # CORS
+   ALLOWED_ORIGINS=http://localhost:3000
+   ```
+
+2. **API Configuration** (appsettings.json)
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-secure-password"
+     },
+     "Jwt": {
+       "Key": "your-secret-key",
+       "Issuer": "your-issuer",
+       "Audience": "your-audience"
+     },
+     "AllowedOrigins": "http://localhost:3000"
+   }
+   ```
