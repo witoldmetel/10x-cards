@@ -16,7 +16,6 @@ using TenXCards.Api.Features.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using TenXCards.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,27 +35,34 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddResponseCaching();
 builder.Services.AddMemoryCache();
 
-// Configure JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// Configure IdentityServer
+builder.Services.AddIdentityServer()
+    .AddInMemoryIdentityResources(IdentityServerConfig.IdentityResources)
+    .AddInMemoryApiScopes(IdentityServerConfig.ApiScopes)
+    .AddInMemoryApiResources(IdentityServerConfig.ApiResources)
+    .AddInMemoryClients(IdentityServerConfig.Clients)
+    .AddDeveloperSigningCredential(); // In production, use AddSigningCredential() with a real certificate
+
+// Configure Authentication
+builder.Services.AddAuthentication()
+    .AddJwtBearer("Bearer", options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key not configured"))
-        )
-    };
-});
+        options.Authority = "https://localhost:5001"; // Your IdentityServer URL
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false
+        };
+    })
+    .AddOpenIdConnect("oidc", options =>
+    {
+        options.Authority = "https://localhost:5001";
+        options.ClientId = "tenxcards.web";
+        options.ResponseType = "code";
+        options.Scope.Add("tenxcards.api");
+        options.Scope.Add("tenxcards.read");
+        options.Scope.Add("tenxcards.write");
+        options.SaveTokens = true;
+    });
 
 // Register AuthService
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -152,10 +158,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure services
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
-builder.Services.AddScoped<IEmailService, EmailService>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -175,6 +177,10 @@ else
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseRouting();
+
+// Add IdentityServer middleware
+app.UseIdentityServer();
+
 app.UseResponseCaching();
 app.UseAuthentication();
 app.UseAuthorization();

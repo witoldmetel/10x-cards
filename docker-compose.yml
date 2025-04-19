@@ -10,7 +10,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://+:80
-      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - ConnectionStrings__DefaultConnection=${DOCKER_DB_CONNECTION_STRING}
     volumes:
       - ~/.aspnet/https:/root/.aspnet/https:ro
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro

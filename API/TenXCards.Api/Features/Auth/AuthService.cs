@@ -8,8 +8,22 @@ using TenXCards.Api.DTOs;
 using TenXCards.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using BC = BCrypt.Net.BCrypt;
+using Duende.IdentityServer;
+using Duende.IdentityServer.Models;
+using Duende.IdentityServer.Services;
 
 namespace TenXCards.Api.Features.Auth;
+
+public static class StringExtensions
+{
+    public static string Sha256(this string input)
+    {
+        using var sha = SHA256.Create();
+        var bytes = Encoding.UTF8.GetBytes(input);
+        var hash = sha.ComputeHash(bytes);
+        return Convert.ToBase64String(hash);
+    }
+}
 
 public interface IAuthService
 {
@@ -17,6 +31,7 @@ public interface IAuthService
     Task<AuthResponse> LoginAsync(LoginRequest request);
     Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request);
     Task<bool> ResetPasswordAsync(ResetPasswordRequest request);
+    Task<AuthResponse> GetIdentityServerToken(string clientId, string clientSecret);
 }
 
 public class AuthService : IAuthService
@@ -24,15 +39,21 @@ public class AuthService : IAuthService
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthService> _logger;
+    private readonly ITokenService _tokenService;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public AuthService(
         ApplicationDbContext context,
         IConfiguration configuration,
-        ILogger<AuthService> logger)
+        ILogger<AuthService> logger,
+        ITokenService tokenService,
+        IHttpClientFactory httpClientFactory)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _tokenService = tokenService;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -74,6 +95,28 @@ public class AuthService : IAuthService
         {
             Token = token,
             User = new UserDto { Id = user.Id, Email = user.Email }
+        };
+    }
+
+    public async Task<AuthResponse> GetIdentityServerToken(string clientId, string clientSecret)
+    {
+        // Validate client credentials
+        var client = IdentityServerConfig.Clients.FirstOrDefault(c =>
+            c.ClientId == clientId &&
+            c.ClientSecrets.Any(s => s.Value == clientSecret.Sha256()));
+
+        if (client == null)
+        {
+            throw new InvalidOperationException("Invalid client credentials");
+        }
+
+        // Create token with appropriate claims and scopes
+        var token = GenerateJwtToken(new User { Id = Guid.Empty, Email = clientId });
+
+        return new AuthResponse
+        {
+            Token = token,
+            User = new UserDto { Id = Guid.Empty, Email = clientId }
         };
     }
 
@@ -127,7 +170,8 @@ public class AuthService : IAuthService
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email)
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim("scope", "tenxcards.api tenxcards.read tenxcards.write")
         };
 
         var token = new JwtSecurityToken(

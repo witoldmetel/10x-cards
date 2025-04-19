@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using TenXCards.Api.DTOs;
 using TenXCards.Api.Features.Auth;
 
@@ -45,6 +46,21 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("token")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public async Task<ActionResult<AuthResponse>> GetToken([FromBody] ClientCredentialsRequest request)
+    {
+        try
+        {
+            var response = await _authService.GetIdentityServerToken(request.ClientId, request.ClientSecret);
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
@@ -65,5 +81,13 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    [HttpGet("userinfo")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public IActionResult GetUserInfo()
+    {
+        var user = User.Claims.ToDictionary(c => c.Type, c => c.Value);
+        return Ok(user);
     }
 } 
