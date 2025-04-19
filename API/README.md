@@ -36,7 +36,7 @@ The solution follows Clean Architecture principles and is divided into three mai
 - Entity Framework Core for ORM
 - MediatR for CQRS pattern implementation
 
-## Getting Started
+## Development Guide
 
 ### Prerequisites
 
@@ -44,38 +44,74 @@ The solution follows Clean Architecture principles and is divided into three mai
 - Docker Desktop
 - PostgreSQL (via Docker)
 
-### Running the Application
+### Development Scripts
 
-1. **Start the Database (Option 1 - Docker Compose)**
+#### Database Management
+
+```bash
+# Option 1: Using Docker Compose (Recommended)
+docker-compose up db -d
+
+# Option 2: Using Docker directly
+docker run --name tenxcards-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=TenX@2024!SecurePass \
+  -e POSTGRES_DB=ten_x_cards_db \
+  -p 5432:5432 \
+  -d postgres:16-alpine
+
+# Check database status
+docker ps
+docker logs tenxcards-db
+
+# Stop database
+docker-compose stop db
+```
+
+#### API Development
+
+1. **Local Development (Recommended for coding)**
 
    ```bash
-   # From the root directory
-   docker-compose up db -d
-   ```
-
-   **Start the Database (Option 2 - Docker)**
-
-   ```bash
-   # Run PostgreSQL container directly
-   docker run --name tenxcards-db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=TenX@2024!SecurePass -e POSTGRES_DB=ten_x_cards_db -p 5432:5432 -d postgres:16-alpine
-   ```
-
-2. **Run the API**
-
-   ```bash
-   # From the API/TenXCards.API directory
+   # From API/TenXCards.API directory
    dotnet restore
    dotnet run
    ```
 
-   The API will be available at:
+2. **Docker Development**
 
-   - Main API: http://localhost:5001
-   - Swagger UI: http://localhost:5001/swagger
+   ```bash
+   # From root directory
+   docker-compose up api -d
+   docker logs tenxcards-api
+   ```
+
+3. **Building and Testing**
+
+   ```bash
+   dotnet build
+   dotnet test
+   dotnet watch run  # Hot reload
+   ```
+
+### Connection Strings
+
+1. **Local Development**
+
+   ```json
+   "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=TenX@2024!SecurePass"
+   ```
+
+2. **Docker Development**
+
+   ```json
+   "DefaultConnection": "Host=db;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=TenX@2024!SecurePass"
+   ```
 
 ### Port Configuration
 
-- API: 5001
+- API: 5001 (http://localhost:5001)
+- Swagger UI: http://localhost:5001/swagger
 - Database: 5432
 - Client (Frontend): 3000
 
@@ -85,11 +121,62 @@ The solution follows Clean Architecture principles and is divided into three mai
 - GET /api/health/status - Health check endpoint
 - More endpoints coming soon...
 
-### Development Notes
+### Troubleshooting Guide
 
-- CORS is configured to allow requests from http://localhost:3000
-- Database connection is automatically checked on startup
-- Swagger UI is available in development mode
+1. **Database Connection Issues**
+
+   ```bash
+   # Check if database is running
+   docker ps
+   docker logs tenxcards-db
+
+   # Check connection
+   docker exec -it tenxcards-db psql -U postgres -d ten_x_cards_db
+
+   # Verify connection string in appsettings.json
+   ```
+
+2. **API Issues**
+
+   ```bash
+   # Check API logs
+   docker logs tenxcards-api
+
+   # Check port availability
+   lsof -i :5001
+
+   # Restart API
+   docker-compose restart api
+   ```
+
+3. **Common Solutions**
+   - Ensure Docker is running
+   - Check port conflicts
+   - Verify environment variables
+   - Check connection strings
+   - Ensure database migrations are applied
+
+### Development Best Practices
+
+1. **Code Organization**
+
+   - Follow Clean Architecture principles
+   - Keep controllers thin
+   - Use services for business logic
+   - Implement repository pattern
+
+2. **API Design**
+
+   - Use RESTful conventions
+   - Implement proper error handling
+   - Include request validation
+   - Document with Swagger
+
+3. **Database**
+   - Use migrations for schema changes
+   - Implement proper indexing
+   - Follow naming conventions
+   - Use transactions where needed
 
 ## Project Setup Decisions
 
@@ -108,18 +195,6 @@ The solution follows Clean Architecture principles and is divided into three mai
 - Rich feature set
 - Great community support
 - Docker-friendly
-
-## Troubleshooting
-
-1. **Database Connection Issues**
-
-   - Ensure PostgreSQL container is running: `docker ps`
-   - Check logs: `docker logs tenxcards-db`
-   - Verify connection string in appsettings.json
-
-2. **Port Conflicts**
-   - Ensure no other services are using ports 5001 or 5432
-   - Check running services: `lsof -i :5001` or `lsof -i :5432`
 
 ## Next Steps
 

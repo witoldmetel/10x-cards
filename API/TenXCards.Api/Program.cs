@@ -27,6 +27,9 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Get logger instance once
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -37,25 +40,42 @@ if (app.Environment.IsDevelopment())
 // Use CORS before other middleware
 app.UseCors("AllowClient");
 
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
-using (var scope = app.Services.CreateScope())
+// Check database connection on startup
+try
 {
-    var services = scope.ServiceProvider;
-    try
+    using (var scope = app.Services.CreateScope())
     {
+        var services = scope.ServiceProvider;
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while creating the database.");
+
+        logger.LogInformation("Checking database connection...");
+        
+        bool canConnect = await context.Database.CanConnectAsync();
+        
+        if (canConnect)
+        {
+            logger.LogInformation("✅ Successfully connected to the database");
+            await context.Database.EnsureCreatedAsync();
+            logger.LogInformation("✅ Database is ready");
+        }
+        else
+        {
+            logger.LogError("❌ Failed to connect to the database");
+        }
     }
 }
+catch (Exception ex)
+{
+    logger.LogError(ex, "❌ An error occurred while checking the database connection");
+}
+
+// Print API information
+logger.LogInformation("🚀 API is running on:");
+logger.LogInformation("   - Main API: http://localhost:5001");
+logger.LogInformation("   - Swagger UI: http://localhost:5001/swagger");
 
 app.Run();
 

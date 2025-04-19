@@ -7,7 +7,7 @@
 - [Project Description](#project-description)
 - [Tech Stack](#tech-stack)
 - [Getting Started Locally](#getting-started-locally)
-- [Available Scripts](#available-scripts)
+- [Development Scripts](#development-scripts)
 - [Project Scope](#project-scope)
 - [Project Status](#project-status)
 - [License](#license)
@@ -118,21 +118,109 @@ docker-compose logs -f
 docker-compose down
 ```
 
-## Available Scripts
+## Development Scripts
 
-In the Client directory:
+### Database Management
 
-- **npm run dev:** Start development server
-- **npm run build:** Build for production
-- **npm run lint:** Run linter
-- **npm run format:** Format code
+```bash
+# Start PostgreSQL
+docker-compose up db -d
 
-In the API directory:
+# Check database status
+docker ps
+docker logs tenxcards-db
 
-- **dotnet restore:** Install dependencies
-- **dotnet run:** Start the API
-- **dotnet test:** Run tests
-- **dotnet build:** Build the project
+# Stop database
+docker-compose stop db
+
+# Reset database (removes all data)
+docker-compose down -v
+```
+
+### Backend (API) Development
+
+```bash
+# Local Development
+cd API/TenXCards.API
+dotnet restore
+dotnet run
+
+# Docker Development
+docker-compose up api -d
+docker logs tenxcards-api
+docker-compose stop api
+```
+
+### Frontend Development
+
+```bash
+# Start development server
+cd Client
+npm run dev
+
+# Build for production
+npm run build
+
+# Lint and format
+npm run lint
+npm run format
+```
+
+### Docker Commands
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Start specific service
+docker-compose up db -d
+docker-compose up api -d
+
+# View logs
+docker-compose logs -f
+docker logs tenxcards-db
+docker logs tenxcards-api
+
+# Stop services
+docker-compose stop
+docker-compose down
+
+# Rebuild services
+docker-compose up -d --build
+```
+
+### Troubleshooting Commands
+
+```bash
+# Check ports in use
+lsof -i :5001  # API port
+lsof -i :5432  # Database port
+lsof -i :3000  # Client port
+
+# Check container health
+docker inspect tenxcards-db | grep Status
+docker inspect tenxcards-api | grep Status
+
+# View real-time logs
+docker-compose logs -f
+```
+
+### Port Configuration
+
+All services use fixed ports for consistency:
+
+- Frontend (Client): http://localhost:3000
+- Backend (API): http://localhost:5001
+- Swagger UI: http://localhost:5001/swagger
+- Database: localhost:5432
+
+### Database Connection Details
+
+- Host: localhost
+- Port: 5432
+- Database: ten_x_cards_db
+- Username: postgres
+- Password: (set in .env file)
 
 ## Project Scope
 

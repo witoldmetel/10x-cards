@@ -5,7 +5,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/health")]
     public class HealthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
