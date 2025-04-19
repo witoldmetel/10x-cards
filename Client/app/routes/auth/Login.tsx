@@ -5,6 +5,7 @@ import {
   useNavigation,
   useActionData,
   Form,
+  redirect,
 } from "react-router";
 import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,13 @@ export async function action({ request }: Route.ActionArgs) {
       };
     }
 
-    return { ok: true };
+    // @todo: Store the token if it exists in the response
+    // if (data.token) {
+    //   localStorage.setItem("authToken", data.token);
+    // }
+
+    // Use redirect instead of returning ok: true
+    return redirect("/dashboard");
   } catch (error) {
     return {
       ok: false,
@@ -52,13 +59,6 @@ export default function Login() {
   const isLoading = navigation.state === "submitting";
 
   console.log("actionData", actionData);
-
-  // Redirect on successful login
-  React.useEffect(() => {
-    if (actionData?.ok) {
-      navigate("/dashboard");
-    }
-  }, [actionData, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">

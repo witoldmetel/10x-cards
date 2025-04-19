@@ -18,6 +18,6 @@ export default [
 
   ...prefix("dashboard", [
     index("routes/Dashboard.tsx"),
-    route("archive", "routes/ArchivedFlashcards.tsx"),
+    route("archived", "routes/ArchivedFlashcards.tsx"),
   ]),
 ] satisfies RouteConfig;
