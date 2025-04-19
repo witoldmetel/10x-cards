@@ -12,6 +12,11 @@ using TenXCards.Api.Mapping;
 using TenXCards.Api.Middleware;
 using TenXCards.Api.Behaviors;
 using TenXCards.Api.Features.Flashcards.Commands;
+using TenXCards.Api.Features.Auth;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using TenXCards.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +35,31 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddResponseCaching();
 builder.Services.AddMemoryCache();
+
+// Configure JWT Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key not configured"))
+        )
+    };
+});
+
+// Register AuthService
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(FlashcardProfile));
@@ -53,13 +83,38 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     );
 });
 
-// Configure Swagger
+// Configure Swagger with JWT authentication
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { 
         Title = "10x Cards API", 
         Version = "v1",
         Description = "API for managing flashcards with AI integration"
+    });
+    
+    // Configure JWT authentication in Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
     
     // Include XML comments in Swagger
@@ -78,14 +133,28 @@ builder.Services.AddCors(options =>
     {
         builder
             .WithOrigins(
-                "http://localhost:3000",    // Client default port
+                "http://localhost:3000",    // React app default port
                 "http://localhost:5001"     // API port
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
     });
+
+    var allowedOrigins = builder.Configuration["AllowedOrigins"]?.Split(',') ?? Array.Empty<string>();
+    options.AddPolicy("Production", corsBuilder =>
+    {
+        corsBuilder
+            .WithOrigins(allowedOrigins)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
 });
+
+// Configure services
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
@@ -99,7 +168,7 @@ if (app.Environment.IsDevelopment())
 else 
 {
     app.UseHsts();
-    app.UseCors("AllowAll");
+    app.UseCors("Production");
 }
 
 // Middleware pipeline (order is important)

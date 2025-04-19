@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
+using System.Security.Claims;
 using TenXCards.Api.Data;
 using TenXCards.Api.Models;
 using TenXCards.Api.DTOs;
@@ -12,6 +14,7 @@ namespace TenXCards.Api.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FlashcardsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -29,8 +32,12 @@ namespace TenXCards.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<FlashcardResponse>>> GetFlashcards([FromQuery] FlashcardFilterRequest filter)
         {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             // Start with base query
-            var query = _context.Flashcards.AsQueryable();
+            var query = _context.Flashcards
+                .Where(f => f.UserId == userId)
+                .AsQueryable();
 
             // Apply filters
             if (!string.IsNullOrEmpty(filter.ReviewStatus))
@@ -71,9 +78,12 @@ namespace TenXCards.Api.Controllers
         /// Retrieves a specific flashcard by ID
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<FlashcardResponse>> GetFlashcard(string id)
+        public async Task<ActionResult<FlashcardResponse>> GetFlashcard(Guid id)
         {
-            var flashcard = await _context.Flashcards.FindAsync(id);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var flashcard = await _context.Flashcards
+                .FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
 
             if (flashcard == null)
             {
@@ -89,7 +99,12 @@ namespace TenXCards.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<FlashcardResponse>> CreateFlashcard([FromBody] CreateFlashcardRequest request)
         {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            
             var flashcard = _mapper.Map<Flashcard>(request);
+            flashcard.UserId = userId;
+            flashcard.CreatedAt = DateTime.UtcNow;
+            flashcard.UpdatedAt = DateTime.UtcNow;
             
             _context.Flashcards.Add(flashcard);
             await _context.SaveChangesAsync();
@@ -105,9 +120,12 @@ namespace TenXCards.Api.Controllers
         /// Updates an existing flashcard
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateFlashcard(string id, [FromBody] UpdateFlashcardRequest request)
+        public async Task<IActionResult> UpdateFlashcard(Guid id, [FromBody] UpdateFlashcardRequest request)
         {
-            var flashcard = await _context.Flashcards.FindAsync(id);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var flashcard = await _context.Flashcards
+                .FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
 
             if (flashcard == null)
             {
@@ -116,6 +134,7 @@ namespace TenXCards.Api.Controllers
 
             // Map update request to entity, preserving unchanged values
             _mapper.Map(request, flashcard);
+            flashcard.UpdatedAt = DateTime.UtcNow;
 
             try
             {
@@ -137,9 +156,13 @@ namespace TenXCards.Api.Controllers
         /// Deletes a flashcard
         /// </summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFlashcard(string id)
+        public async Task<IActionResult> DeleteFlashcard(Guid id)
         {
-            var flashcard = await _context.Flashcards.FindAsync(id);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var flashcard = await _context.Flashcards
+                .FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+
             if (flashcard == null)
             {
                 return NotFound();
@@ -151,9 +174,10 @@ namespace TenXCards.Api.Controllers
             return NoContent();
         }
 
-        private bool FlashcardExists(string id)
+        private bool FlashcardExists(Guid id)
         {
-            return _context.Flashcards.Any(e => e.Id == id);
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            return _context.Flashcards.Any(e => e.Id == id && e.UserId == userId);
         }
     }
 } 

@@ -97,7 +97,7 @@ namespace TenXCards.Api.DTOs
         /// <summary>
         /// Unique identifier of the flashcard
         /// </summary>
-        public string Id { get; set; } = string.Empty;
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Whether the flashcard is archived
@@ -122,7 +122,7 @@ namespace TenXCards.Api.DTOs
         /// </summary>
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
     }
 
     /// <summary>

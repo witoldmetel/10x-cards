@@ -11,7 +11,7 @@ namespace TenXCards.Api.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public string Id { get; set; } = default!;
+        public Guid Id { get; set; }
 
         [Required]
         [MaxLength(1000)]
@@ -45,9 +45,12 @@ namespace TenXCards.Api.Models
         public DateTime CreatedAt { get; set; }
 
         [Required]
-        public string UserId { get; set; } = string.Empty;
+        public Guid UserId { get; set; }
 
         [Required]
         public DateTime UpdatedAt { get; set; }
+
+        // Navigation property
+        public User User { get; set; } = null!;
     }
 } 
