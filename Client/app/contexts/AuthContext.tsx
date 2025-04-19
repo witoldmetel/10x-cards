@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 type User = {
   id: string;
@@ -22,11 +22,17 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock storage key
-const AUTH_STORAGE_KEY = 'flashcards_auth';
+// Storage key for auth data
+const AUTH_STORAGE_KEY = "flashcards_auth";
 
-// Mock user database
-const mockUsers = new Map<string, { password: string; user: User }>();
+// API endpoints
+const API_BASE_URL = "http://localhost:5001/api"; // Make sure this matches your backend URL
+const API_ENDPOINTS = {
+  login: `${API_BASE_URL}/auth/login`,
+  register: `${API_BASE_URL}/auth/register`,
+  resetPassword: `${API_BASE_URL}/auth/forgot-password`,
+  updatePassword: `${API_BASE_URL}/auth/reset-password`,
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -43,84 +49,117 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log("Making login request to:", API_ENDPOINTS.login);
 
-    const userRecord = mockUsers.get(email);
-    if (!userRecord || userRecord.password !== password) {
-      throw new Error('Invalid email or password');
+    const response = await fetch(API_ENDPOINTS.login, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    console.log("Login response status:", response.status);
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Login error:", error);
+      throw new Error(error.message || "Failed to sign in");
     }
 
+    const data = await response.json();
+    console.log("Login successful, received data:", { ...data, token: "***" });
+
     const newSession = {
-      user: userRecord.user,
-      token: `mock-token-${Date.now()}`,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+      },
+      token: data.token,
     };
 
     setSession(newSession);
-    setUser(userRecord.user);
+    setUser(newSession.user);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
   };
 
   const signUp = async (email: string, password: string) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log("Making registration request to:", API_ENDPOINTS.register);
 
-    if (mockUsers.has(email)) {
-      throw new Error('Email already in use');
+    const response = await fetch(API_ENDPOINTS.register, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    console.log("Registration response status:", response.status);
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error("Registration error:", error);
+      throw new Error(error.message || "Failed to create account");
     }
 
-    const newUser = {
-      id: `user-${Date.now()}`,
-      email,
-    };
-
-    mockUsers.set(email, { password, user: newUser });
+    const data = await response.json();
+    console.log("Registration successful, received data:", {
+      ...data,
+      token: "***",
+    });
 
     const newSession = {
-      user: newUser,
-      token: `mock-token-${Date.now()}`,
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+      },
+      token: data.token,
     };
 
     setSession(newSession);
-    setUser(newUser);
+    setUser(newSession.user);
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(newSession));
   };
 
   const signOut = async () => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-
     setSession(null);
     setUser(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
   };
 
   const resetPassword = async (email: string) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const response = await fetch(API_ENDPOINTS.resetPassword, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
 
-    if (!mockUsers.has(email)) {
-      throw new Error('No account found with this email');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to reset password");
     }
-
-    // In a real app, this would send an email
-    console.log(`Password reset requested for ${email}`);
   };
 
   const updatePassword = async (password: string) => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (!user) {
-      throw new Error('No user logged in');
+    if (!session?.token) {
+      throw new Error("No active session");
     }
 
-    const userRecord = mockUsers.get(user.email);
-    if (!userRecord) {
-      throw new Error('User not found');
-    }
+    const response = await fetch(API_ENDPOINTS.updatePassword, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ newPassword: password }),
+    });
 
-    mockUsers.set(user.email, { ...userRecord, password });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to update password");
+    }
   };
 
   const value = {
@@ -139,7 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

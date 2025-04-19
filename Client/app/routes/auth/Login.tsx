@@ -26,15 +26,21 @@ export default function Login() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    console.log("Attempting to sign in..."); // Debug log
 
     try {
       setError("");
       setLoading(true);
       await signIn(email, password);
+      console.log("Sign in successful"); // Debug log
       navigate("/dashboard");
     } catch (err) {
-      setError("Failed to sign in. Please check your credentials.");
       console.error("Login error:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to sign in. Please check your credentials."
+      );
     } finally {
       setLoading(false);
     }
