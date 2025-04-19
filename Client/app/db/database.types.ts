@@ -21,7 +21,7 @@ export type Flashcard = {
   user_id: number;
   question: string;
   answer: string;
-  review_status: "New" | "To correct" | "Approved" | "Rejected";
+  review_status: 'New' | 'To correct' | 'Approved' | 'Rejected';
   archived_at?: string | null;
   archived?: boolean;
   tags: string[];
@@ -79,13 +79,7 @@ export type DeleteUserResponseDto = {
 // For listing flashcards (minimal fields)
 export type FlashcardListItemDto = Pick<
   Flashcard,
-  | "id"
-  | "question"
-  | "answer"
-  | "review_status"
-  | "tags"
-  | "category"
-  | "created_at"
+  'id' | 'question' | 'answer' | 'review_status' | 'tags' | 'category' | 'created_at'
 >;
 
 // Pagination details for list responses
@@ -103,7 +97,7 @@ export type FlashcardsListResponseDto = {
 
 // Detailed Flashcard DTO (used, for example, in the flashcard details endpoint)
 // Excludes the `user_id` as it is part of the domain internal logic.
-export type FlashcardDetailsDto = Omit<Flashcard, "user_id">;
+export type FlashcardDetailsDto = Omit<Flashcard, 'user_id'>;
 
 // Create Flashcard Command Model / DTO
 export type CreateFlashcardDto = {
@@ -111,19 +105,13 @@ export type CreateFlashcardDto = {
   answer: string;
   tags: string[];
   category: string[];
-  review_status: "New" | "To correct" | "Approved" | "Rejected";
+  review_status: 'New' | 'To correct' | 'Approved' | 'Rejected';
 };
 
 // Response after creating a flashcard, mirroring key flashcard fields.
 export type CreateFlashcardResponseDto = Pick<
   Flashcard,
-  | "id"
-  | "question"
-  | "answer"
-  | "review_status"
-  | "tags"
-  | "category"
-  | "created_at"
+  'id' | 'question' | 'answer' | 'review_status' | 'tags' | 'category' | 'created_at'
 >;
 
 // Update Flashcard Command Model / DTO (partial update)
@@ -132,13 +120,7 @@ export type UpdateFlashcardDto = Partial<CreateFlashcardDto>;
 // Response after updating a flashcard.
 export type UpdateFlashcardResponseDto = Pick<
   Flashcard,
-  | "id"
-  | "question"
-  | "answer"
-  | "review_status"
-  | "tags"
-  | "category"
-  | "updated_at"
+  'id' | 'question' | 'answer' | 'review_status' | 'tags' | 'category' | 'updated_at'
 >;
 
 // Archive Flashcard Command Model / DTO
@@ -159,7 +141,7 @@ export type BatchUpdateFlashcardsDto = {
   update: Partial<{
     question: string;
     answer: string;
-    review_status: "New" | "To correct" | "Approved" | "Rejected";
+    review_status: 'New' | 'To correct' | 'Approved' | 'Rejected';
     tags: string[];
     category: string[];
     archived: boolean;
@@ -183,14 +165,14 @@ export type GenerateFlashcardsDto = {
 // Response when an AI flashcard generation task is initiated.
 export type GenerateFlashcardsResponseDto = {
   task_id: string;
-  status: "in_progress" | "completed" | "failed";
+  status: 'in_progress' | 'completed' | 'failed';
   message: string;
 };
 
 // Response for monitoring the flashcard generation progress.
 export type FlashcardGenerationStatusResponseDto = {
   task_id: string;
-  status: "in_progress" | "completed" | "failed";
+  status: 'in_progress' | 'completed' | 'failed';
   progress: number; // percentage (0 to 100)
   generated_flashcards: FlashcardListItemDto[];
   error?: string | null;

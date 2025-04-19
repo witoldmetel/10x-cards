@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "react-router";
+import type { ActionFunctionArgs } from 'react-router';
 
 export namespace Route {
   export type ActionArgs = ActionFunctionArgs;
@@ -19,7 +19,5 @@ export namespace Route {
     token: string;
   }
 
-  export type RegisterResponse =
-    | RegisterResponseDirect
-    | RegisterResponseNested;
+  export type RegisterResponse = RegisterResponseDirect | RegisterResponseNested;
 }
