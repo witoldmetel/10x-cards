@@ -1,33 +1,44 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import type React from 'react';
+import { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 
-interface AuthContextType {
+const AuthContext = createContext<{
   token: string;
-  setToken: (token: string) => void;
+  onLogin: (authCallback: () => Promise<string>) => Promise<void>;
   onLogout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | null>({
+}>({
   token: '',
-  setToken: () => {},
-  onLogout: () => {},
+  onLogin: async () => { },
+  onLogout: () => { },
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+type AuthProviderProps = {
+  children: React.ReactNode;
+};
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const navigate = useNavigate();
   const [token, setToken] = useState('');
 
+  const handleLogin = async (authCallback: () => Promise<string>) => {
+    const token = await authCallback();
+
+    setToken(token);
+    navigate('/dashboard');
+  };
+
   const handleLogout = () => {
-    console.log('Logging out');
     setToken('');
   };
 
   const value = {
     token,
-    setToken,
+    onLogin: handleLogin,
     onLogout: handleLogout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
 export function useAuth() {
   const context = useContext(AuthContext);

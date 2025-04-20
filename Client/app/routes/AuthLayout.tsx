@@ -1,9 +1,8 @@
-import React from 'react';
 import { Outlet } from 'react-router';
 
 export default function AuthLayout() {
   return (
-    <div className='max-w-7xl mx-auto'>
+    <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white'>
       <Outlet />
     </div>
   );

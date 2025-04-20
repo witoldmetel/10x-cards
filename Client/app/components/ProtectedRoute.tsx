@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -16,9 +17,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       setShouldRedirect(true);
     }
   }, [token]);
-
-
-
 
   if (shouldRedirect) {
     // Only redirect after initial render when we detect no token

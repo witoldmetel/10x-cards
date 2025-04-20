@@ -29,7 +29,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": false
+      "recommended": false,
+      "correctness": {
+        "noUnusedImports": "warn"
+      }
     },
     "ignore": [
       "dist"
