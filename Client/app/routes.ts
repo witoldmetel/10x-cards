@@ -11,10 +11,7 @@ export default [
   ]),
 
   layout('routes/ProtectedLayout.tsx', [
-    ...prefix('dashboard', [
-      index('routes/Dashboard.tsx'),
-      route('archived', 'routes/ArchivedFlashcards.tsx')
-    ]),
-    route('settings', 'routes/UserSettings.tsx')
-  ])
+    ...prefix('dashboard', [index('routes/Dashboard.tsx'), route('archived', 'routes/ArchivedFlashcards.tsx')]),
+    route('settings', 'routes/UserSettings.tsx'),
+  ]),
 ] satisfies RouteConfig;

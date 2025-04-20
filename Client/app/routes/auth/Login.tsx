@@ -37,7 +37,6 @@ export async function action({ request }: Route.ActionArgs) {
         'Set-Cookie': `token=${data.token}; Path=/; HttpOnly`,
       },
     });
-
   } catch (error) {
     return {
       ok: false,

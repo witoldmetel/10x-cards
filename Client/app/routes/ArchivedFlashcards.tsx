@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FlashcardList } from '../components/FlashcardList';
 import { Navbar } from '../components/Navbar';
 
-
 export default function ArchivedFlashcards() {
-
   const [archivedCards, setArchivedCards] = useState<any[]>([]);
 
   useEffect(() => {

@@ -3,7 +3,6 @@ import { Navbar } from '../components/Navbar';
 import { Save } from 'lucide-react';
 
 export default function UserSettings() {
-
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<{
@@ -12,11 +11,8 @@ export default function UserSettings() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-
-
   return (
     <div className='min-h-screen bg-gray-50'>
-      <Navbar />
       <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         <div className='max-w-lg mx-auto'>
           <h1 className='text-3xl font-bold text-gray-900 mb-8'>Account Settings</h1>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,11 +9,21 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { token } = useAuth();
   const location = useLocation();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
-  if (!token) {
-    // Redirect to the login page with the current location
-    return <Navigate to="/" replace state={{ from: location }} />;
+  useEffect(() => {
+    if (!token) {
+      setShouldRedirect(true);
+    }
+  }, [token]);
+
+
+
+
+  if (shouldRedirect) {
+    // Only redirect after initial render when we detect no token
+    return <Navigate to='/' replace state={{ from: location }} />;
   }
 
   return <>{children}</>;
-} 
+}

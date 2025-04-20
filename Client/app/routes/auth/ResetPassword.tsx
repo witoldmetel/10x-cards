@@ -16,8 +16,6 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
-
-
   return (
     <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>

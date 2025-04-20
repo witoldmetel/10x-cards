@@ -7,17 +7,17 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>({
-  token: "",
+  token: '',
   setToken: () => {},
   onLogout: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState("");
-
+  const [token, setToken] = useState('');
 
   const handleLogout = () => {
-    setToken("");
+    console.log('Logging out');
+    setToken('');
   };
 
   const value = {
@@ -37,4 +37,4 @@ export function useAuth() {
   }
 
   return context;
-} 
+}
