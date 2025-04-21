@@ -5,9 +5,9 @@ import { FlashcardList } from "../components/FlashcardList";
 import { TextInput } from "../components/TextInput";
 import { useAuth } from "../contexts/AuthContext";
 import type { Flashcard } from "../db/database.types";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
-  const { token } = useAuth();
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

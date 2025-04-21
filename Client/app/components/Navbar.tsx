@@ -4,12 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 export function Navbar() {
-  // const { onLogout } = useAuth();
-
-  const handleLogout = () => {
-    console.log("Logging out");
-    // onLogout();
-  };
+  const { onLogout } = useAuth();
 
   return (
     <nav className="bg-white shadow-sm">
@@ -37,12 +32,9 @@ export function Navbar() {
               Settings
             </Link>
             <Button
-              onClick={() => {
-                console.log("Logging out");
-                // onLogout();
-              }}
+              onClick={onLogout}
               type="submit"
-              className="flex items-center px-4 text-gray-900 hover:text-blue-600">
+              className="flex items-center px-4 text-gray-900 hover:text-blue-600 bg-transparent">
               <LogOut className="w-5 h-5 mr-2" />
               Logout
             </Button>

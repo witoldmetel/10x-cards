@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const handleLogout = () => {
-    console.log("Logging out");
     setToken("");
+    navigate("/login"); // Changed to redirect to login page instead of home
   };
 
   const value = {
