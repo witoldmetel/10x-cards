@@ -1,6 +1,9 @@
 import { Brain, PenTool, Plus, Wand2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+
+
 import { FlashcardList } from '../components/FlashcardList';
 import { TextInput } from '../components/TextInput';
 
@@ -10,6 +13,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+
+interface PaginatedResponse<T> {
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}
+
+interface FlashcardsQueryParams {
+  page: number;
+  limit: number;
+  reviewStatus?: string;
+  searchPhrase?: string;
+  tag?: string;
+  category?: string;
+}
 
 interface PaginatedResponse<T> {
   items: T[];
