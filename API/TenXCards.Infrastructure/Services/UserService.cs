@@ -1,26 +1,31 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
+using TenXCards.Infrastructure.Data;
 
 namespace TenXCards.Infrastructure.Services;
 
 public class UserService : IUserService
 {
+    private readonly ApplicationDbContext _context;
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<UserService> _logger;
 
     public UserService(
+        ApplicationDbContext context,
         IUserRepository userRepository,
         IPasswordHashService passwordHashService,
         IJwtTokenService jwtTokenService,
         ILogger<UserService> logger)
     {
+        _context = context;
         _userRepository = userRepository;
         _passwordHashService = passwordHashService;
         _jwtTokenService = jwtTokenService;
@@ -36,19 +41,21 @@ public class UserService : IUserService
 
         var user = new User
         {
+            Id = Guid.NewGuid(),
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
-            ApiKey = GenerateApiKey(),
+            ApiKey = Guid.NewGuid().ToString("N"),
             CreatedAt = DateTime.UtcNow
         };
 
-        var createdUser = await _userRepository.CreateAsync(user);
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
 
         return new UserRegistrationResponse
         {
-            Id = createdUser.Id,
-            Email = createdUser.Email,
-            CreatedAt = createdUser.CreatedAt
+            Id = user.Id,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt
         };
     }
 
@@ -71,11 +78,54 @@ public class UserService : IUserService
         };
     }
 
-    private static string GenerateApiKey()
+    public async Task<User?> GetUserByEmailAsync(string email)
     {
-        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-            .Replace("/", "_")
-            .Replace("+", "-")
-            .Replace("=", "");
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<User?> GetUserByIdAsync(Guid id)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    public async Task<User?> GetUserByApiKeyAsync(string apiKey)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(u => u.ApiKey == apiKey);
+    }
+
+    public async Task<bool> ValidatePasswordAsync(User user, string password)
+    {
+        return _passwordHashService.VerifyPassword(password, user.Password);
+    }
+
+    public async Task<User> UpdateUserAsync(Guid id, string email, string? password = null)
+    {
+        var user = await GetUserByIdAsync(id);
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found");
+        }
+
+        user.Email = email;
+        if (password != null)
+        {
+            user.Password = _passwordHashService.HashPassword(password);
+        }
+
+        await _context.SaveChangesAsync();
+        return user;
+    }
+
+    public async Task DeleteUserAsync(Guid id)
+    {
+        var user = await GetUserByIdAsync(id);
+        if (user != null)
+        {
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+        }
     }
 } 
