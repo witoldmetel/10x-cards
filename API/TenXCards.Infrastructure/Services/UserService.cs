@@ -65,6 +65,7 @@ public class UserService : IUserService
 
         return new UserLoginResponse
         {
+            UserId = user.Id,
             Token = token,
             ExpiresIn = 7 * 24 * 60 * 60 // 7 days in seconds
         };
