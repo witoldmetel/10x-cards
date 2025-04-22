@@ -2,24 +2,26 @@ version: "3.8"
 
 services:
   api:
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5001:80"
+      - "5001:5001"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
-      - ASPNETCORE_URLS=http://+:80
-      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - ASPNETCORE_URLS=http://+:5001
+      - ConnectionStrings__DefaultConnection=${DOCKER_DB_CONNECTION_STRING}
     volumes:
       - ~/.aspnet/https:/root/.aspnet/https:ro
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
-      - ./API/TenXCards.Api:/src/API/TenXCards.Api
+      - ./API/TenXCards.API:/src/API/TenXCards.API
     depends_on:
       db:
         condition: service_healthy
 
   db:
+    container_name: db
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=${POSTGRES_USER}

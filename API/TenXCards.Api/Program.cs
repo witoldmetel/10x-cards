@@ -1,91 +1,93 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.OpenApi.Models;
+using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
-using FluentValidation;
-using MediatR;
-using System.Reflection;
-using TenXCards.Api.Data;
-using TenXCards.Api.Mapping;
-using TenXCards.Api.Middleware;
-using TenXCards.Api.Behaviors;
-using TenXCards.Api.Features.Flashcards.Commands;
+using Microsoft.IdentityModel.Tokens;
+using TenXCards.API.Middleware;
+using TenXCards.Core.DTOs;
+using TenXCards.Core.Repositories;
+using TenXCards.Core.Services;
+using TenXCards.Infrastructure.Data;
+using TenXCards.Infrastructure.Repositories;
+using TenXCards.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers(options =>
-{
-    // Add cache profiles
-    options.CacheProfiles.Add("Default30",
-        new CacheProfile
-        {
-            Duration = 30,
-            Location = ResponseCacheLocation.Any
-        });
-});
-
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddResponseCaching();
-builder.Services.AddMemoryCache();
+builder.Services.AddSwaggerGen();
 
-// Configure AutoMapper
-builder.Services.AddAutoMapper(typeof(FlashcardProfile));
-
-// Configure MediatR with validation pipeline
-builder.Services.AddMediatR(cfg => 
+// Configure rate limiting
+builder.Services.AddRateLimiter(options =>
 {
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-});
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-// Configure FluentValidation
-builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
-// Configure Entity Framework with PostgreSQL
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsql => npgsql.EnableRetryOnFailure(3)
-    );
-});
-
-// Configure Swagger
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { 
-        Title = "10x Cards API", 
-        Version = "v1",
-        Description = "API for managing flashcards with AI integration"
-    });
-    
-    // Include XML comments in Swagger
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    if (File.Exists(xmlPath))
+    options.AddFixedWindowLimiter("fixed", options =>
     {
-        c.IncludeXmlComments(xmlPath);
-    }
+        options.PermitLimit = 5;
+        options.Window = TimeSpan.FromMinutes(1);
+        options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        options.QueueLimit = 2;
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsJsonAsync(new
+        {
+            message = "Too many requests. Please try again later.",
+            retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter) 
+                ? retryAfter.TotalSeconds 
+                : 60
+        }, token);
+    };
 });
 
 // Configure CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("Development", builder =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        builder
-            .WithOrigins(
-                "http://localhost:3000",    // Client default port
-                "http://localhost:5001"     // API port
-            )
+        policy.WithOrigins(builder.Configuration["AllowedOrigins"]?.Split(',') ?? new[] { "http://localhost:3000" })
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();
     });
 });
+
+// Configure JWT authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Configure database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register services
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+// Register middleware
+builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
+builder.Services.AddTransient<RequestValidationMiddleware>();
 
 var app = builder.Build();
 
@@ -94,42 +96,88 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseCors("Development");
-}
-else 
-{
-    app.UseHsts();
-    app.UseCors("AllowAll");
 }
 
-// Middleware pipeline (order is important)
-app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
-app.UseRouting();
-app.UseResponseCaching();
+
+// Add middleware to pipeline
+app.UseMiddleware<RequestValidationMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+// Use CORS before auth middleware
+app.UseCors("AllowFrontend");
+
+// Use rate limiting
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+// Check database connection on startup
+var logger = app.Logger;
 
-// Database migration
 try
 {
-    using (var scope = app.Services.CreateScope())
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+
+    logger.LogInformation("Checking database connection...");
+
+    bool canConnect = await context.Database.CanConnectAsync();
+
+    if (canConnect)
     {
-        var services = scope.ServiceProvider;
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        
-        logger.LogInformation("Attempting to migrate database...");
-        await context.Database.MigrateAsync();
-        logger.LogInformation("Database migration completed successfully.");
+        logger.LogInformation("✅ Successfully connected to the database");
+        await context.Database.EnsureCreatedAsync();
+        logger.LogInformation("✅ Database is ready");
+    }
+    else
+    {
+        logger.LogError("❌ Failed to connect to the database");
     }
 }
 catch (Exception ex)
 {
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "An error occurred while migrating the database.");
+    logger.LogError(ex, "❌ An error occurred while checking the database connection");
 }
+
+// Print API information
+logger.LogInformation("🚀 API is running on:");
+logger.LogInformation("   - Main API: http://localhost:5001");
+logger.LogInformation("   - Swagger UI: http://localhost:5001/swagger");
+
+// User endpoints
+app.MapPost("/api/users/register", async (IUserService userService, UserRegistrationRequest request) =>
+{
+    try
+    {
+        var response = await userService.RegisterAsync(request);
+        return Results.Created($"/api/users/{response.Id}", response);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+})
+.WithName("RegisterUser")
+.WithOpenApi()
+.RequireRateLimiting("fixed");
+
+app.MapPost("/api/users/login", async (IUserService userService, UserLoginRequest request) =>
+{
+    try
+    {
+        var response = await userService.LoginAsync(request);
+        return Results.Ok(response);
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { message = ex.Message });
+    }
+})
+.WithName("LoginUser")
+.WithOpenApi()
+.RequireRateLimiting("fixed");
 
 app.Run();

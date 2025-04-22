@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace TenXCards.Api.Controllers
+namespace TenXCards.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/test")]
     public class TestController : ControllerBase
     {
         private readonly ILogger<TestController> _logger;

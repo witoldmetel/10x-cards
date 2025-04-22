@@ -7,10 +7,11 @@
 - [Project Description](#project-description)
 - [Tech Stack](#tech-stack)
 - [Getting Started Locally](#getting-started-locally)
-- [Available Scripts](#available-scripts)
+- [Development Scripts](#development-scripts)
 - [Project Scope](#project-scope)
 - [Project Status](#project-status)
 - [License](#license)
+- [Features](#features)
 
 ## Project Description
 
@@ -26,7 +27,7 @@
 
 - **Frontend:** React 19 with TypeScript 5, Tailwind 4, and Shadcn/ui components
 - **Backend:** .NET 8 (LTS) with Entity Framework Core
-- **Database:** Azure SQL Edge (SQL Server compatible)
+- **Database:** PostgreSQL 16
 - **AI Integration:** OpenRouter.ai API
 
 _Note: For detailed technology specifications, please refer to the [tech-stack.md](.ai/tech-stack.md) file._
@@ -42,57 +43,49 @@ Follow these steps to set up the project on your local machine:
    cd 10x-cards
    ```
 
-2. **Start the Database:**
-
-   First, start the Azure SQL Edge database in Docker. Make sure you have Docker installed:
-
-   ```bash
-   docker-compose up -d db
-   ```
-
-   Database connection details:
-
-   - Server: localhost,1433
-   - Database: TenXCardsDb
-   - Username: sa
-   - Password: (set in .env file)
-
-3. **Environment Setup:**
+2. **Environment Setup:**
 
    Copy the `.env.example` file to `.env` and update the values:
 
    ```bash
    cp .env.example .env
-   # Edit .env with your preferred text editor and set appropriate values
+   # Edit .env with your preferred text editor
    ```
+
+3. **Start the Database:**
+
+   Start PostgreSQL using Docker:
+
+   ```bash
+   docker-compose up db -d
+   ```
+
+   Database connection details:
+
+   - Host: localhost
+   - Port: 5432
+   - Database: ten_x_cards_db
+   - Username: postgres
+   - Password: (set in .env file)
 
 4. **Start the API:**
 
    Navigate to the API directory and run the .NET application:
 
    ```bash
-   cd API/TenXCards.Api
-   dotnet restore  # Install dependencies
-   dotnet run      # Start the API
+   cd API/TenXCards.API
+   dotnet restore
+   dotnet run
    ```
 
-   The API will be available at `http://localhost:5001`
+   The API will be available at:
 
-   API Endpoints:
-
-   - GET /api/flashcards - Get all flashcards
-   - GET /api/flashcards/{id} - Get a specific flashcard
-   - POST /api/flashcards - Create a new flashcard
-   - PUT /api/flashcards/{id} - Update a flashcard
-   - DELETE /api/flashcards/{id} - Delete a flashcard
-   - GET /api/test - Test endpoint returning "Hello world"
-   - GET /api/health/db - Check database connection status
-
-   Swagger documentation is available at `http://localhost:5001/swagger`
+   - Main API: http://localhost:5001
+   - Swagger UI: http://localhost:5001/swagger
 
 5. **Start the Client:**
 
-   In a new terminal, navigate to the Client directory and start the frontend:
+   In a new terminal, navigate to the Client directory:
 
    ```bash
    cd Client
@@ -100,59 +93,199 @@ Follow these steps to set up the project on your local machine:
    npm run dev
    ```
 
-   The client will be available at `http://localhost:3000`
+   The client will be available at http://localhost:3000
 
-6. **Docker Commands (Optional):**
+### Port Configuration
 
-   If you need to rebuild or manage Docker containers:
+All services use fixed ports for consistency:
 
-   ```bash
-   # Stop all containers
-   docker-compose down
+- Frontend (Client): 3000
+- Backend (API): 5001
+- Database: 5432
 
-   # Rebuild and start all containers
-   docker-compose up -d --build
+### Docker Commands
 
-   # View container logs
-   docker-compose logs
-   ```
+```bash
+# Start all services
+docker-compose up -d
 
-_Note: Make sure to start the services in the order listed above (Database → API → Client) to avoid connection issues. The API requires a working database connection to start properly._
+# Start only database
+docker-compose up db -d
 
-## Available Scripts
+# View logs
+docker-compose logs -f
 
-Below are some of the key scripts defined in the project:
+# Stop all services
+docker-compose down
+```
 
-- **npm run start:** Runs the application using Vite
-- **npm run build:** Builds the production-ready application with TypeScript compilation
-- **npm run lint:** Checks code using Biome
-- **npm run format:** Formats code using Biome
-- **npm run validate:** Runs TypeScript checks and linting
+## Development Scripts
 
-_For a complete list of scripts, please check the [package.json](package.json) file._
+### Database Management
+
+```bash
+# Start PostgreSQL
+docker-compose up db -d
+
+# Check database status
+docker ps
+docker logs tenxcards-db
+
+# Stop database
+docker-compose stop db
+
+# Reset database (removes all data)
+docker-compose down -v
+```
+
+### Backend (API) Development
+
+```bash
+# Local Development
+cd API/TenXCards.API
+dotnet restore
+dotnet run
+
+# Docker Development
+docker-compose up api -d
+docker logs tenxcards-api
+docker-compose stop api
+```
+
+### Frontend Development
+
+```bash
+# Start development server
+cd Client
+npm run dev
+
+# Build for production
+npm run build
+
+# Lint and format
+npm run lint
+npm run format
+```
+
+### Docker Commands
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Start specific service
+docker-compose up db -d
+docker-compose up api -d
+
+# View logs
+docker-compose logs -f
+docker logs tenxcards-db
+docker logs tenxcards-api
+
+# Stop services
+docker-compose stop
+docker-compose down
+
+# Rebuild services
+docker-compose up -d --build
+```
+
+### Troubleshooting Commands
+
+```bash
+# Check ports in use
+lsof -i :5001  # API port
+lsof -i :5432  # Database port
+lsof -i :3000  # Client port
+
+# Check container health
+docker inspect tenxcards-db | grep Status
+docker inspect tenxcards-api | grep Status
+
+# View real-time logs
+docker-compose logs -f
+```
+
+### Port Configuration
+
+All services use fixed ports for consistency:
+
+- Frontend (Client): http://localhost:3000
+- Backend (API): http://localhost:5001
+- Swagger UI: http://localhost:5001/swagger
+- Database: localhost:5432
+
+### Database Connection Details
+
+- Host: localhost
+- Port: 5432
+- Database: ten_x_cards_db
+- Username: postgres
+- Password: (set in .env file)
 
 ## Project Scope
 
 The MVP scope includes:
 
-- AI-powered flashcard generation from text (up to 50k characters)
-- Flashcard management with metadata editing
-- Spaced repetition system with SM-2 algorithm
-- User account management with email authentication
-- Review interface with filtering and search capabilities
-
-Currently out of scope:
-
-- PDF/DOCX file import
-- Sharing sets between users
-- Mobile applications
-- Custom spaced repetition algorithms
-- External platform integrations
+- AI-powered flashcard generation from text
+- Flashcard management with metadata
+- Spaced repetition system
+- User account management
+- Review interface with filtering
 
 ## Project Status
 
-The project is currently in active development. For detailed requirements and specifications, see the [PRD](.ai/prd.md).
+Currently in active development. See [PRD](.ai/prd.md) for details.
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Features
+
+### Authentication & Security
+
+- User registration and login with JWT authentication
+- Secure password hashing using BCrypt
+- Rate limiting protection (5 requests/minute)
+- CORS security with configurable origins
+
+### API Endpoints
+
+- POST /api/users/register - Create new account
+- POST /api/users/login - Authenticate user
+- More endpoints coming soon...
+
+### Configuration Files
+
+1. **Environment Variables** (.env)
+
+   ```env
+   # Database
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=your-secure-password
+   POSTGRES_DB=ten_x_cards_db
+
+   # JWT Authentication
+   JWT_KEY=your-secret-key
+   JWT_ISSUER=your-issuer
+   JWT_AUDIENCE=your-audience
+
+   # CORS
+   ALLOWED_ORIGINS=http://localhost:3000
+   ```
+
+2. **API Configuration** (appsettings.json)
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-secure-password"
+     },
+     "Jwt": {
+       "Key": "your-secret-key",
+       "Issuer": "your-issuer",
+       "Audience": "your-audience"
+     },
+     "AllowedOrigins": "http://localhost:3000"
+   }
+   ```
