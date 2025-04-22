@@ -15,6 +15,15 @@ interface PaginatedResponse<T> {
   };
 }
 
+interface FlashcardsQueryParams {
+  page: number;
+  limit: number;
+  reviewStatus?: string;
+  searchPhrase?: string;
+  tag?: string;
+  category?: string;
+}
+
 export default function Dashboard() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,12 +35,58 @@ export default function Dashboard() {
     fetchFlashcards();
   }, [page]);
 
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  const buildQueryString = (params: FlashcardsQueryParams): string => {
+    const queryParams = new URLSearchParams();
+    
+    // Add required parameters
+    queryParams.append('page', params.page.toString());
+    queryParams.append('limit', params.limit.toString());
+    
+    // Add optional parameters if they exist
+    if (params.reviewStatus) queryParams.append('reviewStatus', params.reviewStatus);
+    if (params.searchPhrase) queryParams.append('searchPhrase', params.searchPhrase);
+    if (params.tag) queryParams.append('tag', params.tag);
+    if (params.category) queryParams.append('category', params.category);
+    
+    return queryParams.toString();
+  };
+
   const fetchFlashcards = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/flashcards?page=${page}&limit=20`);
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const queryParams: FlashcardsQueryParams = {
+        page,
+        limit: 20,
+      };
+
+      const response = await fetch(
+        `http://localhost:5001/api/flashcards?${buildQueryString(queryParams)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        }
+      );
       
+      if (response.status === 401) {
+        throw new Error('Unauthorized - Please log in again');
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch flashcards');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || 
+          `Failed to fetch flashcards (${response.status})`
+        );
       }
 
       const data: PaginatedResponse<Flashcard> = await response.json();
@@ -42,11 +97,11 @@ export default function Dashboard() {
         setFlashcards(prev => [...prev, ...data.items]);
       }
       
-      setHasMore(data.items.length === 20); // If we got less than limit, we've reached the end
+      setHasMore(data.items.length === 20);
       setError(null);
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch flashcards. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to fetch flashcards. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -57,10 +112,17 @@ export default function Dashboard() {
     setError(null);
 
     try {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('http://localhost:5001/api/flashcards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ 
           front: text,
@@ -72,15 +134,23 @@ export default function Dashboard() {
         }),
       });
 
+      if (response.status === 401) {
+        throw new Error('Unauthorized - Please log in again');
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to create flashcard');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || 
+          `Failed to create flashcard (${response.status})`
+        );
       }
 
       const newFlashcard = await response.json();
       setFlashcards(prev => [newFlashcard, ...prev]);
     } catch (err) {
       console.error(err);
-      setError('Failed to create flashcard. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create flashcard. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +168,12 @@ export default function Dashboard() {
         <div className='space-y-12'>
           <TextInput onSubmit={handleSubmit} isLoading={isLoading} />
 
-          {error && <div className='bg-red-50 text-red-700 p-4 rounded-lg'>{error}</div>}
+          {error && (
+            <div className='bg-red-50 text-red-700 p-4 rounded-lg'>
+              <p className='font-medium'>Error</p>
+              <p>{error}</p>
+            </div>
+          )}
 
           {isLoading && page === 1 ? (
             <div className='text-center py-12'>

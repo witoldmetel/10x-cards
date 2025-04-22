@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using TenXCards.Core.Models;
 
 namespace TenXCards.Core.DTOs
@@ -45,12 +46,16 @@ namespace TenXCards.Core.DTOs
 
     public class FlashcardsQueryParams
     {
+        [Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0")]
         public int Page { get; set; } = 1;
+
+        [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
         public int Limit { get; set; } = 20;
+
         public ReviewStatus? ReviewStatus { get; set; }
-        public string SearchPhrase { get; set; }
-        public string Tag { get; set; }
-        public string Category { get; set; }
+        public string? SearchPhrase { get; set; }
+        public string? Tag { get; set; }
+        public string? Category { get; set; }
     }
 
     public class PaginatedResponse<T>

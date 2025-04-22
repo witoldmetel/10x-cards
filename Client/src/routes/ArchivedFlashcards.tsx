@@ -16,6 +16,11 @@ interface PaginatedResponse<T> {
   };
 }
 
+interface FlashcardsQueryParams {
+  page: number;
+  limit: number;
+}
+
 export default function ArchivedFlashcards() {
   const [archivedCards, setArchivedCards] = useState<Flashcard[]>([]);
   const [statistics, setStatistics] = useState<ArchivedStatistics | null>(null);
@@ -29,12 +34,49 @@ export default function ArchivedFlashcards() {
     fetchStatistics();
   }, [page]);
 
+  const getAuthToken = () => {
+    return localStorage.getItem('token');
+  };
+
+  const buildQueryString = (params: FlashcardsQueryParams): string => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', params.page.toString());
+    queryParams.append('limit', params.limit.toString());
+    return queryParams.toString();
+  };
+
   const fetchArchivedCards = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/flashcards/archived?page=${page}&limit=20`);
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const queryParams: FlashcardsQueryParams = {
+        page,
+        limit: 20
+      };
+
+      const response = await fetch(
+        `http://localhost:5001/api/flashcards/archived?${buildQueryString(queryParams)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        }
+      );
       
+      if (response.status === 401) {
+        throw new Error('Unauthorized - Please log in again');
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch archived flashcards');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || 
+          `Failed to fetch archived flashcards (${response.status})`
+        );
       }
 
       const data: PaginatedResponse<Flashcard> = await response.json();
@@ -49,7 +91,7 @@ export default function ArchivedFlashcards() {
       setError(null);
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch archived flashcards. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to fetch archived flashcards. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -57,10 +99,31 @@ export default function ArchivedFlashcards() {
 
   const fetchStatistics = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/flashcards/archived/statistics');
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(
+        'http://localhost:5001/api/flashcards/archived/statistics',
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        }
+      );
       
+      if (response.status === 401) {
+        throw new Error('Unauthorized - Please log in again');
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch archive statistics');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.message || 
+          `Failed to fetch archive statistics (${response.status})`
+        );
       }
 
       const data: ArchivedStatistics = await response.json();
@@ -99,7 +162,8 @@ export default function ArchivedFlashcards() {
 
           {error && (
             <div className='bg-red-50 text-red-700 p-4 rounded-lg mb-6'>
-              {error}
+              <p className='font-medium'>Error</p>
+              <p>{error}</p>
             </div>
           )}
 
