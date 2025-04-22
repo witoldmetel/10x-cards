@@ -117,6 +117,47 @@ docker-compose stop db
 
 ### Available Endpoints
 
+#### Flashcards
+
+- **GET /api/flashcards** - Get all active flashcards
+  - Supports pagination (`page`, `limit`)
+  - Filtering by `reviewStatus`, `searchPhrase`, `tag`, `category`
+  - Returns paginated response with metadata
+
+- **GET /api/flashcards/archived** - Get all archived flashcards
+  - Same pagination and filtering support as main endpoint
+  - Returns paginated response with metadata
+
+- **GET /api/flashcards/{id}** - Get specific flashcard
+
+- **GET /api/flashcards/archived/statistics** - Get archived flashcards statistics
+  - Returns total count and breakdown by category
+
+- **POST /api/flashcards** - Create new flashcard
+  - Supports tags and categories
+  - Configurable review status
+  - Manual/AI creation source tracking
+
+- **PUT /api/flashcards/{id}** - Update existing flashcard
+  - Full update of all fields
+  - Supports tags and categories
+  - Review status management
+
+- **PATCH /api/flashcards/batch** - Batch update multiple flashcards
+  - Update multiple flashcards simultaneously
+  - Partial updates supported
+  - Same fields as single update
+
+- **PATCH /api/flashcards/{id}/archive** - Archive flashcard
+  - Tracks archival time
+  - Preserves flashcard data
+
+- **PATCH /api/flashcards/{id}/unarchive** - Unarchive flashcard
+  - Restores flashcard to active state
+  - Maintains history
+
+- **DELETE /api/flashcards/{id}** - Delete flashcard permanently
+
 #### Authentication
 
 - POST /api/users/register - Register new user
@@ -255,3 +296,109 @@ All endpoints support:
 - [ ] Set up database migrations
 - [ ] Add request validation
 - [ ] Implement logging middleware
+
+### Core Features
+
+1. **Advanced Flashcard Management**
+   - Full CRUD operations with pagination and filtering
+   - Rich metadata support (tags, categories)
+   - Review status tracking (New, ToCorrect, Approved, Rejected)
+   - Support for both manual and AI-generated flashcards
+   - Batch operations for efficient updates
+   - Comprehensive archiving system with statistics
+   - SM2 algorithm integration for spaced repetition
+
+2. **Authentication & Authorization**
+   - JWT-based authentication
+   - Secure password hashing with BCrypt
+   - Token-based API key system
+
+3. **Security**
+   - Rate limiting protection
+   - CORS policy configuration
+   - Global exception handling
+   - Request validation middleware
+
+4. **Database**
+   - PostgreSQL with Entity Framework Core
+   - Clean architecture implementation
+   - Repository pattern with proper separation of concerns
+   - Efficient archiving mechanism
+   - Proper entity configurations and relationships
+
+### Data Models
+
+1. **Flashcard**
+   ```csharp
+   public class Flashcard
+   {
+       public Guid Id { get; set; }
+       public string Front { get; set; }
+       public string Back { get; set; }
+       public DateTime CreatedAt { get; set; }
+       public DateTime? UpdatedAt { get; set; }
+       public bool IsArchived { get; set; }
+       public DateTime? ArchivedAt { get; set; }
+       public FlashcardCreationSource CreationSource { get; set; }
+       public ReviewStatus ReviewStatus { get; set; }
+       public List<string> Tags { get; set; }
+       public List<string> Category { get; set; }
+       public int Sm2Repetitions { get; set; }
+       public int Sm2Interval { get; set; }
+       public double Sm2Efactor { get; set; }
+       public DateTime? Sm2DueDate { get; set; }
+   }
+   ```
+
+2. **FlashcardCreationSource**
+   ```csharp
+   public enum FlashcardCreationSource
+   {
+       Manual,
+       AI
+   }
+   ```
+
+3. **ReviewStatus**
+   ```csharp
+   public enum ReviewStatus
+   {
+       New,
+       ToCorrect,
+       Approved,
+       Rejected
+   }
+   ```
+
+4. **Query Parameters**
+   ```csharp
+   public class FlashcardsQueryParams
+   {
+       public int Page { get; set; } = 1;
+       public int Limit { get; set; } = 20;
+       public ReviewStatus? ReviewStatus { get; set; }
+       public string SearchPhrase { get; set; }
+       public string Tag { get; set; }
+       public string Category { get; set; }
+   }
+   ```
+
+### Architecture Highlights
+
+1. **Clean Architecture**
+   - Core layer contains domain models and interfaces
+   - Infrastructure layer implements data access
+   - API layer handles HTTP concerns
+   - Clear separation between DTOs and domain models
+
+2. **Repository Pattern**
+   - Generic repository interfaces
+   - Specific implementations for each entity
+   - Proper unit of work pattern
+   - Transaction management
+
+3. **Service Layer**
+   - Business logic encapsulation
+   - Mapping between DTOs and domain models
+   - Validation and business rules
+   - Error handling

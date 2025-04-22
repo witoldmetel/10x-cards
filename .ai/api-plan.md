@@ -8,7 +8,7 @@
 
 - **Flashcard**  
   Maps to `flashcards` table  
-  Key fields: id, user_id, question, answer, review_status, archived_at, archived, tags, category, sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date, created_at.
+  Key fields: id, front, back, is_archived, archived_at, creation_source, review_status, tags, category, sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date, created_at, updated_at.
 
 ## 2. Endpoints
 
@@ -96,28 +96,38 @@
 
 ### B. Flashcard Management
 
-1. **Get Flashcards List**
+1. **Get Active Flashcards**
 
    - **Method:** GET
    - **Path:** `/api/flashcards`
-   - **Description:** Retrieve user's flashcards with pagination, filtering (e.g., status, tag, category), and sorting.
+   - **Description:** Retrieve active (non-archived) flashcards with pagination and filtering.
    - **Query Parameters:**
-     - `page` (optional)
-     - `limit` (optional)
-     - `review_status` (optional: 'New', 'To correct', 'Approved', 'Rejected')
-     - `search` (search phrase in question field)
+     - `page` (default: 1)
+     - `limit` (default: 20)
+     - `reviewStatus` (optional: 'New', 'ToCorrect', 'Approved', 'Rejected')
+     - `searchPhrase` (search in front and back fields)
+     - `tag` (filter by specific tag)
+     - `category` (filter by specific category)
    - **Response Payload JSON:**
      ```json
      {
-       "flashcards": [
+       "items": [
          {
-           "id": 10,
-           "question": "What is REST API?",
-           "answer": "An application programming interface based on HTTP protocol...",
-           "review_status": "New",
+           "id": "guid",
+           "front": "What is REST API?",
+           "back": "An application programming interface...",
+           "reviewStatus": "New",
            "tags": ["technology"],
            "category": ["programming"],
-           "created_at": "2023-10-05T12:34:56Z"
+           "createdAt": "2024-03-20T12:34:56Z",
+           "updatedAt": null,
+           "isArchived": false,
+           "archivedAt": null,
+           "creationSource": "Manual",
+           "sm2Repetitions": 0,
+           "sm2Interval": 0,
+           "sm2Efactor": 2.5,
+           "sm2DueDate": null
          }
        ],
        "pagination": {
@@ -128,150 +138,168 @@
      }
      ```
    - **Success Codes:** 200 OK
-   - **Error Codes:** 401 Unauthorized
+   - **Error Codes:** 400 Bad Request
 
-2. **Get Flashcard Details**
+2. **Get Archived Flashcards**
+
+   - **Method:** GET
+   - **Path:** `/api/flashcards/archived`
+   - **Description:** Retrieve archived flashcards with pagination and filtering.
+   - **Query Parameters:** Same as Get Active Flashcards
+   - **Response:** Same structure as Get Active Flashcards
+   - **Success Codes:** 200 OK
+   - **Error Codes:** 400 Bad Request
+
+3. **Get Archived Statistics**
+
+   - **Method:** GET
+   - **Path:** `/api/flashcards/archived/statistics`
+   - **Description:** Get statistics about archived flashcards.
+   - **Response Payload JSON:**
+     ```json
+     {
+       "totalArchived": 50,
+       "archivedByCategory": {
+         "programming": 20,
+         "language": 30
+       }
+     }
+     ```
+   - **Success Codes:** 200 OK
+
+4. **Get Flashcard Details**
 
    - **Method:** GET
    - **Path:** `/api/flashcards/{id}`
    - **Description:** Retrieve details of a specific flashcard.
-   - **Response Payload JSON:**
-     ```json
-     {
-       "id": 10,
-       "question": "What is REST API?",
-       "answer": "An application programming interface...",
-       "review_status": "New",
-       "tags": ["technology"],
-       "category": ["programming"],
-       "sm2_repetitions": 0,
-       "sm2_interval": 0,
-       "sm2_efactor": 2.5,
-       "sm2_due_date": null,
-       "created_at": "2023-10-05T12:34:56Z"
-     }
-     ```
+   - **Response:** Single flashcard object
    - **Success Codes:** 200 OK
-   - **Error Codes:** 404 Not Found, 401 Unauthorized
+   - **Error Codes:** 404 Not Found
 
-3. **Create New Flashcard (Manual)**
+5. **Create Flashcard**
 
    - **Method:** POST
    - **Path:** `/api/flashcards`
-   - **Description:** Manually create a flashcard.
+   - **Description:** Create a new flashcard.
    - **Request Payload JSON:**
      ```json
      {
-       "question": "What is REST API?",
-       "answer": "An application programming interface based on HTTP protocol...",
+       "front": "What is REST API?",
+       "back": "An application programming interface...",
        "tags": ["technology"],
        "category": ["programming"],
-       "review_status": "New"
+       "creationSource": "Manual",
+       "reviewStatus": "New"
      }
      ```
-   - **Response Payload JSON:**
-     ```json
-     {
-       "id": 11,
-       "question": "What is REST API?",
-       "answer": "An application programming interface based on HTTP protocol...",
-       "review_status": "New",
-       "tags": ["technology"],
-       "category": ["programming"],
-       "created_at": "2023-10-05T12:45:00Z"
-     }
-     ```
+   - **Response:** Created flashcard object
    - **Success Codes:** 201 Created
-   - **Error Codes:** 400 Bad Request, 401 Unauthorized
+   - **Error Codes:** 400 Bad Request
 
-4. **Update Flashcard**
+6. **Update Flashcard**
 
-   - **Method:** PATCH (or PUT)
+   - **Method:** PUT
    - **Path:** `/api/flashcards/{id}`
-   - **Description:** Update flashcard data, including question, answer, review_status, tags, category, and SM-2 parameters.
+   - **Description:** Update an existing flashcard.
    - **Request Payload JSON:**
      ```json
      {
-       "question": "New question",
-       "review_status": "To correct",
-       "tags": ["new tag"]
+       "front": "Updated front",
+       "back": "Updated back",
+       "tags": ["updated-tag"],
+       "category": ["updated-category"],
+       "reviewStatus": "Approved",
+       "isArchived": false
      }
      ```
-   - **Response Payload JSON:**
-     ```json
-     {
-       "id": 10,
-       "question": "New question",
-       "answer": "An application programming interface...",
-       "review_status": "To correct",
-       "tags": ["new tag"],
-       "category": ["programming"],
-       "updated_at": "2023-10-05T13:00:00Z"
-     }
-     ```
+   - **Response:** Updated flashcard object
    - **Success Codes:** 200 OK
-   - **Error Codes:** 400 Bad Request, 404 Not Found, 401 Unauthorized
-
-5. **Delete Flashcard**
-
-   - **Method:** DELETE
-   - **Path:** `/api/flashcards/{id}`
-   - **Description:** Delete a specific flashcard.
-   - **Response Payload JSON:**
-     ```json
-     {
-       "message": "Flashcard deleted successfully."
-     }
-     ```
-   - **Success Codes:** 200 OK
-   - **Error Codes:** 404 Not Found, 401 Unauthorized
-
-6. **Archive Flashcard**
-
-   - **Method:** PATCH
-   - **Path:** `/api/flashcards/{id}/archive`
-   - **Description:** Mark flashcard as archived (sets `archived` flag and saves `archived_at`).
-   - **Request Payload JSON:**
-     ```json
-     {
-       "archived": true
-     }
-     ```
-   - **Response Payload JSON:**
-     ```json
-     {
-       "id": 10,
-       "archived": true,
-       "archived_at": "2023-10-05T13:15:00Z"
-     }
-     ```
-   - **Success Codes:** 200 OK
-   - **Error Codes:** 400 Bad Request, 404 Not Found, 401 Unauthorized
+   - **Error Codes:** 404 Not Found, 400 Bad Request
 
 7. **Batch Update**
+
    - **Method:** PATCH
    - **Path:** `/api/flashcards/batch`
-   - **Description:** Update status or other fields for multiple flashcards simultaneously.
+   - **Description:** Update multiple flashcards simultaneously.
    - **Request Payload JSON:**
      ```json
      {
-       "flashcard_ids": [10, 11, 12],
+       "flashcardIds": ["guid1", "guid2"],
        "update": {
-         "review_status": "Rejected"
+         "reviewStatus": "Approved",
+         "tags": ["new-tag"],
+         "isArchived": false
        }
      }
      ```
    - **Response Payload JSON:**
      ```json
      {
-       "updated_ids": [10, 11, 12],
-       "message": "Batch update successful."
+       "updatedIds": ["guid1", "guid2"],
+       "message": "Successfully updated 2 flashcards"
      }
      ```
    - **Success Codes:** 200 OK
-   - **Error Codes:** 400 Bad Request, 401 Unauthorized
+   - **Error Codes:** 400 Bad Request
 
-### C. AI Flashcard Generation
+8. **Archive Flashcard**
+
+   - **Method:** PATCH
+   - **Path:** `/api/flashcards/{id}/archive`
+   - **Description:** Archive a flashcard.
+   - **Response:** Updated flashcard object with isArchived=true
+   - **Success Codes:** 200 OK
+   - **Error Codes:** 404 Not Found
+
+9. **Unarchive Flashcard**
+
+   - **Method:** PATCH
+   - **Path:** `/api/flashcards/{id}/unarchive`
+   - **Description:** Unarchive a flashcard.
+   - **Response:** Updated flashcard object with isArchived=false
+   - **Success Codes:** 200 OK
+   - **Error Codes:** 404 Not Found
+
+10. **Delete Flashcard**
+    - **Method:** DELETE
+    - **Path:** `/api/flashcards/{id}`
+    - **Description:** Permanently delete a flashcard.
+    - **Success Codes:** 204 No Content
+    - **Error Codes:** 404 Not Found
+
+## 3. Validation and Business Logic
+
+- **Input Validation:**
+  - Required fields: front, back
+  - Valid review status values
+  - Valid creation source values
+  - Proper GUID format for IDs
+  - Valid pagination parameters (page > 0, limit <= 100)
+
+- **Business Logic:**
+  - New flashcards start with default SM2 parameters
+  - Archiving tracks the archive timestamp
+  - Updates track the modification timestamp
+  - Search is case-insensitive
+  - Tags and categories are case-insensitive for comparison
+
+- **Error Handling:**
+  - Proper HTTP status codes
+  - Descriptive error messages
+  - Validation errors include field details
+  - Not found errors for invalid IDs
+
+## 4. Authentication and Authorization
+
+- All endpoints modifying resources (flashcards, users) require authorization in the full implementation.
+- Mechanism used: JWT (JSON Web Token) issued at login (valid for 7 days).
+- Request header:  
+  `Authorization: Bearer <jwt_token>`
+- Additionally, for data protection:
+  - RLS policies in database (e.g., `user_flashcards_policy`).
+  - Rate limiting middleware (5 requests/minute).
+
+## 5. AI Flashcard Generation
 
 1. **Generate Flashcards using AI**
 
@@ -314,50 +342,3 @@
      ```
    - **Success Codes:** 200 OK
    - **Error Codes:** 404 Not Found, 401 Unauthorized
-
-### D. Additional Endpoints (Optional)
-
-1. **Archived Flashcards Statistics**
-   - **Method:** GET
-   - **Path:** `/api/flashcards/archived/statistics`
-   - **Description:** Returns statistics about archived flashcards (e.g., count, learning effectiveness).
-   - **Response Payload JSON:**
-     ```json
-     {
-       "total_archived": 50,
-       "archived_by_category": {
-         "math": 20,
-         "science": 30
-       }
-     }
-     ```
-   - **Success Codes:** 200 OK
-   - **Error Codes:** 401 Unauthorized
-
-## 3. Authentication and Authorization
-
-- All endpoints modifying resources (flashcards, users) require authorization in the full implementation.
-- Mechanism used: JWT (JSON Web Token) issued at login (valid for 7 days).
-- Request header:  
-  `Authorization: Bearer <jwt_token>`
-- Additionally, for data protection:
-  - RLS policies in database (e.g., `user_flashcards_policy`).
-  - Rate limiting middleware (5 requests/minute).
-
-## 4. Validation and Business Logic
-
-- **Input Data Validation:**
-  - Flashcards: Validation of required fields (`question`, `answer`).
-  - `review_status`: Only allowed values: "New", "To correct", "Approved", "Rejected".
-  - Text passed to AI generation: maximum 50k characters - validation at API level.
-- **Business Logic:**
-  - AI flashcard generation must handle long-running process with progress monitoring and error handling (e.g., email notification if >5 minutes).
-  - Flashcard management allows manual editing, batch updates, and archiving while preserving history.
-  - Users can self-manage their accounts (registration, login, password reset, account deletion) using ASP.NET Core Identity and JWT mechanisms.
-- **SM-2 Logic Integration:**
-
-  - Flashcard parameters update (sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date) occurs through update endpoints – SM-2 algorithm logic must be integrated at service layer.
-
-- **Additional Aspects:**
-  - API-level rate limiting (5 requests/minute) for abuse prevention.
-  - Error handling: All endpoints should return consistent error structures, including codes and potential fix suggestions (e.g., for AI generation errors).

@@ -16,7 +16,7 @@ public record UserRegistrationRequest
 
 public record UserRegistrationResponse
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string Email { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
 }
@@ -33,7 +33,7 @@ public record UserLoginRequest
 
 public record UserLoginResponse
 {
-    public int UserId { get; init; }
+    public Guid UserId { get; init; }
     public string Token { get; init; } = string.Empty;
     public int ExpiresIn { get; init; }
 } 
