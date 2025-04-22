@@ -54,39 +54,33 @@ export default function ArchivedFlashcards() {
 
       const queryParams: FlashcardsQueryParams = {
         page,
-        limit: 20
+        limit: 20,
       };
 
-      const response = await fetch(
-        `http://localhost:5001/api/flashcards/archived?${buildQueryString(queryParams)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        }
-      );
-      
+      const response = await fetch(`http://localhost:5001/api/flashcards/archived?${buildQueryString(queryParams)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
       if (response.status === 401) {
         throw new Error('Unauthorized - Please log in again');
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || 
-          `Failed to fetch archived flashcards (${response.status})`
-        );
+        throw new Error(errorData?.message || `Failed to fetch archived flashcards (${response.status})`);
       }
 
       const data: PaginatedResponse<Flashcard> = await response.json();
-      
+
       if (page === 1) {
         setArchivedCards(data.items);
       } else {
         setArchivedCards(prev => [...prev, ...data.items]);
       }
-      
+
       setHasMore(data.items.length === 20);
       setError(null);
     } catch (err) {
@@ -104,26 +98,20 @@ export default function ArchivedFlashcards() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(
-        'http://localhost:5001/api/flashcards/archived/statistics',
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        }
-      );
-      
+      const response = await fetch('http://localhost:5001/api/flashcards/archived/statistics', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
       if (response.status === 401) {
         throw new Error('Unauthorized - Please log in again');
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || 
-          `Failed to fetch archive statistics (${response.status})`
-        );
+        throw new Error(errorData?.message || `Failed to fetch archive statistics (${response.status})`);
       }
 
       const data: ArchivedStatistics = await response.json();
@@ -186,8 +174,7 @@ export default function ArchivedFlashcards() {
                   <button
                     onClick={loadMore}
                     disabled={isLoading}
-                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50'
-                  >
+                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50'>
                     {isLoading ? 'Loading...' : 'Load More'}
                   </button>
                 </div>

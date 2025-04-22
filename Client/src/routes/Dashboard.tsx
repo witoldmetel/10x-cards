@@ -41,17 +41,17 @@ export default function Dashboard() {
 
   const buildQueryString = (params: FlashcardsQueryParams): string => {
     const queryParams = new URLSearchParams();
-    
+
     // Add required parameters
     queryParams.append('page', params.page.toString());
     queryParams.append('limit', params.limit.toString());
-    
+
     // Add optional parameters if they exist
     if (params.reviewStatus) queryParams.append('reviewStatus', params.reviewStatus);
     if (params.searchPhrase) queryParams.append('searchPhrase', params.searchPhrase);
     if (params.tag) queryParams.append('tag', params.tag);
     if (params.category) queryParams.append('category', params.category);
-    
+
     return queryParams.toString();
   };
 
@@ -67,36 +67,30 @@ export default function Dashboard() {
         limit: 20,
       };
 
-      const response = await fetch(
-        `http://localhost:5001/api/flashcards?${buildQueryString(queryParams)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          },
-        }
-      );
-      
+      const response = await fetch(`http://localhost:5001/api/flashcards?${buildQueryString(queryParams)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
       if (response.status === 401) {
         throw new Error('Unauthorized - Please log in again');
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || 
-          `Failed to fetch flashcards (${response.status})`
-        );
+        throw new Error(errorData?.message || `Failed to fetch flashcards (${response.status})`);
       }
 
       const data: PaginatedResponse<Flashcard> = await response.json();
-      
+
       if (page === 1) {
         setFlashcards(data.items);
       } else {
         setFlashcards(prev => [...prev, ...data.items]);
       }
-      
+
       setHasMore(data.items.length === 20);
       setError(null);
     } catch (err) {
@@ -121,16 +115,16 @@ export default function Dashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           front: text,
-          back: "Generated content will go here",
+          back: 'Generated content will go here',
           tags: [],
           category: [],
-          creationSource: "Manual",
-          reviewStatus: "New"
+          creationSource: 'Manual',
+          reviewStatus: 'New',
         }),
       });
 
@@ -140,10 +134,7 @@ export default function Dashboard() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.message || 
-          `Failed to create flashcard (${response.status})`
-        );
+        throw new Error(errorData?.message || `Failed to create flashcard (${response.status})`);
       }
 
       const newFlashcard = await response.json();
@@ -184,9 +175,7 @@ export default function Dashboard() {
             <div className='text-center py-12 bg-white rounded-lg shadow-sm'>
               <Plus className='mx-auto h-12 w-12 text-gray-400' />
               <h3 className='mt-4 text-lg font-medium text-gray-900'>No flashcards yet</h3>
-              <p className='mt-2 text-gray-600'>
-                Get started by creating your first flashcard above.
-              </p>
+              <p className='mt-2 text-gray-600'>Get started by creating your first flashcard above.</p>
             </div>
           ) : (
             <div className='space-y-6'>
@@ -197,8 +186,7 @@ export default function Dashboard() {
                   <button
                     onClick={loadMore}
                     disabled={isLoading}
-                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50'
-                  >
+                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50'>
                     {isLoading ? 'Loading...' : 'Load More'}
                   </button>
                 </div>
