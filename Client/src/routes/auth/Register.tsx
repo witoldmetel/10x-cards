@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { ArrowLeft, Lock, Mail } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { CardHeader } from '@/components/ui/card';
@@ -12,7 +12,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const { onLogin } = useAuth();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -49,6 +48,7 @@ export default function Register() {
 
       const data = await response.json();
 
+
       if (!response.ok) {
         throw new Error(data.message || 'Failed to create account');
       }
@@ -56,8 +56,8 @@ export default function Register() {
       // Store in localStorage
       const session = {
         user: {
-          id: data.id || data.user?.id,
-          email: data.email || data.user?.email,
+          id: data.id ,
+          email: data.email ,
         },
         token: data.token,
       };
@@ -69,9 +69,8 @@ export default function Register() {
 
       localStorage.setItem('flashcards_auth', JSON.stringify(session));
 
-      // Update auth context and navigate
-      onLogin();
-      navigate('/dashboard');
+
+      onLogin(session.token);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {

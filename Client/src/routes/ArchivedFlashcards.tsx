@@ -1,25 +1,27 @@
 import { useState, useEffect } from 'react';
 import { FlashcardList } from '../components/FlashcardList';
 import type { Flashcard } from '../db/database.types';
+import api from '../api';
+import { AxiosError } from 'axios';
 
-interface ArchivedStatistics {
+type ArchivedStatistics = {
   totalArchived: number;
   archivedByCategory: Record<string, number>;
-}
+};
 
-interface PaginatedResponse<T> {
+type PaginatedResponse<T> = {
   items: T[];
   pagination: {
     page: number;
     limit: number;
     total: number;
   };
-}
+};
 
-interface FlashcardsQueryParams {
+type FlashcardsQueryParams = {
   page: number;
   limit: number;
-}
+};
 
 export default function ArchivedFlashcards() {
   const [archivedCards, setArchivedCards] = useState<Flashcard[]>([]);
@@ -47,33 +49,16 @@ export default function ArchivedFlashcards() {
 
   const fetchArchivedCards = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const queryParams: FlashcardsQueryParams = {
         page,
         limit: 20,
       };
 
-      const response = await fetch(`http://localhost:5001/api/flashcards/archived?${buildQueryString(queryParams)}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
+      const response = await api.get<PaginatedResponse<Flashcard>>(
+        `/api/flashcards/archived?${buildQueryString(queryParams)}`,
+      );
 
-      if (response.status === 401) {
-        throw new Error('Unauthorized - Please log in again');
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `Failed to fetch archived flashcards (${response.status})`);
-      }
-
-      const data: PaginatedResponse<Flashcard> = await response.json();
+      const data = response.data;
 
       if (page === 1) {
         setArchivedCards(data.items);
@@ -83,9 +68,13 @@ export default function ArchivedFlashcards() {
 
       setHasMore(data.items.length === 20);
       setError(null);
-    } catch (err) {
+    } catch (err: unknown) {
+      if ((err as AxiosError).isAxiosError && (err as AxiosError).response?.status === 401) {
+        setError('Unauthorized - Please log in again');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to fetch archived flashcards. Please try again.');
+      }
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch archived flashcards. Please try again.');
     } finally {
       setIsLoading(false);
     }
