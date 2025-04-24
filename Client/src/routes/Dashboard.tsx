@@ -63,10 +63,6 @@ export default function Dashboard() {
     fetchFlashcards();
   }, [page]);
 
-  const getAuthToken = () => {
-    return localStorage.getItem('token');
-  };
-
   const buildQueryString = (params: FlashcardsQueryParams): string => {
     const queryParams = new URLSearchParams();
 
@@ -120,20 +116,19 @@ export default function Dashboard() {
     setError(null);
 
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
       const response = await api.post('/api/flashcards', {
-        front: text,
-        back: 'Generated content will go here',
-        tags: [],
-        category: [],
-        creationSource: 'Manual',
-        reviewStatus: 'New',
+        dto: {
+          front: text,
+          back: 'Generated content will go here',
+          tags: [],
+          category: [],
+          creationSource: 'AI',
+          reviewStatus: 'New',
+        },
       });
+
       const newFlashcard = response.data;
+
       setFlashcards(prev => [newFlashcard, ...prev]);
     } catch (err) {
       console.error(err);
@@ -143,11 +138,36 @@ export default function Dashboard() {
     }
   };
 
-  const loadMore = () => {
-    if (!isLoading && hasMore) {
-      setPage(prev => prev + 1);
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.post('/api/flashcards', {
+        front: manualQuestion,
+        back: manualAnswer,
+        tags: [],
+        category: [],
+        creationSource: 'Manual',
+        reviewStatus: 'New',
+      });
+
+      const newFlashcard = response.data;
+
+      setFlashcards(prev => [newFlashcard, ...prev]);
+      // Clear the form after successful submission
+      setManualQuestion('');
+      setManualAnswer('');
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Failed to create flashcard. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -155,11 +175,11 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='space-y-8'>
           <Tabs defaultValue='ai' className='w-full'>
             <TabsList className='grid w-full max-w-md mx-auto grid-cols-2 mb-8'>
-              <TabsTrigger value='ai' className='flex items-center gap-2'>
+              <TabsTrigger value='ai' className='flex items-center gap-2 cursor-pointer hover:text-blue-600'>
                 <Brain className='w-4 h-4' />
                 AI Generation
               </TabsTrigger>
-              <TabsTrigger value='manual' className='flex items-center gap-2'>
+              <TabsTrigger value='manual' className='flex items-center gap-2 cursor-pointer hover:text-blue-600'>
                 <PenTool className='w-4 h-4' />
                 Manual Creation
               </TabsTrigger>
@@ -188,7 +208,7 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className='space-y-6'>
+                  <form onSubmit={handleManualSubmit} className='space-y-6'>
                     <div className='space-y-4'>
                       <div>
                         <Label htmlFor='question'>Question</Label>

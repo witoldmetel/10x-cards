@@ -9,29 +9,42 @@
    they also serve as the base for creating our DTO and Command Models. */
 
 export type User = {
-  id: number;
+  id: string; // GUID
   email: string;
   password: string; // typically hashed; not exposed in responses
-  api_key?: string;
+  api_model_key?: string;
   created_at: string; // ISO date string
 };
 
+export enum FlashcardCreationSource {
+  Manual = 'Manual',
+  AI = 'AI'
+}
+
+export enum ReviewStatus {
+  New = 'New',
+  ToCorrect = 'ToCorrect',
+  Approved = 'Approved',
+  Rejected = 'Rejected'
+}
+
 export type Flashcard = {
-  id: number;
-  user_id: number;
-  question: string;
-  answer: string;
-  review_status: 'New' | 'To correct' | 'Approved' | 'Rejected';
-  archived_at?: string | null;
-  archived?: boolean;
+  id: string; // GUID
+  user_id: string; // GUID
+  front: string;
+  back: string;
+  review_status: ReviewStatus;
+  is_archived: boolean;
+  archived_at?: string | null; // ISO date string
+  creation_source: FlashcardCreationSource;
   tags: string[];
   category: string[];
   sm2_repetitions: number;
   sm2_interval: number;
   sm2_efactor: number;
-  sm2_due_date?: string | null;
-  created_at: string;
-  updated_at?: string;
+  sm2_due_date?: string | null; // ISO date string
+  created_at: string; // ISO date string
+  updated_at?: string | null; // ISO date string
 };
 
 /* ---------------------- User DTOs and Command Models ---------------------- */
@@ -43,7 +56,7 @@ export type UserRegistrationDto = {
 };
 
 export type UserRegistrationResponseDto = {
-  id: number;
+  id: string; // GUID
   email: string;
   created_at: string;
 };
@@ -79,7 +92,7 @@ export type DeleteUserResponseDto = {
 // For listing flashcards (minimal fields)
 export type FlashcardListItemDto = Pick<
   Flashcard,
-  'id' | 'question' | 'answer' | 'review_status' | 'tags' | 'category' | 'created_at'
+  'id' | 'front' | 'back' | 'review_status' | 'tags' | 'category' | 'created_at'
 >;
 
 // Pagination details for list responses
@@ -101,17 +114,18 @@ export type FlashcardDetailsDto = Omit<Flashcard, 'user_id'>;
 
 // Create Flashcard Command Model / DTO
 export type CreateFlashcardDto = {
-  question: string;
-  answer: string;
+  front: string;
+  back: string;
   tags: string[];
   category: string[];
-  review_status: 'New' | 'To correct' | 'Approved' | 'Rejected';
+  review_status: ReviewStatus;
+  creation_source: FlashcardCreationSource;
 };
 
 // Response after creating a flashcard, mirroring key flashcard fields.
 export type CreateFlashcardResponseDto = Pick<
   Flashcard,
-  'id' | 'question' | 'answer' | 'review_status' | 'tags' | 'category' | 'created_at'
+  'id' | 'front' | 'back' | 'review_status' | 'tags' | 'category' | 'created_at'
 >;
 
 // Update Flashcard Command Model / DTO (partial update)
@@ -120,37 +134,37 @@ export type UpdateFlashcardDto = Partial<CreateFlashcardDto>;
 // Response after updating a flashcard.
 export type UpdateFlashcardResponseDto = Pick<
   Flashcard,
-  'id' | 'question' | 'answer' | 'review_status' | 'tags' | 'category' | 'updated_at'
+  'id' | 'front' | 'back' | 'review_status' | 'tags' | 'category' | 'updated_at'
 >;
 
 // Archive Flashcard Command Model / DTO
 export type ArchiveFlashcardDto = {
-  archived: boolean;
+  is_archived: boolean;
 };
 
 // Response after archiving a flashcard.
 export type ArchiveFlashcardResponseDto = {
-  id: number;
-  archived: boolean;
+  id: string;
+  is_archived: boolean;
   archived_at: string;
 };
 
 // Batch Update Command Model / DTO for multiple flashcards.
 export type BatchUpdateFlashcardsDto = {
-  flashcard_ids: number[];
+  flashcard_ids: string[];
   update: Partial<{
-    question: string;
-    answer: string;
-    review_status: 'New' | 'To correct' | 'Approved' | 'Rejected';
+    front: string;
+    back: string;
+    review_status: ReviewStatus;
     tags: string[];
     category: string[];
-    archived: boolean;
+    is_archived: boolean;
   }>;
 };
 
 // Response for a batch flashcard update.
 export type BatchUpdateFlashcardsResponseDto = {
-  updated_ids: number[];
+  updated_ids: string[];
   message: string;
 };
 

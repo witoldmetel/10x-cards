@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { FlashcardListItemDto } from '@/db/database.types';
 
 interface FlashcardListProps {
-  flashcards: any[];
+  flashcards: FlashcardListItemDto[];
 }
 
 const CARDS_PER_PAGE = 6;
@@ -65,12 +66,12 @@ export function FlashcardList({ flashcards }: FlashcardListProps) {
                 >
                   {/* Front */}
                   <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] flex items-center justify-center p-4 text-center">
-                    <p className="text-lg font-medium">{card.question}</p>
+                    <p className="text-lg font-medium">{card.front}</p>
                   </div>
                   
                   {/* Back */}
                   <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] flex items-center justify-center p-4 bg-blue-50 rounded-lg text-center">
-                    <p className="text-lg">{card.answer}</p>
+                    <p className="text-lg">{card.back}</p>
                   </div>
                 </div>
               </div>

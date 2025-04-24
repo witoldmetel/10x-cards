@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Services;
+using System.Text.Json.Serialization;
+using TenXCards.Core.Models;
 
 namespace TenXCards.API.Controllers
 {
@@ -84,15 +86,15 @@ namespace TenXCards.API.Controllers
         /// <summary>
         /// Creates a new flashcard
         /// </summary>
-        /// <param name="dto">The flashcard data</param>
+        /// <param name="createDto">The flashcard data</param>
         /// <returns>The created flashcard</returns>
         [HttpPost]
         [Authorize]
         [ProducesResponseType(typeof(FlashcardResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<FlashcardResponseDto>> Create([FromBody] CreateFlashcardDto dto)
+        public async Task<ActionResult<FlashcardResponseDto>> Create([FromBody] CreateFlashcardDto createDto)
         {
-            var flashcard = await _flashcardService.CreateAsync(dto);
+            var flashcard = await _flashcardService.CreateAsync(createDto);
             return CreatedAtAction(nameof(GetById), new { id = flashcard.Id }, flashcard);
         }
 
@@ -143,7 +145,7 @@ namespace TenXCards.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<FlashcardResponseDto>> Archive(Guid id)
         {
-            var updateDto = new UpdateFlashcardDto { IsArchived = true };
+            var updateDto = new UpdateFlashcardDto { IsArchived = true, Front = null!, Back = null! };
             var flashcard = await _flashcardService.UpdateAsync(id, updateDto);
             
             if (flashcard == null)
@@ -164,7 +166,7 @@ namespace TenXCards.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<FlashcardResponseDto>> Unarchive(Guid id)
         {
-            var updateDto = new UpdateFlashcardDto { IsArchived = false };
+            var updateDto = new UpdateFlashcardDto { IsArchived = false, Front = null!, Back = null! };
             var flashcard = await _flashcardService.UpdateAsync(id, updateDto);
             
             if (flashcard == null)

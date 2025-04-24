@@ -7,8 +7,8 @@ namespace TenXCards.Core.DTOs
 {
     public class CreateFlashcardDto
     {
-        public string Front { get; set; }
-        public string Back { get; set; }
+        public required string Front { get; set; }
+        public required string Back { get; set; }
         public FlashcardCreationSource CreationSource { get; set; } = FlashcardCreationSource.Manual;
         public List<string> Tags { get; set; } = new();
         public List<string> Category { get; set; } = new();
@@ -17,27 +17,27 @@ namespace TenXCards.Core.DTOs
 
     public class UpdateFlashcardDto
     {
-        public string Front { get; set; }
-        public string Back { get; set; }
+        public required string Front { get; set; }
+        public required string Back { get; set; }
         public bool? IsArchived { get; set; }
-        public List<string> Tags { get; set; }
-        public List<string> Category { get; set; }
+        public List<string> Tags { get; set; } = new();
+        public List<string> Category { get; set; } = new();
         public ReviewStatus? ReviewStatus { get; set; }
     }
 
     public class FlashcardResponseDto
     {
         public Guid Id { get; set; }
-        public string Front { get; set; }
-        public string Back { get; set; }
+        public required string Front { get; set; }
+        public required string Back { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }
         public FlashcardCreationSource CreationSource { get; set; }
         public ReviewStatus ReviewStatus { get; set; }
-        public List<string> Tags { get; set; }
-        public List<string> Category { get; set; }
+        public List<string> Tags { get; set; } = new();
+        public List<string> Category { get; set; } = new();
         public int Sm2Repetitions { get; set; }
         public int Sm2Interval { get; set; }
         public double Sm2Efactor { get; set; }
@@ -60,8 +60,8 @@ namespace TenXCards.Core.DTOs
 
     public class PaginatedResponse<T>
     {
-        public IEnumerable<T> Items { get; set; }
-        public PaginationMetadata Pagination { get; set; }
+        public required IEnumerable<T> Items { get; set; }
+        public required PaginationMetadata Pagination { get; set; }
     }
 
     public class PaginationMetadata
@@ -73,7 +73,7 @@ namespace TenXCards.Core.DTOs
 
     public class BatchUpdateRequest
     {
-        public List<Guid> FlashcardIds { get; set; }
+        public required List<Guid> FlashcardIds { get; set; }
         public UpdateFlashcardDto Update { get; set; }
     }
 
