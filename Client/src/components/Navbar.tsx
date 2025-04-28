@@ -24,7 +24,10 @@ export function Navbar() {
               <Settings className='w-5 h-5 mr-2' />
               Settings
             </Link>
-            <button type='button' onClick={onLogout} className='border rounded px-2.5 py-1 cursor-pointer hover:text-blue-600'>
+            <button
+              type='button'
+              onClick={onLogout}
+              className='border rounded px-2.5 py-1 cursor-pointer hover:text-blue-600'>
               Logout
             </button>
           </div>

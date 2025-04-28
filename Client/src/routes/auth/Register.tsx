@@ -48,7 +48,6 @@ export default function Register() {
 
       const data = await response.json();
 
-
       if (!response.ok) {
         throw new Error(data.message || 'Failed to create account');
       }
@@ -56,8 +55,8 @@ export default function Register() {
       // Store in localStorage
       const session = {
         user: {
-          id: data.id ,
-          email: data.email ,
+          id: data.id,
+          email: data.email,
         },
         token: data.token,
       };
@@ -68,7 +67,6 @@ export default function Register() {
       }
 
       localStorage.setItem('flashcards_auth', JSON.stringify(session));
-
 
       onLogin(session.token);
     } catch (error) {

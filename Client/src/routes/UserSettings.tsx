@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Save } from 'lucide-react';
 
 export default function UserSettings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState<{
+  const [message] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   return (
     <div className='min-h-screen bg-gray-50'>

@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [loading] = useState(false);
+  const [message] = useState('');
+  const [error] = useState('');
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8'>

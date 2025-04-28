@@ -1,173 +1,46 @@
 import { Brain, PenTool, Plus, Wand2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../api';
-import type { AxiosError } from 'axios';
 
 import { FlashcardList } from '../components/FlashcardList';
 import { TextInput } from '../components/TextInput';
 
-import type { Flashcard } from '../db/database.types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
-interface PaginatedResponse<T> {
-  items: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
-
-interface FlashcardsQueryParams {
-  page: number;
-  limit: number;
-  reviewStatus?: string;
-  searchPhrase?: string;
-  tag?: string;
-  category?: string;
-}
-
-interface PaginatedResponse<T> {
-  items: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
-
-interface FlashcardsQueryParams {
-  page: number;
-  limit: number;
-  reviewStatus?: string;
-  searchPhrase?: string;
-  tag?: string;
-  category?: string;
-}
+import { useFlashcards } from '@/api/flashcard/queries';
+import { useCreateFlashcard } from '@/api/flashcard/mutations';
 
 export default function Dashboard() {
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [manualQuestion, setManualQuestion] = useState('');
   const [manualAnswer, setManualAnswer] = useState('');
-
-  useEffect(() => {
-    fetchFlashcards();
-  }, [page]);
-
-  const buildQueryString = (params: FlashcardsQueryParams): string => {
-    const queryParams = new URLSearchParams();
-
-    // Add required parameters
-    queryParams.append('page', params.page.toString());
-    queryParams.append('limit', params.limit.toString());
-
-    // Add optional parameters if they exist
-    if (params.reviewStatus) queryParams.append('reviewStatus', params.reviewStatus);
-    if (params.searchPhrase) queryParams.append('searchPhrase', params.searchPhrase);
-    if (params.tag) queryParams.append('tag', params.tag);
-    if (params.category) queryParams.append('category', params.category);
-
-    return queryParams.toString();
-  };
-
-  const fetchFlashcards = async () => {
-    try {
-      const queryParams: FlashcardsQueryParams = {
-        page,
-        limit: 20,
-      };
-
-      const response = await api.get<PaginatedResponse<Flashcard>>(`/api/flashcards?${buildQueryString(queryParams)}`);
-      const data = response.data;
-
-      if (page === 1) {
-        setFlashcards(data.items);
-      } else {
-        setFlashcards(prev => [...prev, ...data.items]);
-      }
-
-      setHasMore(data.items.length === 20);
-      setError(null);
-    } catch (err: unknown) {
-      if ((err as AxiosError).isAxiosError && (err as AxiosError).response?.status === 401) {
-        setError('Unauthorized - Please log in again');
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to fetch flashcards. Please try again.');
-      }
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: flashcards = [], isLoading, error } = useFlashcards();
+  console.log(' Dashboard ~ flashcards:', flashcards);
+  const { mutate: createFlashcard } = useCreateFlashcard();
 
   const handleSubmit = async (text: string) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await api.post('/api/flashcards', {
-        dto: {
-          front: text,
-          back: 'Generated content will go here',
-          tags: [],
-          category: [],
-          creationSource: 'AI',
-          reviewStatus: 'New',
-        },
-      });
-
-      const newFlashcard = response.data;
-
-      setFlashcards(prev => [newFlashcard, ...prev]);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Failed to create flashcard. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    createFlashcard({
+      front: text,
+      back: 'Generated content will go here',
+      tags: [],
+      category: [],
+      creationSource: 'AI',
+      reviewStatus: 'New',
+    });
   };
 
-  const handleManualSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await api.post('/api/flashcards', {
-        front: manualQuestion,
-        back: manualAnswer,
-        tags: [],
-        category: [],
-        creationSource: 'Manual',
-        reviewStatus: 'New',
-      });
-
-      const newFlashcard = response.data;
-
-      setFlashcards(prev => [newFlashcard, ...prev]);
-      // Clear the form after successful submission
-      setManualQuestion('');
-      setManualAnswer('');
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Failed to create flashcard. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleManualSubmit = async () => {
+    createFlashcard({
+      front: manualQuestion,
+      back: manualAnswer,
+      tags: [],
+      category: [],
+      creationSource: 'Manual',
+      reviewStatus: 'New',
+    });
   };
-
-
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -251,7 +124,15 @@ export default function Dashboard() {
           )}
 
           <AnimatePresence>
-            {flashcards.length > 0 ? (
+            {isLoading ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className='text-center py-12 bg-white rounded-lg shadow-sm'>
+                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto'></div>
+                <h3 className='mt-4 text-lg font-medium text-gray-900'>Loading flashcards...</h3>
+              </motion.div>
+            ) : flashcards && flashcards.length > 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

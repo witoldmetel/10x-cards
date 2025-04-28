@@ -1,12 +1,12 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-// Create an Axios instance
-const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:3000',
+export const instance: AxiosInstance = axios.create({
+  // @todo: use env variable
+  baseURL: 'http://localhost:3000/api/',
 });
 
 // Request interceptor to add Authorization header from localStorage
-api.interceptors.request.use(
+instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
 
@@ -19,4 +19,4 @@ api.interceptors.request.use(
   error => Promise.reject(error),
 );
 
-export default api;
+export default instance;

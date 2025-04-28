@@ -18,14 +18,14 @@ export type User = {
 
 export enum FlashcardCreationSource {
   Manual = 'Manual',
-  AI = 'AI'
+  AI = 'AI',
 }
 
 export enum ReviewStatus {
   New = 'New',
   ToCorrect = 'ToCorrect',
   Approved = 'Approved',
-  Rejected = 'Rejected'
+  Rejected = 'Rejected',
 }
 
 export type Flashcard = {
