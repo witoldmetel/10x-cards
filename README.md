@@ -136,6 +136,22 @@ docker-compose stop db
 
 # Reset database (removes all data)
 docker-compose down -v
+
+# Create a new migration
+cd API/TenXCards.API
+dotnet ef migrations add MigrationName -p ../TenXCards.Infrastructure/TenXCards.Infrastructure.csproj
+
+# Apply pending migrations
+dotnet ef database update
+
+# Remove the last migration (only if not applied to database)
+dotnet ef migrations remove
+
+# List all migrations
+dotnet ef migrations list
+
+# Generate SQL script for migrations
+dotnet ef migrations script
 ```
 
 ### Backend (API) Development

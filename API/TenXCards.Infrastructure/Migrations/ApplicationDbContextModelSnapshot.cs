@@ -114,10 +114,9 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("ApiKey")
-                        .IsRequired()
+                    b.Property<string>("ApiModelKey")
                         .HasColumnType("text")
-                        .HasColumnName("api_key");
+                        .HasColumnName("api_model_key");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()

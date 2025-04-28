@@ -44,18 +44,22 @@ public class UserService : IUserService
             Id = Guid.NewGuid(),
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
-            ApiKey = Guid.NewGuid().ToString("N"),
+            ApiModelKey = string.Empty,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
+        var token = _jwtTokenService.GenerateToken(user);
+
         return new UserRegistrationResponse
         {
             Id = user.Id,
             Email = user.Email,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            Token = token,
+            ExpiresIn = 7 * 24 * 60 * 60 // 7 days in seconds
         };
     }
 
@@ -88,12 +92,6 @@ public class UserService : IUserService
     {
         return await _context.Users
             .FirstOrDefaultAsync(u => u.Id == id);
-    }
-
-    public async Task<User?> GetUserByApiKeyAsync(string apiKey)
-    {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.ApiKey == apiKey);
     }
 
     public async Task<bool> ValidatePasswordAsync(User user, string password)

@@ -19,6 +19,8 @@ public record UserRegistrationResponse
     public Guid Id { get; init; }
     public string Email { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
+    public string Token { get; init; } = string.Empty;
+    public int ExpiresIn { get; init; }
 }
 
 public record UserLoginRequest

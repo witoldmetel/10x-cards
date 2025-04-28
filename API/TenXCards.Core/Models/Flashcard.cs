@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace TenXCards.Core.Models
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum FlashcardCreationSource
     {
         Manual,
         AI
     }
 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ReviewStatus
     {
         New,
@@ -20,8 +23,8 @@ namespace TenXCards.Core.Models
     public class Flashcard
     {
         public Guid Id { get; set; }
-        public string Front { get; set; }
-        public string Back { get; set; }
+        public required string Front { get; set; }
+        public required string Back { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsArchived { get; set; }

@@ -13,8 +13,8 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250422162918_ExtendedFlashcardsAndUsers")]
-    partial class ExtendedFlashcardsAndUsers
+    [Migration("20250423171059_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -117,10 +117,9 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("ApiKey")
-                        .IsRequired()
+                    b.Property<string>("ApiModelKey")
                         .HasColumnType("text")
-                        .HasColumnName("api_key");
+                        .HasColumnName("api_model_key");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()

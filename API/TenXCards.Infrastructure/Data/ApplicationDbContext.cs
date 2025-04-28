@@ -35,9 +35,9 @@ namespace TenXCards.Infrastructure.Data
                     .HasColumnName("password")
                     .IsRequired();
                 
-                entity.Property(e => e.ApiKey)
-                    .HasColumnName("api_key")
-                    .IsRequired();
+                entity.Property(e => e.ApiModelKey)
+                    .HasColumnName("api_model_key")
+                    .IsRequired(false);
                 
                 entity.Property(e => e.CreatedAt)
                     .HasColumnName("created_at")
