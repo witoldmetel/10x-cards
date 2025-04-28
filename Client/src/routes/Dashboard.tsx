@@ -16,8 +16,7 @@ import { useCreateFlashcard } from '@/api/flashcard/mutations';
 export default function Dashboard() {
   const [manualQuestion, setManualQuestion] = useState('');
   const [manualAnswer, setManualAnswer] = useState('');
-  const { data: flashcards = [], isLoading, error } = useFlashcards();
-  console.log(' Dashboard ~ flashcards:', flashcards);
+  const { data, isLoading, error } = useFlashcards();
   const { mutate: createFlashcard } = useCreateFlashcard();
 
   const handleSubmit = async (text: string) => {
@@ -119,7 +118,7 @@ export default function Dashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className='bg-red-50 text-red-700 p-4 rounded-lg'>
-              {error}
+              {error.message}
             </motion.div>
           )}
 
@@ -132,14 +131,14 @@ export default function Dashboard() {
                 <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto'></div>
                 <h3 className='mt-4 text-lg font-medium text-gray-900'>Loading flashcards...</h3>
               </motion.div>
-            ) : flashcards && flashcards.length > 0 ? (
+            ) : data?.pagination?.total && data.pagination.total > 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 className='space-y-6'>
                 <h2 className='text-2xl font-semibold text-gray-900'>Your Flashcards</h2>
-                <FlashcardList flashcards={flashcards} />
+                <FlashcardList flashcards={data.items} />
               </motion.div>
             ) : (
               <motion.div
