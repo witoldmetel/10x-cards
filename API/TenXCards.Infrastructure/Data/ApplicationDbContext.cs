@@ -11,6 +11,7 @@ namespace TenXCards.Infrastructure.Data
         }
 
         public DbSet<User> Users => Set<User>();
+        public DbSet<Collection> Collections { get; set; }
         public DbSet<Flashcard> Flashcards { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -66,10 +67,6 @@ namespace TenXCards.Infrastructure.Data
 
                 entity.Property(e => e.UpdatedAt)
                     .HasColumnName("updated_at");
-
-                entity.Property(e => e.IsArchived)
-                    .HasColumnName("is_archived")
-                    .HasDefaultValue(false);
 
                 entity.Property(e => e.ArchivedAt)
                     .HasColumnName("archived_at");

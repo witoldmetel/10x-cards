@@ -4,11 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using TenXCards.Core.Models;
+using TenXCards.Core.Repositories;
 using TenXCards.Infrastructure.Data;
 
 namespace TenXCards.Infrastructure.Repositories
 {
-    public class CollectionRepository
+    public class CollectionRepository : ICollectionRepository
     {
         private readonly ApplicationDbContext _context;
 

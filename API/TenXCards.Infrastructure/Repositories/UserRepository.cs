@@ -32,4 +32,10 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .AnyAsync(u => u.Email == email);
     }
+
+    public async Task UpdateAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
 } 

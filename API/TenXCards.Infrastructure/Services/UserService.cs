@@ -32,17 +32,20 @@ public class UserService : IUserService
         _logger = logger;
     }
 
-    public async Task<UserRegistrationResponse> RegisterAsync(UserRegistrationRequest request)
+    public async Task<UserRegistrationResult> RegisterUserAsync(UserRegistrationRequest request)
     {
         if (await _userRepository.EmailExistsAsync(request.Email))
         {
-            throw new InvalidOperationException("Email already exists");
+            return new UserRegistrationResult
+            {
+                Success = false,
+                Errors = new[] { "Email already exists" }
+            };
         }
 
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Name = request.Name,
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
             ApiModelKey = string.Empty,
@@ -54,34 +57,60 @@ public class UserService : IUserService
 
         var token = _jwtTokenService.GenerateToken(user);
 
-        return new UserRegistrationResponse
+        return new UserRegistrationResult
         {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            CreatedAt = user.CreatedAt,
-            Token = token,
-            ExpiresIn = 604800 // 7 days in seconds
+            Success = true,
+            User = new UserRegistrationResponse
+            {
+                Id = user.Id,
+                Name = request.Name,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt,
+                Token = token,
+                ExpiresIn = 604800 // 7 days in seconds
+            }
         };
     }
 
-    public async Task<UserLoginResponse> LoginAsync(UserLoginRequest request)
+    public async Task<UserLoginResult> LoginUserAsync(UserLoginRequest request)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
-        
         if (user == null || !_passwordHashService.VerifyPassword(request.Password, user.Password))
         {
-            throw new InvalidOperationException("Invalid email or password");
+            return new UserLoginResult
+            {
+                Success = false,
+                Errors = new[] { "Invalid email or password" }
+            };
         }
 
         var token = _jwtTokenService.GenerateToken(user);
-
-        return new UserLoginResponse
+        return new UserLoginResult
         {
-            UserId = user.Id,
-            Token = token,
-            ExpiresIn = 7 * 24 * 60 * 60 // 7 days in seconds
+            Success = true,
+            User = new UserLoginResponse
+            {
+                UserId = user.Id,
+                Token = token,
+                ExpiresIn = 604800 // 7 days in seconds
+            }
         };
+    }
+
+    public async Task<PasswordResetResult> ResetPasswordAsync(PasswordResetRequest request)
+    {
+        var user = await _userRepository.GetByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return new PasswordResetResult
+            {
+                Success = false,
+                Errors = new[] { "User not found" }
+            };
+        }
+        user.Password = _passwordHashService.HashPassword(request.NewPassword);
+        await _userRepository.UpdateAsync(user);
+        return new PasswordResetResult { Success = true };
     }
 
     public async Task<User?> GetUserByEmailAsync(string email)
