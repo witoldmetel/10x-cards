@@ -37,10 +37,22 @@ namespace TenXCards.Core.Services
             return collections.Select(MapToResponseDto);
         }
 
-        public async Task<CollectionResponseDto> GetByIdAsync(Guid id)
+        public async Task<CollectionResponseDto?> GetByIdAsync(Guid id)
         {
             var collection = await _collectionRepository.GetByIdAsync(id);
             return collection == null ? null : MapToResponseDto(collection);
+        }
+
+        public async Task<CollectionResponseDto?> UpdateAsync(Guid id, UpdateCollectionDto updateDto)
+        {
+            var collection = await _collectionRepository.GetByIdAsync(id);
+            if (collection == null) return null;
+            collection.Name = updateDto.Name;
+            collection.Description = updateDto.Description;
+            collection.Color = updateDto.Color;
+            collection.UpdatedAt = DateTime.UtcNow;
+            var updated = await _collectionRepository.UpdateAsync(collection);
+            return MapToResponseDto(updated);
         }
 
         public async Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto)
@@ -55,18 +67,6 @@ namespace TenXCards.Core.Services
             };
             var created = await _collectionRepository.CreateAsync(collection);
             return MapToResponseDto(created);
-        }
-
-        public async Task<CollectionResponseDto> UpdateAsync(Guid id, UpdateCollectionDto updateDto)
-        {
-            var collection = await _collectionRepository.GetByIdAsync(id);
-            if (collection == null) return null;
-            collection.Name = updateDto.Name;
-            collection.Description = updateDto.Description;
-            collection.Color = updateDto.Color;
-            collection.UpdatedAt = DateTime.UtcNow;
-            var updated = await _collectionRepository.UpdateAsync(collection);
-            return MapToResponseDto(updated);
         }
 
         public async Task<bool> DeleteAsync(Guid id)

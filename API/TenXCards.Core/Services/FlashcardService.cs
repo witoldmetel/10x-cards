@@ -20,7 +20,7 @@ namespace TenXCards.Core.Services
             _collectionService = collectionService;
         }
 
-        public async Task<FlashcardResponseDto> GetByIdAsync(Guid id)
+        public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
         {
             var flashcard = await _repository.GetByIdAsync(id);
             return flashcard != null ? MapToResponseDto(flashcard) : null;
@@ -94,7 +94,7 @@ namespace TenXCards.Core.Services
             return MapToResponseDto(created);
         }
 
-        public async Task<FlashcardResponseDto> UpdateAsync(Guid id, UpdateFlashcardDto updateDto)
+        public async Task<FlashcardResponseDto?> UpdateAsync(Guid id, UpdateFlashcardDto updateDto)
         {
             var existingFlashcard = await _repository.GetByIdAsync(id);
             if (existingFlashcard == null)
@@ -136,7 +136,7 @@ namespace TenXCards.Core.Services
             };
         }
 
-        public async Task<FlashcardResponseDto> ArchiveAsync(Guid id)
+        public async Task<FlashcardResponseDto?> ArchiveAsync(Guid id)
         {
             var flashcard = await _repository.GetByIdAsync(id);
             if (flashcard == null)
@@ -157,7 +157,7 @@ namespace TenXCards.Core.Services
             return MapToResponseDto(flashcard);
         }
 
-        public async Task<FlashcardResponseDto> UnarchiveAsync(Guid id)
+        public async Task<FlashcardResponseDto?> UnarchiveAsync(Guid id)
         {
             var flashcard = await _repository.GetByIdAsync(id);
             if (flashcard == null)

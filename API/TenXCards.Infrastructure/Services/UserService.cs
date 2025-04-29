@@ -125,7 +125,7 @@ public class UserService : IUserService
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<bool> ValidatePasswordAsync(User user, string password)
+    public bool ValidatePassword(User user, string password)
     {
         return _passwordHashService.VerifyPassword(password, user.Password);
     }

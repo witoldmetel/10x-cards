@@ -37,7 +37,7 @@ namespace TenXCards.Infrastructure.Repositories
             return await _context.Collections.Where(c => c.ArchivedAt != null).ToListAsync();
         }
 
-        public async Task<Collection> GetByIdAsync(Guid id)
+        public async Task<Collection?> GetByIdAsync(Guid id)
         {
             return await _context.Collections.FindAsync(id);
         }
@@ -50,7 +50,7 @@ namespace TenXCards.Infrastructure.Repositories
             return collection;
         }
 
-        public async Task<Collection> UpdateAsync(Collection collection)
+        public async Task<Collection?> UpdateAsync(Collection collection)
         {
             var existing = await _context.Collections.FindAsync(collection.Id);
             if (existing == null) return null;

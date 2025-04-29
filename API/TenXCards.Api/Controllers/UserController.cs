@@ -22,8 +22,8 @@ namespace TenXCards.API.Controllers
         public async Task<IActionResult> Register([FromBody] UserRegistrationRequest registerDto)
         {
             var result = await _userService.RegisterUserAsync(registerDto);
-            if (!result.Success)
-                return BadRequest(result.Errors);
+            if (result == null || !result.Success || result.User == null)
+                return BadRequest(result?.Errors ?? new[] {"Unknown error"});
             return CreatedAtAction(nameof(Register), new { id = result.User.Id }, result.User);
         }
 

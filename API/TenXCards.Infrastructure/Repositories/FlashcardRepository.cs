@@ -19,7 +19,7 @@ namespace TenXCards.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<Flashcard> GetByIdAsync(Guid id)
+        public async Task<Flashcard?> GetByIdAsync(Guid id)
         {
             return await _context.Flashcards.FindAsync(id);
         }
@@ -76,7 +76,7 @@ namespace TenXCards.Infrastructure.Repositories
             return flashcard;
         }
 
-        public async Task<Flashcard> UpdateAsync(Flashcard flashcard)
+        public async Task<Flashcard?> UpdateAsync(Flashcard flashcard)
         {
             var existingFlashcard = await _context.Flashcards.FindAsync(flashcard.Id);
             if (existingFlashcard == null)

@@ -10,9 +10,9 @@ namespace TenXCards.Core.Repositories
         Task<IEnumerable<Collection>> GetAllAsync();
         Task<IEnumerable<Collection>> GetAllForDashboardAsync();
         Task<IEnumerable<Collection>> GetAllArchivedAsync();
-        Task<Collection> GetByIdAsync(Guid id);
+        Task<Collection?> GetByIdAsync(Guid id);
         Task<Collection> CreateAsync(Collection collection);
-        Task<Collection> UpdateAsync(Collection collection);
+        Task<Collection?> UpdateAsync(Collection collection);
         Task<bool> DeleteAsync(Guid id);
         Task<bool> ArchiveAsync(Guid id);
         Task<bool> UnarchiveAsync(Guid id);
