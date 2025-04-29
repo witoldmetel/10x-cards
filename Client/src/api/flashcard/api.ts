@@ -1,6 +1,7 @@
 import { instance } from '@/lib/axios';
 import { FLASHCARD_API_ROUTES } from './constants';
 import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO } from './types';
+import type { Collection } from '@/db/database.types';
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -11,30 +12,26 @@ interface PaginatedResponse<T> {
   };
 }
 
-export const getFlashcards = async (): Promise<PaginatedResponse<Flashcard>> => {
-  const { data } = await instance.get<PaginatedResponse<Flashcard>>(FLASHCARD_API_ROUTES.BASE);
-
+export async function getFlashcards(): Promise<PaginatedResponse<Collection>> {
+  const { data } = await instance.get<PaginatedResponse<Collection>>(FLASHCARD_API_ROUTES.GET_FLASHCARDS);
   return data;
-};
+}
 
-export const getFlashcard = async (id: string): Promise<Flashcard> => {
-  const { data } = await instance.get<Flashcard>(FLASHCARD_API_ROUTES.BY_ID(id));
-
+export async function getFlashcard(id: string): Promise<Flashcard> {
+  const { data } = await instance.get<Flashcard>(`${FLASHCARD_API_ROUTES.GET_FLASHCARDS}/${id}`);
   return data;
-};
+}
 
-export const createFlashcard = async (flashcard: CreateFlashcardDTO): Promise<Flashcard> => {
-  const { data } = await instance.post<Flashcard>(FLASHCARD_API_ROUTES.BASE, flashcard);
-
+export async function createFlashcard(flashcard: CreateFlashcardDTO): Promise<Flashcard> {
+  const { data } = await instance.post<Flashcard>(FLASHCARD_API_ROUTES.GET_FLASHCARDS, flashcard);
   return data;
-};
+}
 
-export const updateFlashcard = async ({ id, ...flashcard }: UpdateFlashcardDTO): Promise<Flashcard> => {
-  const { data } = await instance.patch<Flashcard>(FLASHCARD_API_ROUTES.BY_ID(id), flashcard);
-
+export async function updateFlashcard(flashcard: UpdateFlashcardDTO): Promise<Flashcard> {
+  const { data } = await instance.put<Flashcard>(`${FLASHCARD_API_ROUTES.GET_FLASHCARDS}/${flashcard.id}`, flashcard);
   return data;
-};
+}
 
-export const deleteFlashcard = async (id: string): Promise<void> => {
-  await instance.delete(FLASHCARD_API_ROUTES.BY_ID(id));
-};
+export async function deleteFlashcard(id: string): Promise<void> {
+  await instance.delete(`${FLASHCARD_API_ROUTES.GET_FLASHCARDS}/${id}`);
+}

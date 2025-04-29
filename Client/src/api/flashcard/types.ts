@@ -1,14 +1,34 @@
 export interface Flashcard {
   id: string;
+  userId: string;
+  collectionId: string;
+  lastReviewed?: string;
+  nextReview?: string;
   front: string;
   back: string;
-  userId: string;
+  reviewStatus: ReviewStatus;
+  archivedAt?: string | null;
+  creationSource: FlashcardCreationSource;
   tags: string[];
   category: string[];
-  creationSource: 'AI' | 'Manual';
-  reviewStatus: 'New' | 'In Progress' | 'Completed';
+  sm2Repetitions: number;
+  sm2Interval: number;
+  sm2Efactor: number;
+  sm2DueDate?: string | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string | null;
+}
+
+export enum FlashcardCreationSource {
+  Manual = 'Manual',
+  AI = 'AI',
+}
+
+export enum ReviewStatus {
+  New = 'New',
+  ToCorrect = 'ToCorrect',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
 }
 
 export interface CreateFlashcardDTO {
@@ -16,9 +36,9 @@ export interface CreateFlashcardDTO {
   back: string;
   tags: string[];
   category: string[];
-  creationSource: 'AI' | 'Manual';
-  // @todo: for creation, we should have a default value - New
-  reviewStatus: 'New' | 'In Progress' | 'Completed';
+  creationSource: FlashcardCreationSource;
+  reviewStatus: ReviewStatus;
+  collectionId: string;
 }
 
 export interface UpdateFlashcardDTO extends Partial<CreateFlashcardDTO> {

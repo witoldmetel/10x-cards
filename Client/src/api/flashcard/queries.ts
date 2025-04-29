@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getFlashcard, getFlashcards } from './api';
-import type { Flashcard } from './types';
+import type { Collection } from '@/db/database.types';
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -11,16 +11,17 @@ interface PaginatedResponse<T> {
   };
 }
 
-export const useFlashcards = () => {
-  return useQuery<PaginatedResponse<Flashcard>>({
+export function useFlashcards() {
+  return useQuery<PaginatedResponse<Collection>>({
     queryKey: ['flashcards'],
     queryFn: getFlashcards,
   });
-};
+}
 
-export const useFlashcard = (id: string) => {
-  return useQuery<Flashcard>({
+export function useFlashcard(id: string) {
+  return useQuery({
     queryKey: ['flashcard', id],
     queryFn: () => getFlashcard(id),
+    enabled: !!id,
   });
-};
+}

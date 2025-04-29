@@ -1,20 +1,7 @@
 import { createContext, useContext, useState } from 'react';
-import { useNavigate, Navigate, useLocation } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 
-type ProtectedRouteProps = {
-  children: React.ReactNode;
-};
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { token } = useAuth();
-  const location = useLocation();
-
-  if (!token) {
-    return <Navigate to='/' replace state={{ from: location }} />;
-  }
-
-  return children;
-};
 
 const AuthContext = createContext<{
   token: string;
@@ -34,7 +21,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize token from localStorage
+
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
 
   const handleLogin = async (token: string) => {
@@ -43,7 +30,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     setToken(token);
-    // Store token in localStorage
+
     localStorage.setItem('token', token);
 
     const origin = location.state?.from?.pathname || '/dashboard';
@@ -52,7 +39,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const handleLogout = () => {
     setToken('');
-    // Remove token from localStorage
+
     localStorage.removeItem('token');
     navigate('/');
   };

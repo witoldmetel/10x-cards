@@ -1,17 +1,28 @@
-import { Outlet } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
 
-import { Navbar } from '@/components/Navbar';
-import { ProtectedRoute } from '@/contexts/AuthContext';
+import {  useAuth } from '@/contexts/AuthContext';
+import Footer from '@/components/layout/Footer';
+import Header from '@/components/layout/Header';
+
 
 export default function ProtectedLayout() {
+  const { token } = useAuth();
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to='/' replace state={{ from: location }} />;
+  }
+
+
   return (
-    <ProtectedRoute>
-      <div className='min-h-screen bg-gray-50'>
-        <Navbar />
-        <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className="app-shell">
+
+      <Header />
+        <main className="container mx-auto py-8 flex-1">
           <Outlet />
         </main>
-      </div>
-    </ProtectedRoute>
+
+      <Footer />
+    </div>
   );
 }

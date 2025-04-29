@@ -7,7 +7,7 @@ import ForgotPassword from './auth/ForgotPassword';
 import ResetPassword from './auth/ResetPassword';
 import Dashboard from './Dashboard';
 import ArchivedFlashcards from './ArchivedFlashcards';
-import UserSettings from './UserSettings';
+import Settings from './Settings';
 import AuthLayout from '@/layouts/AuthLayout';
 import ProtectedLayout from '@/layouts/ProtectedLayout';
 
@@ -25,7 +25,7 @@ export const routes = (
     <Route element={<ProtectedLayout />}>
       <Route path='dashboard' element={<Dashboard />} />
       <Route path='archived' element={<ArchivedFlashcards />} />
-      <Route path='settings' element={<UserSettings />} />
+      <Route path='settings' element={<Settings />} />
     </Route>
 
     <Route path='*' element={<div>404</div>} />

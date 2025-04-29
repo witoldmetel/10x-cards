@@ -10,11 +10,23 @@
 
 export type User = {
   id: string; // GUID
+  name: string;
   email: string;
   password: string; // typically hashed; not exposed in responses
-  api_model_key?: string;
-  created_at: string; // ISO date string
+  apiModelKey?: string;
+  createdAt: string; // ISO date string
 };
+
+export type Collection = {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string | null;
+  totalCards: number;
+  dueCards: number;
+  color?: string;
+}
 
 export enum FlashcardCreationSource {
   Manual = 'Manual',
@@ -29,172 +41,137 @@ export enum ReviewStatus {
 }
 
 export type Flashcard = {
-  id: string; // GUID
-  user_id: string; // GUID
+  id: string;
+  userId: string;
+  collectionId: string;
+  lastReviewed?: string;
+  nextReview?: string;
   front: string;
   back: string;
-  review_status: ReviewStatus;
-  is_archived: boolean;
-  archived_at?: string | null; // ISO date string
-  creation_source: FlashcardCreationSource;
+  reviewStatus: ReviewStatus;
+  archivedAt?: string | null;
+  creationSource: FlashcardCreationSource;
   tags: string[];
   category: string[];
-  sm2_repetitions: number;
-  sm2_interval: number;
-  sm2_efactor: number;
-  sm2_due_date?: string | null; // ISO date string
-  created_at: string; // ISO date string
-  updated_at?: string | null; // ISO date string
+  sm2Repetitions: number;
+  sm2Interval: number;
+  sm2Efactor: number;
+  sm2DueDate?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
 };
+
+export type StudySession = {
+  id: string;
+  collectionId: string;
+  startedAt: string;
+  completedAt?: string;
+  cardsStudied: number;
+  correctAnswers: number;
+}
 
 /* ---------------------- User DTOs and Command Models ---------------------- */
 
 // Registration
-export type UserRegistrationDto = {
+export type UserRegistration = {
+  name: string;
   email: string;
   password: string;
 };
 
-export type UserRegistrationResponseDto = {
+export type UserRegistrationResponse = {
   id: string; // GUID
   email: string;
-  created_at: string;
+  createdAt: string;
 };
 
 // Login
-export type UserLoginDto = {
+export type UserLogin = {
   email: string;
   password: string;
 };
 
-export type UserLoginResponseDto = {
+export type UserLoginResponse = {
   token: string;
-  expires_in: number;
+  expiresIn: number;
 };
 
 // Password Reset
-export type PasswordResetDto = {
+export type PasswordReset = {
   email: string;
-  new_password: string;
+  newPassword: string;
 };
 
-export type PasswordResetResponseDto = {
+export type PasswordResetResponse = {
   message: string;
 };
 
 // Delete User
-export type DeleteUserResponseDto = {
+export type DeleteUserResponse = {
   message: string;
 };
 
 /* ---------------------- Flashcard DTOs and Command Models ---------------------- */
 
-// For listing flashcards (minimal fields)
-export type FlashcardListItemDto = Pick<
-  Flashcard,
-  'id' | 'front' | 'back' | 'review_status' | 'tags' | 'category' | 'created_at'
->;
 
-// Pagination details for list responses
-export type PaginationDto = {
+
+// Flashcards list response including pagination
+export type FlashcardsListResponse = {
+  flashcards: Flashcard[];
   page: number;
   limit: number;
   total: number;
 };
 
-// Flashcards list response including pagination
-export type FlashcardsListResponseDto = {
-  flashcards: FlashcardListItemDto[];
-  pagination: PaginationDto;
-};
-
-// Detailed Flashcard DTO (used, for example, in the flashcard details endpoint)
-// Excludes the `user_id` as it is part of the domain internal logic.
-export type FlashcardDetailsDto = Omit<Flashcard, 'user_id'>;
 
 // Create Flashcard Command Model / DTO
-export type CreateFlashcardDto = {
+export type CreateFlashcard= {
   front: string;
   back: string;
   tags: string[];
   category: string[];
-  review_status: ReviewStatus;
-  creation_source: FlashcardCreationSource;
+  reviewStatus: ReviewStatus;
+  creationSource: FlashcardCreationSource;
+  collectionId: string;
 };
 
 // Response after creating a flashcard, mirroring key flashcard fields.
-export type CreateFlashcardResponseDto = Pick<
+export type CreateFlashcardResponse = Pick<
   Flashcard,
-  'id' | 'front' | 'back' | 'review_status' | 'tags' | 'category' | 'created_at'
+  'id' | 'front' | 'back' | 'reviewStatus' | 'tags' | 'category' | 'createdAt'
 >;
 
 // Update Flashcard Command Model / DTO (partial update)
-export type UpdateFlashcardDto = Partial<CreateFlashcardDto>;
+export type UpdateFlashcard = Partial<CreateFlashcard> & {
+  id: string;
+};
 
 // Response after updating a flashcard.
-export type UpdateFlashcardResponseDto = Pick<
+export type UpdateFlashcardResponse = Pick<
   Flashcard,
-  'id' | 'front' | 'back' | 'review_status' | 'tags' | 'category' | 'updated_at'
+  'id' | 'front' | 'back' | 'reviewStatus' | 'tags' | 'category' | 'updatedAt'
 >;
 
-// Archive Flashcard Command Model / DTO
-export type ArchiveFlashcardDto = {
-  is_archived: boolean;
-};
 
 // Response after archiving a flashcard.
-export type ArchiveFlashcardResponseDto = {
+export type ArchiveFlashcardResponse = {
   id: string;
-  is_archived: boolean;
-  archived_at: string;
-};
-
-// Batch Update Command Model / DTO for multiple flashcards.
-export type BatchUpdateFlashcardsDto = {
-  flashcard_ids: string[];
-  update: Partial<{
-    front: string;
-    back: string;
-    review_status: ReviewStatus;
-    tags: string[];
-    category: string[];
-    is_archived: boolean;
-  }>;
-};
-
-// Response for a batch flashcard update.
-export type BatchUpdateFlashcardsResponseDto = {
-  updated_ids: string[];
-  message: string;
+  archivedAt: string;
 };
 
 /* ---------------------- AI Flashcard Generation DTOs ---------------------- */
 
 // Command Model for generating flashcards using AI.
-export type GenerateFlashcardsDto = {
-  text: string; // up to 50k characters
-  openrouter_api_key?: string;
+export type AIGenerateRequest = {
+  sourceText: string;
+  numberOfCards?: number;
+  collectionId?: string;
+  collectionName?: string;
+  apiModelKey?: string;
 };
 
 // Response when an AI flashcard generation task is initiated.
-export type GenerateFlashcardsResponseDto = {
-  task_id: string;
-  status: 'in_progress' | 'completed' | 'failed';
-  message: string;
-};
-
-// Response for monitoring the flashcard generation progress.
-export type FlashcardGenerationStatusResponseDto = {
-  task_id: string;
-  status: 'in_progress' | 'completed' | 'failed';
-  progress: number; // percentage (0 to 100)
-  generated_flashcards: FlashcardListItemDto[];
-  error?: string | null;
-};
-
-/* ---------------------- Archived Flashcards Statistics DTO ---------------------- */
-
-export type ArchivedFlashcardsStatisticsResponseDto = {
-  total_archived: number;
-  archived_by_category: Record<string, number>;
+export type AIGenerateResponse = {
+  flashcards: Omit<Flashcard, 'id' | 'collectionId' | 'createdAt' | 'repetitions' | 'easeFactor' | 'interval'>[];
+  collectionId: string;
 };
