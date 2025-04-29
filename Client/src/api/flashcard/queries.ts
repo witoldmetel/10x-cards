@@ -4,11 +4,9 @@ import type { Collection } from '@/db/database.types';
 
 interface PaginatedResponse<T> {
   items: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-  };
+  page: number;
+  limit: number;
+  total: number;
 }
 
 export function useFlashcards() {

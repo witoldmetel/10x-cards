@@ -3,24 +3,17 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useFlashcards } from '@/api/flashcard/queries';
 import CollectionCard from '@/components/CollectionCard';
-import { Collection } from '@/db/database.types';
+import { FlashcardsListResponse } from '@/db/database.types';
 
-interface EmptyStateProps {
+type EmptyStateProps = {
   onCreateCollection: () => void;
   onGenerateWithAI: () => void;
 }
 
-interface FlashcardsResponse {
-  items: Collection[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
+
 
 export default function Dashboard() {
-  const { data, isLoading } = useFlashcards<FlashcardsResponse>();
+  const { data, isLoading } = useFlashcards<FlashcardsListResponse>();
 
   if (isLoading) {
     return <LoadingState />;
