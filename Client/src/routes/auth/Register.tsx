@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Lock, Mail } from 'lucide-react';
+import { ArrowLeft, Lock, Mail, User } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Card } from '@/components/ui/card';
-import { CardHeader } from '@/components/ui/card';
-import { CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 
 const registerSchema = z
   .object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
@@ -37,6 +34,7 @@ export default function Register() {
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -54,6 +52,7 @@ export default function Register() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          name: formData.name,
           email: formData.email,
           password: formData.password,
         }),
@@ -106,6 +105,16 @@ export default function Register() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className='space-y-4'>
+          <Input
+            type="text"
+            label="Full Name"
+            placeholder="Your name"
+            {...register('name')}
+            error={errors.name?.message}
+            leftElement={<User className="h-4 w-4" />}
+            autoComplete="name"
+          />
+          
             <Input
               type='email'
               label='Email'
