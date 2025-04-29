@@ -111,6 +111,7 @@ namespace TenXCards.Core.Services
             }
 
             var updated = await _repository.UpdateAsync(existingFlashcard);
+            if (updated == null) return null;
             return MapToResponseDto(updated);
         }
 

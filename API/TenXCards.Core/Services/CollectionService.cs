@@ -52,6 +52,7 @@ namespace TenXCards.Core.Services
             collection.Color = updateDto.Color;
             collection.UpdatedAt = DateTime.UtcNow;
             var updated = await _collectionRepository.UpdateAsync(collection);
+            if (updated == null) return null;
             return MapToResponseDto(updated);
         }
 
