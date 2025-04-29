@@ -1,14 +1,14 @@
 import { createContext, useContext, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 
-
-
 const AuthContext = createContext<{
-  token: string;
-  onLogin: (token: string) => void;
+  isAuth: boolean;
+  userId: string | undefined;
+  onLogin: (token: string, userId: string) => void;
   onLogout: () => void;
 }>({
-  token: '',
+  isAuth: false,
+  userId: undefined,
   onLogin: () => {},
   onLogout: () => {},
 });
@@ -21,31 +21,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
+  const [userId, setUserId] = useState(() => localStorage.getItem('userId') || undefined);
 
-  const handleLogin = async (token: string) => {
+  const handleLogin = async (token: string, userId: string) => {
     if (!token) {
       throw new Error('Token is required');
     }
-
     setToken(token);
+    setUserId(userId);
 
     localStorage.setItem('token', token);
+    localStorage.setItem('userId', userId);
 
     const origin = location.state?.from?.pathname || '/dashboard';
+
     navigate(origin);
   };
 
   const handleLogout = () => {
     setToken('');
-
+    setUserId('');
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     navigate('/');
   };
 
   const value = {
-    token,
+    isAuth: !!token,
+    userId,
     onLogin: handleLogin,
     onLogout: handleLogout,
   };
@@ -53,6 +57,4 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

@@ -32,15 +32,11 @@ public class UserService : IUserService
         _logger = logger;
     }
 
-    public async Task<UserRegistrationResult> RegisterUserAsync(UserRegistrationRequest request)
+    public async Task<UserLoginResponse> RegisterUserAsync(UserRegistrationRequest request)
     {
         if (await _userRepository.EmailExistsAsync(request.Email))
         {
-            return new UserRegistrationResult
-            {
-                Success = false,
-                Errors = new[] { "Email already exists" }
-            };
+            throw new Exception("Email already exists");
         }
 
         var user = new User
@@ -48,6 +44,7 @@ public class UserService : IUserService
             Id = Guid.NewGuid(),
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
+            Name = request.Name,
             ApiModelKey = string.Empty,
             CreatedAt = DateTime.UtcNow
         };
@@ -57,49 +54,33 @@ public class UserService : IUserService
 
         var token = _jwtTokenService.GenerateToken(user);
 
-        return new UserRegistrationResult
+        return new UserLoginResponse
         {
-            Success = true,
-            User = new UserRegistrationResponse
-            {
-                Id = user.Id,
-                Name = request.Name,
-                Email = user.Email,
-                CreatedAt = user.CreatedAt,
-                Token = token,
-                ExpiresIn = 604800 // 7 days in seconds
-            }
+            UserId = user.Id,
+            Token = token,
+            ExpiresIn = 604800 // 7 days
         };
     }
 
-    public async Task<UserLoginResult> LoginUserAsync(UserLoginRequest request)
+    public async Task<UserLoginResponse> LoginUserAsync(UserLoginRequest loginDto)
     {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
-        if (user == null || !_passwordHashService.VerifyPassword(request.Password, user.Password))
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
+        if (user == null || !_passwordHashService.VerifyPassword(loginDto.Password, user.Password))
         {
-            return new UserLoginResult
-            {
-                Success = false,
-                Errors = new[] { "Invalid email or password" }
-            };
+            throw new Exception("Invalid email or password");
         }
-
         var token = _jwtTokenService.GenerateToken(user);
-        return new UserLoginResult
+        return new UserLoginResponse
         {
-            Success = true,
-            User = new UserLoginResponse
-            {
-                UserId = user.Id,
-                Token = token,
-                ExpiresIn = 604800 // 7 days in seconds
-            }
+            UserId = user.Id,
+            Token = token,
+            ExpiresIn = 604800 // 7 days
         };
     }
 
     public async Task<PasswordResetResult> ResetPasswordAsync(PasswordResetRequest request)
     {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
         if (user == null)
         {
             return new PasswordResetResult
@@ -119,10 +100,14 @@ public class UserService : IUserService
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    public async Task<User?> GetByIdAsync(Guid id)
+    {
+        return await _userRepository.GetByIdAsync(id);
+    }
+
     public async Task<User?> GetUserByIdAsync(Guid id)
     {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.Id == id);
+        return await _userRepository.GetByIdAsync(id);
     }
 
     public bool ValidatePassword(User user, string password)
@@ -130,21 +115,15 @@ public class UserService : IUserService
         return _passwordHashService.VerifyPassword(password, user.Password);
     }
 
-    public async Task<User> UpdateUserAsync(Guid id, string email, string? password = null)
+    public async Task<User?> UpdateUserAsync(Guid id, UpdateUserRequest dto)
     {
-        var user = await GetUserByIdAsync(id);
+        var user = await _userRepository.GetByIdAsync(id);
         if (user == null)
-        {
-            throw new InvalidOperationException("User not found");
-        }
+            return null;
 
-        user.Email = email;
-        if (password != null)
-        {
-            user.Password = _passwordHashService.HashPassword(password);
-        }
-
-        await _context.SaveChangesAsync();
+        user.Name = dto.Name;
+        user.Email = dto.Email;
+        await _userRepository.UpdateAsync(user);
         return user;
     }
 
@@ -156,5 +135,20 @@ public class UserService : IUserService
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<bool> EmailExistsAsync(string email)
+    {
+        return await _userRepository.EmailExistsAsync(email);
+    }
+
+    public async Task UpdateAsync(User user)
+    {
+        await _userRepository.UpdateAsync(user);
+    }
+
+    public async Task<User> CreateAsync(User user)
+    {
+        return await _userRepository.CreateAsync(user);
     }
 } 

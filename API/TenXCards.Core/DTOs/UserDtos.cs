@@ -76,25 +76,6 @@ public record PasswordResetRequest
     public string NewPassword { get; init; } = string.Empty;
 }
 
-/// <summary>
-/// Service response type for user registration.
-/// </summary>
-public record UserRegistrationResult
-{
-    public bool Success { get; init; }
-    public UserRegistrationResponse? User { get; init; }
-    public IEnumerable<string>? Errors { get; init; }
-}
-
-/// <summary>
-/// Service response type for user login.
-/// </summary>
-public record UserLoginResult
-{
-    public bool Success { get; init; }
-    public UserLoginResponse? User { get; init; }
-    public IEnumerable<string>? Errors { get; init; }
-}
 
 /// <summary>
 /// Service response type for password reset.
@@ -103,4 +84,37 @@ public record PasswordResetResult
 {
     public bool Success { get; init; }
     public IEnumerable<string>? Errors { get; init; }
+}
+
+/// <summary>
+/// Response payload for returning user data by id.
+/// </summary>
+public record UserDataResponse
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Request payload for updating user name and email.
+/// </summary>
+public class UpdateUserRequest
+{
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Minimal response payload for login/register.
+/// </summary>
+public class AuthResponse
+{
+    public Guid UserId { get; set; }
+    public string Token { get; set; } = string.Empty;
+    public int ExpiresIn { get; set; }
 }

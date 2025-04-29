@@ -40,18 +40,17 @@ export function FlashcardList({ flashcards }: FlashcardListProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AnimatePresence mode="wait">
-          {visibleCards.map((card) => (
+    <div className='space-y-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+        <AnimatePresence mode='wait'>
+          {visibleCards.map(card => (
             <motion.div
               key={card.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="relative h-48"
-            >
+              className='relative h-48'>
               <div
                 className={`absolute inset-0 p-4 rounded-lg shadow-md cursor-pointer transition-transform duration-500 transform-gpu ${
                   flippedCards.has(card.id) ? 'rotate-y-180' : ''
@@ -60,20 +59,15 @@ export function FlashcardList({ flashcards }: FlashcardListProps) {
                 style={{
                   transformStyle: 'preserve-3d',
                   backfaceVisibility: 'hidden',
-                }}
-              >
+                }}>
                 <div
                   className={`absolute inset-0 p-4 bg-white rounded-lg ${
                     flippedCards.has(card.id) ? 'invisible' : ''
-                  }`}
-                >
-                  <p className="text-lg font-medium">{card.front}</p>
-                  <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                    {card.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                      >
+                  }`}>
+                  <p className='text-lg font-medium'>{card.front}</p>
+                  <div className='absolute bottom-4 left-4 flex flex-wrap gap-2'>
+                    {card.tags.map(tag => (
+                      <span key={tag} className='px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full'>
                         {tag}
                       </span>
                     ))}
@@ -82,15 +76,11 @@ export function FlashcardList({ flashcards }: FlashcardListProps) {
                 <div
                   className={`absolute inset-0 p-4 bg-white rounded-lg transform-gpu rotate-y-180 ${
                     flippedCards.has(card.id) ? '' : 'invisible'
-                  }`}
-                >
-                  <p className="text-lg">{card.back}</p>
-                  <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                    {card.category.map((cat) => (
-                      <span
-                        key={cat}
-                        className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full"
-                      >
+                  }`}>
+                  <p className='text-lg'>{card.back}</p>
+                  <div className='absolute bottom-4 left-4 flex flex-wrap gap-2'>
+                    {card.category.map(cat => (
+                      <span key={cat} className='px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full'>
                         {cat}
                       </span>
                     ))}
@@ -102,22 +92,17 @@ export function FlashcardList({ flashcards }: FlashcardListProps) {
         </AnimatePresence>
       </div>
       {totalPages > 1 && (
-        <div className="flex justify-center gap-4 mt-6">
-          <Button
-            variant="outline"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
+        <div className='flex justify-center gap-4 mt-6'>
+          <Button variant='outline' onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+            <ChevronLeft className='h-4 w-4' />
             Previous
           </Button>
           <Button
-            variant="outline"
+            variant='outline'
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
+            disabled={currentPage === totalPages}>
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className='h-4 w-4' />
           </Button>
         </div>
       )}

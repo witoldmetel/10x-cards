@@ -64,23 +64,22 @@ export default function Register() {
         throw new Error(data.message || 'Failed to create account');
       }
 
-      // Store in localStorage
       const session = {
         user: {
           id: data.id,
           email: data.email,
+          name: data.name,
         },
         token: data.token,
       };
 
-      // Validate required data
       if (!session.user.id || !session.user.email || !session.token) {
         throw new Error('Invalid response from server');
       }
 
       localStorage.setItem('flashcards_auth', JSON.stringify(session));
 
-      onLogin(session.token);
+      onLogin(session.token, session.user.id);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {
@@ -105,16 +104,16 @@ export default function Register() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className='space-y-4'>
-          <Input
-            type="text"
-            label="Full Name"
-            placeholder="Your name"
-            {...register('name')}
-            error={errors.name?.message}
-            leftElement={<User className="h-4 w-4" />}
-            autoComplete="name"
-          />
-          
+            <Input
+              type='text'
+              label='Full Name'
+              placeholder='Your name'
+              {...register('name')}
+              error={errors.name?.message}
+              leftElement={<User className='h-4 w-4' />}
+              autoComplete='name'
+            />
+
             <Input
               type='email'
               label='Email'

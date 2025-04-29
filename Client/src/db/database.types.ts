@@ -26,7 +26,7 @@ export type Collection = {
   totalCards: number;
   dueCards: number;
   color?: string;
-}
+};
 
 export enum FlashcardCreationSource {
   Manual = 'Manual',
@@ -68,7 +68,7 @@ export type StudySession = {
   completedAt?: string;
   cardsStudied: number;
   correctAnswers: number;
-}
+};
 
 /* ---------------------- User DTOs and Command Models ---------------------- */
 
@@ -113,8 +113,6 @@ export type DeleteUserResponse = {
 
 /* ---------------------- Flashcard DTOs and Command Models ---------------------- */
 
-
-
 // Flashcards list response including pagination
 export type FlashcardsListResponse = {
   flashcards: Flashcard[];
@@ -123,9 +121,8 @@ export type FlashcardsListResponse = {
   total: number;
 };
 
-
 // Create Flashcard Command Model / DTO
-export type CreateFlashcard= {
+export type CreateFlashcard = {
   front: string;
   back: string;
   tags: string[];
@@ -151,7 +148,6 @@ export type UpdateFlashcardResponse = Pick<
   Flashcard,
   'id' | 'front' | 'back' | 'reviewStatus' | 'tags' | 'category' | 'updatedAt'
 >;
-
 
 // Response after archiving a flashcard.
 export type ArchiveFlashcardResponse = {

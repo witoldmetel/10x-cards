@@ -51,7 +51,7 @@ export default function Login() {
         throw new Error(data.message || 'Failed to sign in');
       }
 
-      onLogin(data.token);
+      onLogin(data.token, data.userId);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to sign in');
     } finally {
