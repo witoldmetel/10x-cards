@@ -192,37 +192,4 @@ logger.LogInformation("🚀 API is running on:");
 logger.LogInformation("   - Main API: http://localhost:5001");
 logger.LogInformation("   - Swagger UI: http://localhost:5001/swagger");
 
-// User endpoints
-app.MapPost("/api/users/register", async (IUserService userService, UserRegistrationRequest request) =>
-{
-    try
-    {
-        var response = await userService.RegisterAsync(request);
-        return Results.Created($"/api/users/{response.Id}", response);
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { message = ex.Message });
-    }
-})
-.WithName("RegisterUser")
-.WithOpenApi()
-.RequireRateLimiting("fixed");
-
-app.MapPost("/api/users/login", async (IUserService userService, UserLoginRequest request) =>
-{
-    try
-    {
-        var response = await userService.LoginAsync(request);
-        return Results.Ok(response);
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { message = ex.Message });
-    }
-})
-.WithName("LoginUser")
-.WithOpenApi()
-.RequireRateLimiting("fixed");
-
 app.Run();

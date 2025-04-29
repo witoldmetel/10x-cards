@@ -7,4 +7,5 @@ public interface IUserService
 {
     Task<UserRegistrationResponse> RegisterAsync(UserRegistrationRequest request);
     Task<UserLoginResponse> LoginAsync(UserLoginRequest request);
+    Task<bool> ResetPasswordAsync(string email, string newPassword);
 } 

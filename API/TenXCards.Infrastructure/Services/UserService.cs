@@ -42,6 +42,7 @@ public class UserService : IUserService
         var user = new User
         {
             Id = Guid.NewGuid(),
+            Name = request.Name,
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
             ApiModelKey = string.Empty,
@@ -56,10 +57,11 @@ public class UserService : IUserService
         return new UserRegistrationResponse
         {
             Id = user.Id,
+            Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,
             Token = token,
-            ExpiresIn = 7 * 24 * 60 * 60 // 7 days in seconds
+            ExpiresIn = 604800 // 7 days in seconds
         };
     }
 
