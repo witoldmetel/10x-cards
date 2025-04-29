@@ -11,6 +11,7 @@ namespace TenXCards.Core.Services
         Task<PaginatedResponse<FlashcardResponseDto>> GetAllAsync(FlashcardsQueryParams queryParams);
         Task<PaginatedResponse<FlashcardResponseDto>> GetArchivedAsync(FlashcardsQueryParams queryParams);
         Task<FlashcardResponseDto> CreateAsync(CreateFlashcardDto createDto);
+        Task<FlashcardResponseDto> CreateForCollectionAsync(Guid collectionId, CreateFlashcardDto createDto);
         Task<FlashcardResponseDto> UpdateAsync(Guid id, UpdateFlashcardDto updateDto);
         Task<bool> DeleteAsync(Guid id);
         Task<BatchUpdateResponse> BatchUpdateAsync(BatchUpdateRequest request);

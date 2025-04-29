@@ -27,8 +27,11 @@ namespace TenXCards.Infrastructure.Repositories
         public async Task<(IEnumerable<Flashcard> Items, int Total)> GetAllAsync(FlashcardsQueryParams queryParams)
         {
             var query = _context.Flashcards
-                .Where(f => !f.IsArchived)
+                .Where(f => f.ArchivedAt == null)
                 .AsQueryable();
+
+            if (queryParams.CollectionId.HasValue)
+                query = query.Where(f => f.CollectionId == queryParams.CollectionId.Value);
 
             query = ApplyFilters(query, queryParams);
 
@@ -46,8 +49,11 @@ namespace TenXCards.Infrastructure.Repositories
         public async Task<(IEnumerable<Flashcard> Items, int Total)> GetArchivedAsync(FlashcardsQueryParams queryParams)
         {
             var query = _context.Flashcards
-                .Where(f => f.IsArchived)
+                .Where(f => f.ArchivedAt != null)
                 .AsQueryable();
+
+            if (queryParams.CollectionId.HasValue)
+                query = query.Where(f => f.CollectionId == queryParams.CollectionId.Value);
 
             query = ApplyFilters(query, queryParams);
 
@@ -83,10 +89,9 @@ namespace TenXCards.Infrastructure.Repositories
             existingFlashcard.ReviewStatus = flashcard.ReviewStatus;
             existingFlashcard.UpdatedAt = DateTime.UtcNow;
 
-            if (flashcard.IsArchived != existingFlashcard.IsArchived)
+            if (flashcard.ArchivedAt != existingFlashcard.ArchivedAt)
             {
-                existingFlashcard.IsArchived = flashcard.IsArchived;
-                existingFlashcard.ArchivedAt = flashcard.IsArchived ? DateTime.UtcNow : null;
+                existingFlashcard.ArchivedAt = flashcard.ArchivedAt;
             }
 
             await _context.SaveChangesAsync();
@@ -123,7 +128,7 @@ namespace TenXCards.Infrastructure.Repositories
         public async Task<Dictionary<string, int>> GetArchivedCountByCategory()
         {
             return await _context.Flashcards
-                .Where(f => f.IsArchived)
+                .Where(f => f.ArchivedAt != null)
                 .SelectMany(f => f.Category)
                 .GroupBy(category => category)
                 .Select(group => new { Category = group.Key, Count = group.Count() })

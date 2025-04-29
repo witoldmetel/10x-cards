@@ -16,6 +16,7 @@
 - **description**: TEXT NOT NULL
 - **created_at**: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 - **updated_at**: TIMESTAMP WITH TIME ZONE
+- **archived_at**: TIMESTAMP WITH TIME ZONE  # Added for soft-archiving collections
 - **total_cards**: INTEGER DEFAULT 0
 - **due_cards**: INTEGER DEFAULT 0
 - **color**: TEXT
@@ -33,7 +34,7 @@
   - _Constraint_: CHECK (creation_source IN ('Manual', 'AI'))
 - **last_reviewed**: TIMESTAMP WITH TIME ZONE
 - **next_review**: TIMESTAMP WITH TIME ZONE
-- **archived_at**: TIMESTAMP WITH TIME ZONE
+- **archived_at**: TIMESTAMP WITH TIME ZONE  # Used for soft-archiving flashcards
 - **tags**: TEXT[]
 - **category**: TEXT[]
 - **sm2_repetitions**: INTEGER NOT NULL DEFAULT 0
@@ -57,6 +58,11 @@
 - **users** (one) ↔ **flashcards** (many)
 - **collections** (one) ↔ **flashcards** (many)
 - **collections** (one) ↔ **study_sessions** (many)
+
+> **Archiving logic:**
+> - If all flashcards in a collection are archived, the collection is automatically archived (archived_at set).
+> - Collections with archived_at set are not visible in dashboard endpoints.
+> - Flashcards are only accessible via their parent collection; there are no global flashcard tables/views.
 
 ## 6. Indexes
 

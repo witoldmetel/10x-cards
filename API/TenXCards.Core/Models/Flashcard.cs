@@ -27,12 +27,12 @@ namespace TenXCards.Core.Models
         public required string Back { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }
         public FlashcardCreationSource CreationSource { get; set; }
         public ReviewStatus ReviewStatus { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<string> Category { get; set; } = new();
+        public Guid CollectionId { get; set; } 
         
         // SM2 Algorithm fields
         public int Sm2Repetitions { get; set; }

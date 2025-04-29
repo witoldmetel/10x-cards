@@ -19,11 +19,10 @@ namespace TenXCards.Core.DTOs
     {
         public required string Front { get; set; }
         public required string Back { get; set; }
-        public bool? IsArchived { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<string> Category { get; set; } = new();
         public ReviewStatus? ReviewStatus { get; set; }
-    }
+        public DateTime? ArchivedAt { get; set; }
 
     public class FlashcardResponseDto
     {
@@ -32,7 +31,6 @@ namespace TenXCards.Core.DTOs
         public required string Back { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public bool IsArchived { get; set; }
         public DateTime? ArchivedAt { get; set; }
         public FlashcardCreationSource CreationSource { get; set; }
         public ReviewStatus ReviewStatus { get; set; }
@@ -56,6 +54,7 @@ namespace TenXCards.Core.DTOs
         public string? SearchPhrase { get; set; }
         public string? Tag { get; set; }
         public string? Category { get; set; }
+        public Guid? CollectionId { get; set; } 
     }
 
     public class PaginatedResponse<T>

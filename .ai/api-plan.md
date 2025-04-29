@@ -110,7 +110,7 @@
 
    - **Method:** GET
    - **Path:** `/api/collections`
-   - **Description:** Retrieve user's collections.
+   - **Description:** Retrieve user's collections (all, including empty ones).
    - **Query Parameters:**
      - `page` (default: 1)
      - `limit` (default: 20)
@@ -139,7 +139,23 @@
    - **Success Codes:** 200 OK
    - **Error Codes:** 400 Bad Request
 
-2. **Create Collection**
+2. **Get Dashboard Collections**
+
+   - **Method:** GET
+   - **Path:** `/api/collections/dashboard`
+   - **Description:** Retrieve only collections that are not archived and have at least one active (not archived) flashcard.
+   - **Success Codes:** 200 OK
+   - **Error Codes:** 400 Bad Request
+
+3. **Get Archived Collections**
+
+   - **Method:** GET
+   - **Path:** `/api/collections/archived`
+   - **Description:** Retrieve all archived collections.
+   - **Success Codes:** 200 OK
+   - **Error Codes:** 400 Bad Request
+
+4. **Create Collection**
 
    - **Method:** POST
    - **Path:** `/api/collections`
@@ -156,7 +172,7 @@
    - **Success Codes:** 201 Created
    - **Error Codes:** 400 Bad Request
 
-3. **Update Collection**
+5. **Update Collection**
 
    - **Method:** PUT
    - **Path:** `/api/collections/{id}`
@@ -173,7 +189,23 @@
    - **Success Codes:** 200 OK
    - **Error Codes:** 404 Not Found, 400 Bad Request
 
-4. **Delete Collection**
+6. **Archive Collection**
+
+   - **Method:** PUT
+   - **Path:** `/api/collections/{id}/archive`
+   - **Description:** Archive a collection and all its flashcards.
+   - **Success Codes:** 204 No Content
+   - **Error Codes:** 404 Not Found
+
+7. **Unarchive Collection**
+
+   - **Method:** PUT
+   - **Path:** `/api/collections/{id}/unarchive`
+   - **Description:** Unarchive a collection and all its flashcards.
+   - **Success Codes:** 204 No Content
+   - **Error Codes:** 404 Not Found
+
+8. **Delete Collection**
    - **Method:** DELETE
    - **Path:** `/api/collections/{id}`
    - **Description:** Delete a collection and its associated flashcards.
@@ -186,7 +218,7 @@
 
    - **Method:** GET
    - **Path:** `/api/collections/{collection_id}/flashcards`
-   - **Description:** Retrieve flashcards for a specific collection.
+   - **Description:** Retrieve flashcards for a specific collection. Only accessible via collection context.
    - **Query Parameters:**
      - `page` (default: 1)
      - `limit` (default: 20)
@@ -229,7 +261,7 @@
    - **Success Codes:** 200 OK
    - **Error Codes:** 400 Bad Request
 
-2. **Create Flashcard**
+2. **Create Flashcard in Collection**
 
    - **Method:** POST
    - **Path:** `/api/collections/{collection_id}/flashcards`
@@ -270,26 +302,25 @@
 
 4. **Archive Flashcard**
 
-   - **Method:** PATCH
+   - **Method:** PUT
    - **Path:** `/api/flashcards/{id}/archive`
-   - **Description:** Archive a flashcard.
-   - **Response:** Updated flashcard object with archived_at timestamp
+   - **Description:** Archive a flashcard. If all flashcards in a collection are archived, the collection is also archived automatically.
    - **Success Codes:** 200 OK
    - **Error Codes:** 404 Not Found
 
 5. **Unarchive Flashcard**
 
-   - **Method:** PATCH
+   - **Method:** PUT
    - **Path:** `/api/flashcards/{id}/unarchive`
    - **Description:** Unarchive a flashcard.
-   - **Response:** Updated flashcard object with archived_at set to null
    - **Success Codes:** 200 OK
    - **Error Codes:** 404 Not Found
 
 6. **Delete Flashcard**
+
    - **Method:** DELETE
    - **Path:** `/api/flashcards/{id}`
-   - **Description:** Permanently delete a flashcard.
+   - **Description:** Delete a flashcard by ID.
    - **Success Codes:** 204 No Content
    - **Error Codes:** 404 Not Found
 
@@ -428,3 +459,5 @@
   - Rate limiting (5 requests/second per user)
   - Collection ownership validation
   - Study session ownership validation
+
+> **Note:** There are no global endpoints for listing or displaying flashcards. All flashcard access is through their parent collection.
