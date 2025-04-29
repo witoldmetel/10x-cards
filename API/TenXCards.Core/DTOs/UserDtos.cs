@@ -61,3 +61,46 @@ public record UserLoginResponse
     public string Token { get; init; } = string.Empty;
     public int ExpiresIn { get; init; }
 }
+
+/// <summary>
+/// Request payload for password reset.
+/// </summary>
+public record PasswordResetRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(8)]
+    public string NewPassword { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Service response type for user registration.
+/// </summary>
+public record UserRegistrationResult
+{
+    public bool Success { get; init; }
+    public UserRegistrationResponse? User { get; init; }
+    public IEnumerable<string>? Errors { get; init; }
+}
+
+/// <summary>
+/// Service response type for user login.
+/// </summary>
+public record UserLoginResult
+{
+    public bool Success { get; init; }
+    public UserLoginResponse? User { get; init; }
+    public IEnumerable<string>? Errors { get; init; }
+}
+
+/// <summary>
+/// Service response type for password reset.
+/// </summary>
+public record PasswordResetResult
+{
+    public bool Success { get; init; }
+    public IEnumerable<string>? Errors { get; init; }
+}

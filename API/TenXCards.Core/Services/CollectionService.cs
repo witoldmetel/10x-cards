@@ -4,16 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
-using TenXCards.Infrastructure.Repositories;
+using TenXCards.Core.Repositories;
 
 namespace TenXCards.Core.Services
 {
     public class CollectionService : ICollectionService
     {
-        private readonly CollectionRepository _collectionRepository;
-        private readonly FlashcardRepository _flashcardRepository;
+        private readonly ICollectionRepository _collectionRepository;
+        private readonly IFlashcardRepository _flashcardRepository;
 
-        public CollectionService(CollectionRepository collectionRepository, FlashcardRepository flashcardRepository)
+        public CollectionService(ICollectionRepository collectionRepository, IFlashcardRepository flashcardRepository)
         {
             _collectionRepository = collectionRepository;
             _flashcardRepository = flashcardRepository;

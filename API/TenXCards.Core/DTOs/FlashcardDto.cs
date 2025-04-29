@@ -23,6 +23,7 @@ namespace TenXCards.Core.DTOs
         public List<string> Category { get; set; } = new();
         public ReviewStatus? ReviewStatus { get; set; }
         public DateTime? ArchivedAt { get; set; }
+    }
 
     public class FlashcardResponseDto
     {
@@ -72,19 +73,19 @@ namespace TenXCards.Core.DTOs
 
     public class BatchUpdateRequest
     {
-        public required List<Guid> FlashcardIds { get; set; }
-        public UpdateFlashcardDto Update { get; set; }
+        public required List<Guid> FlashcardIds { get; set; } = new();
+        public required UpdateFlashcardDto Update { get; set; }
     }
 
     public class BatchUpdateResponse
     {
-        public List<Guid> UpdatedIds { get; set; }
-        public string Message { get; set; }
+        public List<Guid> UpdatedIds { get; set; } = new();
+        public required string Message { get; set; } = string.Empty;
     }
 
     public class ArchivedStatisticsDto
     {
         public int TotalArchived { get; set; }
-        public Dictionary<string, int> ArchivedByCategory { get; set; }
+        public required Dictionary<string, int> ArchivedByCategory { get; set; } = new();
     }
 } 

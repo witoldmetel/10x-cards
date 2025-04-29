@@ -19,7 +19,7 @@ namespace TenXCards.API.Controllers
         [HttpPost("register")]
         [ProducesResponseType(typeof(UserRegistrationResponse), 201)]
         [ProducesResponseType(typeof(object), 400)]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto registerDto)
+        public async Task<IActionResult> Register([FromBody] UserRegistrationRequest registerDto)
         {
             var result = await _userService.RegisterUserAsync(registerDto);
             if (!result.Success)
@@ -30,7 +30,7 @@ namespace TenXCards.API.Controllers
         [HttpPost("login")]
         [ProducesResponseType(typeof(UserLoginResponse), 200)]
         [ProducesResponseType(typeof(object), 401)]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto loginDto)
+        public async Task<IActionResult> Login([FromBody] UserLoginRequest loginDto)
         {
             var tokenResult = await _userService.LoginUserAsync(loginDto);
             if (!tokenResult.Success)
@@ -41,7 +41,7 @@ namespace TenXCards.API.Controllers
         [HttpPost("password-reset")]
         [ProducesResponseType(typeof(object), 200)]
         [ProducesResponseType(typeof(object), 400)]
-        public async Task<IActionResult> PasswordReset([FromBody] PasswordResetDto resetDto)
+        public async Task<IActionResult> PasswordReset([FromBody] PasswordResetRequest resetDto)
         {
             var result = await _userService.ResetPasswordAsync(resetDto);
             if (!result.Success)

@@ -5,7 +5,7 @@ namespace TenXCards.Core.Services;
 
 public interface IUserService
 {
-    Task<UserRegistrationResponse> RegisterAsync(UserRegistrationRequest request);
-    Task<UserLoginResponse> LoginAsync(UserLoginRequest request);
-    Task<bool> ResetPasswordAsync(string email, string newPassword);
+    Task<UserRegistrationResult> RegisterUserAsync(UserRegistrationRequest request);
+    Task<UserLoginResult> LoginUserAsync(UserLoginRequest request);
+    Task<PasswordResetResult> ResetPasswordAsync(PasswordResetRequest request);
 } 

@@ -69,7 +69,6 @@ namespace TenXCards.Core.Services
                 Tags = createDto.Tags,
                 Category = createDto.Category,
                 ReviewStatus = createDto.ReviewStatus,
-                IsArchived = false,
                 Sm2Efactor = 2.5 // Default value for new cards
             };
 
@@ -88,7 +87,6 @@ namespace TenXCards.Core.Services
                 Tags = createDto.Tags,
                 Category = createDto.Category,
                 ReviewStatus = createDto.ReviewStatus,
-                IsArchived = false,
                 Sm2Efactor = 2.5, // Default value for new cards
                 CollectionId = collectionId
             };
@@ -107,7 +105,10 @@ namespace TenXCards.Core.Services
             if (updateDto.Tags != null) existingFlashcard.Tags = updateDto.Tags;
             if (updateDto.Category != null) existingFlashcard.Category = updateDto.Category;
             if (updateDto.ReviewStatus.HasValue) existingFlashcard.ReviewStatus = updateDto.ReviewStatus.Value;
-            if (updateDto.IsArchived.HasValue) existingFlashcard.IsArchived = updateDto.IsArchived.Value;
+            if (updateDto.ArchivedAt.HasValue)
+            {
+                existingFlashcard.ArchivedAt = updateDto.ArchivedAt.Value;
+            }
 
             var updated = await _repository.UpdateAsync(existingFlashcard);
             return MapToResponseDto(updated);
@@ -122,10 +123,9 @@ namespace TenXCards.Core.Services
                 if (request.Update.Tags != null) flashcard.Tags = request.Update.Tags;
                 if (request.Update.Category != null) flashcard.Category = request.Update.Category;
                 if (request.Update.ReviewStatus.HasValue) flashcard.ReviewStatus = request.Update.ReviewStatus.Value;
-                if (request.Update.IsArchived.HasValue)
+                if (request.Update.ArchivedAt.HasValue)
                 {
-                    flashcard.IsArchived = request.Update.IsArchived.Value;
-                    flashcard.ArchivedAt = request.Update.IsArchived.Value ? DateTime.UtcNow : null;
+                    flashcard.ArchivedAt = request.Update.ArchivedAt.Value;
                 }
             });
 
@@ -145,13 +145,34 @@ namespace TenXCards.Core.Services
             await _repository.UpdateAsync(flashcard);
 
             // Check if all flashcards in the collection are archived
-            if (flashcard.CollectionId != null)
+            if (flashcard.CollectionId != Guid.Empty)
             {
                 var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Page = 1, Limit = int.MaxValue });
                 if (allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Archive the collection if all flashcards are archived
-                    await _collectionService.ArchiveAsync(flashcard.CollectionId.Value);
+                    await _collectionService.ArchiveAsync(flashcard.CollectionId);
+                }
+            }
+            return MapToResponseDto(flashcard);
+        }
+
+        public async Task<FlashcardResponseDto> UnarchiveAsync(Guid id)
+        {
+            var flashcard = await _repository.GetByIdAsync(id);
+            if (flashcard == null)
+                return null;
+            flashcard.ArchivedAt = null;
+            await _repository.UpdateAsync(flashcard);
+
+            // Check if all flashcards in the collection are archived
+            if (flashcard.CollectionId != Guid.Empty)
+            {
+                var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Page = 1, Limit = int.MaxValue });
+                if (!allInCollection.Items.All(f => f.ArchivedAt != null))
+                {
+                    // Unarchive the collection if not all flashcards are archived
+                    await _collectionService.UnarchiveAsync(flashcard.CollectionId);
                 }
             }
             return MapToResponseDto(flashcard);
@@ -183,7 +204,6 @@ namespace TenXCards.Core.Services
                 Back = flashcard.Back,
                 CreatedAt = flashcard.CreatedAt,
                 UpdatedAt = flashcard.UpdatedAt,
-                IsArchived = flashcard.IsArchived,
                 ArchivedAt = flashcard.ArchivedAt,
                 CreationSource = flashcard.CreationSource,
                 ReviewStatus = flashcard.ReviewStatus,
