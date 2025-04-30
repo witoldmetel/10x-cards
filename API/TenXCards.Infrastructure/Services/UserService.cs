@@ -1,38 +1,33 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
-using TenXCards.Infrastructure.Data;
 
 namespace TenXCards.Infrastructure.Services;
 
 public class UserService : IUserService
 {
-    private readonly ApplicationDbContext _context;
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<UserService> _logger;
 
     public UserService(
-        ApplicationDbContext context,
         IUserRepository userRepository,
         IPasswordHashService passwordHashService,
         IJwtTokenService jwtTokenService,
         ILogger<UserService> logger)
     {
-        _context = context;
         _userRepository = userRepository;
         _passwordHashService = passwordHashService;
         _jwtTokenService = jwtTokenService;
         _logger = logger;
     }
 
-    public async Task<UserLoginResponse> RegisterUserAsync(UserRegistrationRequest request)
+    public async Task<UserRegistrationResponse> RegisterUserAsync(UserRegistrationRequest request)
     {
         if (await _userRepository.EmailExistsAsync(request.Email))
         {
@@ -45,110 +40,118 @@ public class UserService : IUserService
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
             Name = request.Name,
-            ApiModelKey = string.Empty,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _userRepository.CreateAsync(user);
 
         var token = _jwtTokenService.GenerateToken(user);
 
-        return new UserLoginResponse
+        return new UserRegistrationResponse
         {
-            UserId = user.Id,
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt,
             Token = token,
             ExpiresIn = 604800 // 7 days
         };
     }
 
-    public async Task<UserLoginResponse> LoginUserAsync(UserLoginRequest loginDto)
+    public async Task<UserLoginResponse> LoginUserAsync(UserLoginRequest request)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
-        if (user == null || !_passwordHashService.VerifyPassword(loginDto.Password, user.Password))
+        var user = await _userRepository.GetByEmailAsync(request.Email);
+        if (user == null || !_passwordHashService.VerifyPassword(request.Password, user.Password))
         {
             throw new Exception("Invalid email or password");
         }
+
         var token = _jwtTokenService.GenerateToken(user);
         return new UserLoginResponse
         {
-            UserId = user.Id,
             Token = token,
             ExpiresIn = 604800 // 7 days
         };
     }
 
-    public async Task<PasswordResetResult> ResetPasswordAsync(PasswordResetRequest request)
+    public async Task<PasswordResetResponse> ResetPasswordAsync(PasswordResetRequest request)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user == null)
         {
-            return new PasswordResetResult
-            {
-                Success = false,
-                Errors = new[] { "User not found" }
-            };
+            throw new Exception("User not found");
         }
+
         user.Password = _passwordHashService.HashPassword(request.NewPassword);
         await _userRepository.UpdateAsync(user);
-        return new PasswordResetResult { Success = true };
+
+        return new PasswordResetResponse
+        {
+            Message = "Password has been reset successfully"
+        };
     }
 
-    public async Task<User?> GetUserByEmailAsync(string email)
-    {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == email);
-    }
-
-    public async Task<User?> GetByIdAsync(Guid id)
-    {
-        return await _userRepository.GetByIdAsync(id);
-    }
-
-    public async Task<User?> GetUserByIdAsync(Guid id)
-    {
-        return await _userRepository.GetByIdAsync(id);
-    }
-
-    public bool ValidatePassword(User user, string password)
-    {
-        return _passwordHashService.VerifyPassword(password, user.Password);
-    }
-
-    public async Task<User?> UpdateUserAsync(Guid id, UpdateUserRequest dto)
+    public async Task<UserDataResponse> GetUserDataAsync(Guid id)
     {
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null)
-            return null;
+        {
+            throw new Exception("User not found");
+        }
 
-        user.Name = dto.Name;
-        user.Email = dto.Email;
+        return new UserDataResponse
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt,
+            ApiModelKey = user.ApiModelKey
+        };
+    }
+
+    public async Task<UserDataResponse> UpdateUserAsync(Guid id, UpdateUserRequest request)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+        {
+            throw new Exception("User not found");
+        }
+
+        // Check if email is being changed and if it already exists
+        if (user.Email != request.Email && await _userRepository.EmailExistsAsync(request.Email))
+        {
+            throw new Exception("Email already exists");
+        }
+
+        user.Name = request.Name;
+        user.Email = request.Email;
+        user.ApiModelKey = request.ApiModelKey;
+
         await _userRepository.UpdateAsync(user);
-        return user;
+
+        return new UserDataResponse
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            CreatedAt = user.CreatedAt,
+            ApiModelKey = user.ApiModelKey
+        };
     }
 
     public async Task DeleteUserAsync(Guid id)
     {
-        var user = await GetUserByIdAsync(id);
-        if (user != null)
+        await _userRepository.DeleteAsync(id);
+    }
+
+    public async Task<bool> ValidatePasswordAsync(Guid id, string password)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
         {
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            return false;
         }
-    }
 
-    public async Task<bool> EmailExistsAsync(string email)
-    {
-        return await _userRepository.EmailExistsAsync(email);
-    }
-
-    public async Task UpdateAsync(User user)
-    {
-        await _userRepository.UpdateAsync(user);
-    }
-
-    public async Task<User> CreateAsync(User user)
-    {
-        return await _userRepository.CreateAsync(user);
+        return _passwordHashService.VerifyPassword(password, user.Password);
     }
 } 

@@ -21,47 +21,30 @@ namespace TenXCards.Infrastructure.Repositories
 
         public async Task<Flashcard?> GetByIdAsync(Guid id)
         {
-            return await _context.Flashcards.FindAsync(id);
+            return await _context.Flashcards
+                .Include(f => f.Collection)
+                .FirstOrDefaultAsync(f => f.Id == id);
         }
 
         public async Task<(IEnumerable<Flashcard> Items, int Total)> GetAllAsync(FlashcardsQueryParams queryParams)
         {
-            var query = _context.Flashcards
-                .Where(f => f.ArchivedAt == null)
-                .AsQueryable();
+            var query = _context.Flashcards.AsQueryable();
 
-            if (queryParams.CollectionId.HasValue)
-                query = query.Where(f => f.CollectionId == queryParams.CollectionId.Value);
+            if (queryParams.Archived.HasValue)
+            {
+                query = queryParams.Archived.Value
+                    ? query.Where(f => f.ArchivedAt != null)
+                    : query.Where(f => f.ArchivedAt == null);
+            }
 
             query = ApplyFilters(query, queryParams);
 
             var total = await query.CountAsync();
 
             var items = await query
+                .Include(f => f.Collection)
                 .OrderByDescending(f => f.CreatedAt)
-                .Skip((queryParams.Page - 1) * queryParams.Limit)
-                .Take(queryParams.Limit)
-                .ToListAsync();
-
-            return (items, total);
-        }
-
-        public async Task<(IEnumerable<Flashcard> Items, int Total)> GetArchivedAsync(FlashcardsQueryParams queryParams)
-        {
-            var query = _context.Flashcards
-                .Where(f => f.ArchivedAt != null)
-                .AsQueryable();
-
-            if (queryParams.CollectionId.HasValue)
-                query = query.Where(f => f.CollectionId == queryParams.CollectionId.Value);
-
-            query = ApplyFilters(query, queryParams);
-
-            var total = await query.CountAsync();
-
-            var items = await query
-                .OrderByDescending(f => f.ArchivedAt ?? f.UpdatedAt ?? f.CreatedAt)
-                .Skip((queryParams.Page - 1) * queryParams.Limit)
+                .Skip(queryParams.Offset)
                 .Take(queryParams.Limit)
                 .ToListAsync();
 
@@ -71,8 +54,23 @@ namespace TenXCards.Infrastructure.Repositories
         public async Task<Flashcard> CreateAsync(Flashcard flashcard)
         {
             flashcard.CreatedAt = DateTime.UtcNow;
+            
+            // Set default review status based on creation source
+            if (flashcard.CreationSource == FlashcardCreationSource.Manual)
+            {
+                flashcard.ReviewStatus = ReviewStatus.Approved;
+            }
+            else
+            {
+                flashcard.ReviewStatus = ReviewStatus.New;
+            }
+
             _context.Flashcards.Add(flashcard);
             await _context.SaveChangesAsync();
+
+            // Update collection statistics
+            await UpdateCollectionStatistics(flashcard.CollectionId);
+
             return flashcard;
         }
 
@@ -86,15 +84,22 @@ namespace TenXCards.Infrastructure.Repositories
             existingFlashcard.Back = flashcard.Back;
             existingFlashcard.Tags = flashcard.Tags;
             existingFlashcard.Category = flashcard.Category;
-            existingFlashcard.ReviewStatus = flashcard.ReviewStatus;
-            existingFlashcard.UpdatedAt = DateTime.UtcNow;
+
+            if (flashcard.ReviewStatus != existingFlashcard.ReviewStatus)
+            {
+                existingFlashcard.ReviewStatus = flashcard.ReviewStatus;
+                existingFlashcard.ReviewedAt = DateTime.UtcNow;
+            }
 
             if (flashcard.ArchivedAt != existingFlashcard.ArchivedAt)
             {
                 existingFlashcard.ArchivedAt = flashcard.ArchivedAt;
+                await UpdateCollectionStatistics(existingFlashcard.CollectionId);
             }
 
+            existingFlashcard.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
             return existingFlashcard;
         }
 
@@ -104,8 +109,13 @@ namespace TenXCards.Infrastructure.Repositories
             if (flashcard == null)
                 return false;
 
+            var collectionId = flashcard.CollectionId;
             _context.Flashcards.Remove(flashcard);
             await _context.SaveChangesAsync();
+
+            // Update collection statistics
+            await UpdateCollectionStatistics(collectionId);
+
             return true;
         }
 
@@ -115,24 +125,67 @@ namespace TenXCards.Infrastructure.Repositories
                 .Where(f => ids.Contains(f.Id))
                 .ToListAsync();
 
+            var now = DateTime.UtcNow;
+            var affectedCollections = new HashSet<Guid>();
+
             foreach (var flashcard in flashcards)
             {
+                var oldStatus = flashcard.ReviewStatus;
+                var oldArchivedAt = flashcard.ArchivedAt;
+
                 updateAction(flashcard);
-                flashcard.UpdatedAt = DateTime.UtcNow;
+                
+                if (flashcard.ReviewStatus != oldStatus)
+                {
+                    flashcard.ReviewedAt = now;
+                }
+
+                if (flashcard.ArchivedAt != oldArchivedAt)
+                {
+                    affectedCollections.Add(flashcard.CollectionId);
+                }
+
+                flashcard.UpdatedAt = now;
             }
 
             await _context.SaveChangesAsync();
+
+            // Update statistics for affected collections
+            foreach (var collectionId in affectedCollections)
+            {
+                await UpdateCollectionStatistics(collectionId);
+            }
+
             return flashcards;
+        }
+
+        public async Task<bool> UpdateSM2Parameters(Guid id, int repetitions, int interval, double eFactor, DateTime dueDate)
+        {
+            var flashcard = await _context.Flashcards.FindAsync(id);
+            if (flashcard == null) return false;
+
+            flashcard.Sm2Repetitions = repetitions;
+            flashcard.Sm2Interval = interval;
+            flashcard.Sm2Efactor = eFactor;
+            flashcard.Sm2DueDate = dueDate;
+            flashcard.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            await UpdateCollectionStatistics(flashcard.CollectionId);
+
+            return true;
         }
 
         public async Task<Dictionary<string, int>> GetArchivedCountByCategory()
         {
-            return await _context.Flashcards
+            var query = await _context.Flashcards
                 .Where(f => f.ArchivedAt != null)
                 .SelectMany(f => f.Category)
-                .GroupBy(category => category)
-                .Select(group => new { Category = group.Key, Count = group.Count() })
-                .ToDictionaryAsync(x => x.Category, x => x.Count);
+                .GroupBy(c => c)
+                .Select(g => new { Category = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            return query.ToDictionary(x => x.Category, x => x.Count);
         }
 
         private static IQueryable<Flashcard> ApplyFilters(IQueryable<Flashcard> query, FlashcardsQueryParams queryParams)
@@ -163,6 +216,29 @@ namespace TenXCards.Infrastructure.Repositories
             }
 
             return query;
+        }
+
+        private async Task UpdateCollectionStatistics(Guid collectionId)
+        {
+            var collection = await _context.Collections.FindAsync(collectionId);
+            if (collection == null) return;
+
+            var stats = await _context.Flashcards
+                .Where(f => f.CollectionId == collectionId && f.ArchivedAt == null)
+                .GroupBy(f => 1)
+                .Select(g => new
+                {
+                    TotalCards = g.Count(),
+                    DueCards = g.Count(f => f.Sm2DueDate <= DateTime.UtcNow)
+                })
+                .FirstOrDefaultAsync();
+
+            if (stats != null)
+            {
+                collection.TotalCards = stats.TotalCards;
+                collection.DueCards = stats.DueCards;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 } 

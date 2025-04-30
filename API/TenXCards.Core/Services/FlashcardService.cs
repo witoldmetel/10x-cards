@@ -33,28 +33,23 @@ namespace TenXCards.Core.Services
             return new PaginatedResponse<FlashcardResponseDto>
             {
                 Items = MapToResponseDtos(items),
-                Pagination = new PaginationMetadata
-                {
-                    Page = queryParams.Page,
-                    Limit = queryParams.Limit,
-                    Total = total
-                }
+                Limit = queryParams.Limit,
+                Offset = queryParams.Offset,
+                TotalCount = total
             };
         }
 
         public async Task<PaginatedResponse<FlashcardResponseDto>> GetArchivedAsync(FlashcardsQueryParams queryParams)
         {
-            var (items, total) = await _repository.GetArchivedAsync(queryParams);
+            queryParams.Archived = true;
+            var (items, total) = await _repository.GetAllAsync(queryParams);
             
             return new PaginatedResponse<FlashcardResponseDto>
             {
                 Items = MapToResponseDtos(items),
-                Pagination = new PaginationMetadata
-                {
-                    Page = queryParams.Page,
-                    Limit = queryParams.Limit,
-                    Total = total
-                }
+                Limit = queryParams.Limit,
+                Offset = queryParams.Offset,
+                TotalCount = total
             };
         }
 
@@ -148,7 +143,7 @@ namespace TenXCards.Core.Services
             // Check if all flashcards in the collection are archived
             if (flashcard.CollectionId != Guid.Empty)
             {
-                var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Page = 1, Limit = int.MaxValue });
+                var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Offset = 0, Limit = int.MaxValue });
                 if (allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Archive the collection if all flashcards are archived
@@ -169,7 +164,7 @@ namespace TenXCards.Core.Services
             // Check if all flashcards in the collection are archived
             if (flashcard.CollectionId != Guid.Empty)
             {
-                var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Page = 1, Limit = int.MaxValue });
+                var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Offset = 0, Limit = int.MaxValue });
                 if (!allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Unarchive the collection if not all flashcards are archived
@@ -187,7 +182,7 @@ namespace TenXCards.Core.Services
         public async Task<ArchivedStatisticsDto> GetArchivedStatisticsAsync()
         {
             var categoryStats = await _repository.GetArchivedCountByCategory();
-            var (archivedCards, _) = await _repository.GetArchivedAsync(new FlashcardsQueryParams { Page = 1, Limit = 1 });
+            var (archivedCards, _) = await _repository.GetAllAsync(new FlashcardsQueryParams { Archived = true, Offset = 0, Limit = 1 });
 
             return new ArchivedStatisticsDto
             {
@@ -222,4 +217,4 @@ namespace TenXCards.Core.Services
             return flashcards.Select(MapToResponseDto);
         }
     }
-} 
+}

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Infrastructure.Data;
@@ -18,33 +19,58 @@ namespace TenXCards.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Collection>> GetAllAsync()
+        public async Task<(IEnumerable<Collection> Items, int Total)> GetAllAsync(CollectionsQueryParams queryParams)
         {
-            return await _context.Collections.Where(c => c.ArchivedAt == null).ToListAsync();
+            var query = _context.Collections.AsQueryable();
+
+            if (queryParams.Archived.HasValue)
+            {
+                query = queryParams.Archived.Value
+                    ? query.Where(c => c.ArchivedAt != null)
+                    : query.Where(c => c.ArchivedAt == null);
+            }
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip(queryParams.Offset)
+                .Take(queryParams.Limit)
+                .ToListAsync();
+
+            return (items, total);
         }
 
-                public async Task<IEnumerable<Collection>> GetAllForDashboardAsync()
+        public async Task<IEnumerable<Collection>> GetAllForDashboardAsync()
         {
-            // Only collections that are not archived and have at least one active flashcard
             return await _context.Collections
                 .Where(c => c.ArchivedAt == null &&
                     _context.Flashcards.Any(f => f.CollectionId == c.Id && f.ArchivedAt == null))
+                .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Collection>> GetAllArchivedAsync()
         {
-            return await _context.Collections.Where(c => c.ArchivedAt != null).ToListAsync();
+            return await _context.Collections
+                .Where(c => c.ArchivedAt != null)
+                .ToListAsync();
         }
 
         public async Task<Collection?> GetByIdAsync(Guid id)
         {
-            return await _context.Collections.FindAsync(id);
+            return await _context.Collections
+                .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
+                .FirstOrDefaultAsync(c => c.Id == id);
         }
 
         public async Task<Collection> CreateAsync(Collection collection)
         {
             collection.CreatedAt = DateTime.UtcNow;
+            collection.TotalCards = 0;
+            collection.DueCards = 0;
+            
             _context.Collections.Add(collection);
             await _context.SaveChangesAsync();
             return collection;
@@ -54,10 +80,12 @@ namespace TenXCards.Infrastructure.Repositories
         {
             var existing = await _context.Collections.FindAsync(collection.Id);
             if (existing == null) return null;
+
             existing.Name = collection.Name;
             existing.Description = collection.Description;
             existing.Color = collection.Color;
             existing.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
             return existing;
         }
@@ -66,6 +94,7 @@ namespace TenXCards.Infrastructure.Repositories
         {
             var collection = await _context.Collections.FindAsync(id);
             if (collection == null) return false;
+
             _context.Collections.Remove(collection);
             await _context.SaveChangesAsync();
             return true;
@@ -73,22 +102,66 @@ namespace TenXCards.Infrastructure.Repositories
 
         public async Task<bool> ArchiveAsync(Guid id)
         {
-            var collection = await _context.Collections.FindAsync(id);
+            var collection = await _context.Collections
+                .Include(c => c.Flashcards)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (collection == null) return false;
-            collection.ArchivedAt = DateTime.UtcNow;
+
+            var now = DateTime.UtcNow;
+            collection.ArchivedAt = now;
+
+            // Archive all flashcards in the collection
+            foreach (var flashcard in collection.Flashcards)
+            {
+                flashcard.ArchivedAt = now;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> UnarchiveAsync(Guid id)
         {
-            var collection = await _context.Collections.FindAsync(id);
+            var collection = await _context.Collections
+                .Include(c => c.Flashcards)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (collection == null) return false;
+
             collection.ArchivedAt = null;
+
+            // Unarchive all flashcards in the collection
+            foreach (var flashcard in collection.Flashcards)
+            {
+                flashcard.ArchivedAt = null;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
 
+        public async Task UpdateCollectionStatistics(Guid collectionId)
+        {
+            var collection = await _context.Collections.FindAsync(collectionId);
+            if (collection == null) return;
 
+            var stats = await _context.Flashcards
+                .Where(f => f.CollectionId == collectionId && f.ArchivedAt == null)
+                .GroupBy(f => 1)
+                .Select(g => new
+                {
+                    TotalCards = g.Count(),
+                    DueCards = g.Count(f => f.Sm2DueDate <= DateTime.UtcNow)
+                })
+                .FirstOrDefaultAsync();
+
+            if (stats != null)
+            {
+                collection.TotalCards = stats.TotalCards;
+                collection.DueCards = stats.DueCards;
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

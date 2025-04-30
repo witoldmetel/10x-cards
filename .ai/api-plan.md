@@ -60,6 +60,7 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 - **Response Payload JSON:**
   ```json
   {
+    "user_id": "user-id",
     "token": "jwt_token_here",
     "expires_in": 604800
   }

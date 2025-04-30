@@ -19,22 +19,41 @@ namespace TenXCards.Core.Services
             _flashcardRepository = flashcardRepository;
         }
 
-        public async Task<IEnumerable<CollectionResponseDto>> GetAllAsync()
+        public async Task<CollectionsResponse> GetAllAsync(CollectionsQueryParams queryParams)
         {
-            var collections = await _collectionRepository.GetAllAsync();
-            return collections.Select(MapToResponseDto);
+            var (items, total) = await _collectionRepository.GetAllAsync(queryParams);
+            
+            return new CollectionsResponse
+            {
+                Collections = items.Select(MapToResponseDto),
+                Limit = queryParams.Limit,
+                Offset = queryParams.Offset,
+                TotalCount = total
+            };
         }
 
-                public async Task<IEnumerable<CollectionResponseDto>> GetAllForDashboardAsync()
+        public async Task<CollectionsResponse> GetAllForDashboardAsync()
         {
             var collections = await _collectionRepository.GetAllForDashboardAsync();
-            return collections.Select(MapToResponseDto);
+            return new CollectionsResponse
+            {
+                Collections = collections.Select(MapToResponseDto),
+                Limit = 0,
+                Offset = 0,
+                TotalCount = collections.Count()
+            };
         }
 
-        public async Task<IEnumerable<CollectionResponseDto>> GetAllArchivedAsync()
+        public async Task<CollectionsResponse> GetAllArchivedAsync()
         {
             var collections = await _collectionRepository.GetAllArchivedAsync();
-            return collections.Select(MapToResponseDto);
+            return new CollectionsResponse
+            {
+                Collections = collections.Select(MapToResponseDto),
+                Limit = 0,
+                Offset = 0,
+                TotalCount = collections.Count()
+            };
         }
 
         public async Task<CollectionResponseDto?> GetByIdAsync(Guid id)
@@ -80,7 +99,7 @@ namespace TenXCards.Core.Services
             var archived = await _collectionRepository.ArchiveAsync(id);
             if (!archived) return false;
             // Cascade: archive all flashcards in this collection
-            var flashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams { CollectionId = id, Page = 1, Limit = int.MaxValue });
+            var flashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams { CollectionId = id, Offset = 0, Limit = int.MaxValue });
             foreach (var card in flashcards.Items)
             {
                 card.ArchivedAt = DateTime.UtcNow;
@@ -91,10 +110,10 @@ namespace TenXCards.Core.Services
 
         public async Task<bool> UnarchiveAsync(Guid id)
         {
-            var unarchived = await _collectionRepository.UnarchiveAsync(id);
-            if (!unarchived) return false;
+            var unarchive = await _collectionRepository.UnarchiveAsync(id);
+            if (!unarchive) return false;
             // Cascade: unarchive all flashcards in this collection
-            var flashcards = await _flashcardRepository.GetArchivedAsync(new FlashcardsQueryParams { CollectionId = id, Page = 1, Limit = int.MaxValue });
+            var flashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams { CollectionId = id, Archived = true, Offset = 0, Limit = int.MaxValue });
             foreach (var card in flashcards.Items)
             {
                 card.ArchivedAt = null;
@@ -102,8 +121,6 @@ namespace TenXCards.Core.Services
             }
             return true;
         }
-
-
 
         private static CollectionResponseDto MapToResponseDto(Collection collection)
         {

@@ -1,3 +1,6 @@
+using System;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Services;
@@ -7,6 +10,7 @@ namespace TenXCards.API.Controllers
 {
     [ApiController]
     [Route("api/users")]
+    [Produces("application/json")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -16,82 +20,161 @@ namespace TenXCards.API.Controllers
             _userService = userService;
         }
 
+        /// <summary>
+        /// Register a new user
+        /// </summary>
         [HttpPost("register")]
-        [ProducesResponseType(typeof(UserLoginResponse), 201)]
-        [ProducesResponseType(typeof(object), 400)]
-        public async Task<IActionResult> Register([FromBody] UserRegistrationRequest registerDto)
+        [ProducesResponseType(typeof(UserRegistrationResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserRegistrationResponse>> Register([FromBody] UserRegistrationRequest request)
         {
             try
             {
-                var response = await _userService.RegisterUserAsync(registerDto);
-                return CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
+                var response = await _userService.RegisterUserAsync(request);
+                return CreatedAtAction(nameof(GetUserData), new { id = response.Id }, response);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Registration failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
             }
         }
 
+        /// <summary>
+        /// Login with email and password
+        /// </summary>
         [HttpPost("login")]
-        [ProducesResponseType(typeof(UserLoginResponse), 200)]
-        [ProducesResponseType(typeof(object), 401)]
-        public async Task<IActionResult> Login([FromBody] UserLoginRequest loginDto)
+        [ProducesResponseType(typeof(UserLoginResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<UserLoginResponse>> Login([FromBody] UserLoginRequest request)
         {
             try
             {
-                var response = await _userService.LoginUserAsync(loginDto);
+                var response = await _userService.LoginUserAsync(request);
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { error = ex.Message });
+                return Unauthorized(new ProblemDetails
+                {
+                    Title = "Login failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status401Unauthorized
+                });
             }
         }
 
+        /// <summary>
+        /// Reset user password
+        /// </summary>
         [HttpPost("password-reset")]
-        [ProducesResponseType(typeof(object), 200)]
-        [ProducesResponseType(typeof(object), 400)]
-        public async Task<IActionResult> PasswordReset([FromBody] PasswordResetRequest resetDto)
+        [ProducesResponseType(typeof(PasswordResetResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<PasswordResetResponse>> ResetPassword([FromBody] PasswordResetRequest request)
         {
-            var result = await _userService.ResetPasswordAsync(resetDto);
-            if (!result.Success)
-                return BadRequest(result.Errors);
-            return Ok(result);
+            try
+            {
+                var response = await _userService.ResetPasswordAsync(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Password reset failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
         }
 
+        /// <summary>
+        /// Get user data by ID
+        /// </summary>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(UserDataResponse), 200)]
-        [ProducesResponseType(404)]
-        public async Task<IActionResult> GetUserById([FromRoute] Guid id)
+        [Authorize]
+        [ProducesResponseType(typeof(UserDataResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserDataResponse>> GetUserData([FromRoute] Guid id)
         {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
-                return NotFound();
-            var response = new UserDataResponse
+            try
             {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email
-            };
-            return Ok(response);
+                var response = await _userService.GetUserDataAsync(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "User not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
         }
 
+        /// <summary>
+        /// Update user data
+        /// </summary>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(UserDataResponse), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        public async Task<IActionResult> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserRequest dto)
+        [Authorize]
+        [ProducesResponseType(typeof(UserDataResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserDataResponse>> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserRequest request)
         {
-            var updated = await _userService.UpdateUserAsync(id, dto);
-            if (updated == null)
-                return NotFound();
-            var response = new UserDataResponse
+            try
             {
-                Id = updated.Id,
-                Name = updated.Name,
-                Email = updated.Email
-            };
-            return Ok(response);
+                var response = await _userService.UpdateUserAsync(id, request);
+                return Ok(response);
+            }
+            catch (Exception ex) when (ex.Message == "User not found")
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "User not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Update failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        /// <summary>
+        /// Delete user account
+        /// </summary>
+        [HttpDelete("{id}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> DeleteUser([FromRoute] Guid id)
+        {
+            try
+            {
+                await _userService.DeleteUserAsync(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "User not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
         }
     }
 }

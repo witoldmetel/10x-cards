@@ -23,21 +23,28 @@ namespace TenXCards.Core.Models
     public class Flashcard
     {
         public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid CollectionId { get; set; }
         public required string Front { get; set; }
         public required string Back { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public DateTime? ArchivedAt { get; set; }
-        public FlashcardCreationSource CreationSource { get; set; }
         public ReviewStatus ReviewStatus { get; set; }
+        public FlashcardCreationSource CreationSource { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+        public DateTime? ArchivedAt { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<string> Category { get; set; } = new();
-        public Guid CollectionId { get; set; } 
         
         // SM2 Algorithm fields
         public int Sm2Repetitions { get; set; }
         public int Sm2Interval { get; set; }
         public double Sm2Efactor { get; set; } = 2.5;
         public DateTime? Sm2DueDate { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+
+        // Navigation properties
+        public User? User { get; set; }
+        public Collection? Collection { get; set; }
     }
 } 

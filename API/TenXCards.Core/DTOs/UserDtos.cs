@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace TenXCards.Core.DTOs;
@@ -76,6 +77,41 @@ public record PasswordResetRequest
     public string NewPassword { get; init; } = string.Empty;
 }
 
+/// <summary>
+/// Response payload for password reset.
+/// </summary>
+public record PasswordResetResponse
+{
+    public string Message { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Response payload for returning user data.
+/// </summary>
+public record UserDataResponse
+{
+    public Guid Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+    public string? ApiModelKey { get; init; }
+}
+
+/// <summary>
+/// Request payload for updating user data.
+/// </summary>
+public record UpdateUserRequest
+{
+    [Required]
+    [MinLength(2)]
+    public string Name { get; init; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    public string Email { get; init; } = string.Empty;
+
+    public string? ApiModelKey { get; init; }
+}
 
 /// <summary>
 /// Service response type for password reset.
@@ -84,29 +120,6 @@ public record PasswordResetResult
 {
     public bool Success { get; init; }
     public IEnumerable<string>? Errors { get; init; }
-}
-
-/// <summary>
-/// Response payload for returning user data by id.
-/// </summary>
-public record UserDataResponse
-{
-    public Guid Id { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string Email { get; init; } = string.Empty;
-}
-
-/// <summary>
-/// Request payload for updating user name and email.
-/// </summary>
-public class UpdateUserRequest
-{
-    [Required]
-    public string Name { get; set; } = string.Empty;
-
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; } = string.Empty;
 }
 
 /// <summary>

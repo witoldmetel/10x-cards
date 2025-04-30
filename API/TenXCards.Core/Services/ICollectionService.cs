@@ -7,9 +7,9 @@ namespace TenXCards.Core.Services
 {
     public interface ICollectionService
     {
-        Task<IEnumerable<CollectionResponseDto>> GetAllAsync();
-        Task<IEnumerable<CollectionResponseDto>> GetAllForDashboardAsync();
-        Task<IEnumerable<CollectionResponseDto>> GetAllArchivedAsync();
+        Task<CollectionsResponse> GetAllAsync(CollectionsQueryParams queryParams);
+        Task<CollectionsResponse> GetAllForDashboardAsync();
+        Task<CollectionsResponse> GetAllArchivedAsync();
         Task<CollectionResponseDto?> GetByIdAsync(Guid id);
         Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto);
         Task<CollectionResponseDto?> UpdateAsync(Guid id, UpdateCollectionDto updateDto);

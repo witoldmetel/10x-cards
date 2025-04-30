@@ -14,6 +14,7 @@ namespace TenXCards.API.Controllers
     [ApiController]
     [Route("api/flashcards")]
     [Produces("application/json")]
+    [Authorize]
     public class FlashcardsController : ControllerBase
     {
         private readonly IFlashcardService _flashcardService;

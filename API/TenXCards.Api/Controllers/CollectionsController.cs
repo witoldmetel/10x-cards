@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,6 +11,7 @@ namespace TenXCards.API.Controllers
     [ApiController]
     [Route("api/collections")]
     [Produces("application/json")]
+    [Authorize]
     public class CollectionsController : ControllerBase
     {
         private readonly ICollectionService _collectionService;
@@ -21,121 +21,204 @@ namespace TenXCards.API.Controllers
             _collectionService = collectionService;
         }
 
-        // GET: api/collections
+        /// <summary>
+        /// Get all collections with pagination
+        /// </summary>
+        /// <param name="offset">Number of items to skip</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="archived">Filter by archived status (optional)</param>
         [HttpGet]
-        [Authorize]
-        [ProducesResponseType(typeof(IEnumerable<CollectionResponseDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<CollectionResponseDto>>> GetAll()
+        [ProducesResponseType(typeof(PaginatedResponse<CollectionResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginatedResponse<CollectionResponseDto>>> GetAll(
+            [FromQuery] int offset = 0,
+            [FromQuery] int limit = 10,
+            [FromQuery] bool? archived = null)
         {
-            var collections = await _collectionService.GetAllAsync();
-            return Ok(collections);
+            var queryParams = new CollectionsQueryParams
+            {
+                Offset = offset,
+                Limit = limit,
+                Archived = archived
+            };
+
+            var response = await _collectionService.GetAllAsync(queryParams);
+            return Ok(response);
         }
 
-        // GET: api/collections/{id}
+        /// <summary>
+        /// Get collection by ID
+        /// </summary>
         [HttpGet("{id}")]
-        [Authorize]
         [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CollectionResponseDto>> GetById(Guid id)
         {
-            var collection = await _collectionService.GetByIdAsync(id);
-            if (collection == null)
+            try
             {
-                return NotFound();
+                var collection = await _collectionService.GetByIdAsync(id);
+                return Ok(collection);
             }
-            return Ok(collection);
+            catch (Exception ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Collection not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
         }
 
-        // POST: api/collections
+        /// <summary>
+        /// Create a new collection
+        /// </summary>
         [HttpPost]
-        [Authorize]
         [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<CollectionResponseDto>> Create([FromBody] CreateCollectionDto createDto)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CollectionResponseDto>> Create([FromBody] CreateCollectionDto request)
         {
-            var collection = await _collectionService.CreateAsync(createDto);
-            return CreatedAtAction(nameof(GetById), new { id = collection.Id }, collection);
-        }
-
-        // PUT: api/collections/{id}
-        [HttpPut("{id}")]
-        [Authorize]
-        [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<CollectionResponseDto>> Update(Guid id, [FromBody] UpdateCollectionDto updateDto)
-        {
-            var collection = await _collectionService.UpdateAsync(id, updateDto);
-            if (collection == null)
+            try
             {
-                return NotFound();
+                var collection = await _collectionService.CreateAsync(request);
+                return CreatedAtAction(nameof(GetById), new { id = collection.Id }, collection);
             }
-            return Ok(collection);
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Failed to create collection",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
         }
 
-        // DELETE: api/collections/{id}
+        /// <summary>
+        /// Update a collection
+        /// </summary>
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(CollectionResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CollectionResponseDto>> Update(Guid id, [FromBody] UpdateCollectionDto request)
+        {
+            try
+            {
+                var collection = await _collectionService.UpdateAsync(id, request);
+                return Ok(collection);
+            }
+            catch (Exception ex) when (ex.Message.Contains("not found"))
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Collection not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Failed to update collection",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        /// <summary>
+        /// Delete a collection
+        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(Guid id)
         {
-            var success = await _collectionService.DeleteAsync(id);
-            if (!success)
+            try
             {
-                return NotFound();
+                await _collectionService.DeleteAsync(id);
+                return NoContent();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Collection not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
         }
 
-        // GET: api/collections/dashboard
+        /// <summary>
+        /// Get collections for dashboard
+        /// </summary>
         [HttpGet("dashboard")]
-        [Authorize]
-        [ProducesResponseType(typeof(IEnumerable<CollectionResponseDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<CollectionResponseDto>>> GetAllForDashboard()
+        [ProducesResponseType(typeof(PaginatedResponse<CollectionResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginatedResponse<CollectionResponseDto>>> GetDashboard()
         {
-            var collections = await _collectionService.GetAllForDashboardAsync();
-            return Ok(collections);
+            var response = await _collectionService.GetAllForDashboardAsync();
+            return Ok(response);
         }
 
-        // GET: api/collections/archived
+         /// <summary>
+        /// Get archived collections
+        /// </summary>
         [HttpGet("archived")]
-        [Authorize]
-        [ProducesResponseType(typeof(IEnumerable<CollectionResponseDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<CollectionResponseDto>>> GetAllArchived()
+        [ProducesResponseType(typeof(PaginatedResponse<CollectionResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<PaginatedResponse<CollectionResponseDto>>> GetArchived()
         {
-            var collections = await _collectionService.GetAllArchivedAsync();
-            return Ok(collections);
+            var response = await _collectionService.GetAllArchivedAsync();
+            return Ok(response);
         }
 
-        // PUT: api/collections/{id}/archive
+        /// <summary>
+        /// Archive a collection
+        /// </summary>
         [HttpPut("{id}/archive")]
-        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Archive(Guid id)
         {
-            var success = await _collectionService.ArchiveAsync(id);
-            if (!success)
+            try
             {
-                return NotFound();
+                await _collectionService.ArchiveAsync(id);
+                return NoContent();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Collection not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
         }
 
-        // PUT: api/collections/{id}/unarchive
+        /// <summary>
+        /// Unarchive a collection
+        /// </summary>
         [HttpPut("{id}/unarchive")]
-        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Unarchive(Guid id)
         {
-            var success = await _collectionService.UnarchiveAsync(id);
-            if (!success)
+            try
             {
-                return NotFound();
+                await _collectionService.UnarchiveAsync(id);
+                return NoContent();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Collection not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
         }
     }
 }
