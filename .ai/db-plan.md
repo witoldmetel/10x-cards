@@ -13,13 +13,13 @@
 
 - **id**: UUID PRIMARY KEY
 - **name**: TEXT NOT NULL
-- **description**: TEXT NOT NULL
+- **description**: TEXT -- Made optional
 - **created_at**: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 - **updated_at**: TIMESTAMP WITH TIME ZONE
 - **archived_at**: TIMESTAMP WITH TIME ZONE  # Added for soft-archiving collections
 - **total_cards**: INTEGER DEFAULT 0
 - **due_cards**: INTEGER DEFAULT 0
-- **color**: TEXT
+- **color**: TEXT NOT NULL -- Required field
 
 ## 3. Table `flashcards`
 
@@ -30,16 +30,17 @@
 - **back**: TEXT NOT NULL
 - **review_status**: TEXT NOT NULL
   - _Constraint_: CHECK (review_status IN ('New', 'ToCorrect', 'Approved', 'Rejected'))
+  - _Default_: 'Approved' WHEN creation_source = 'Manual'
+  - _Default_: 'New' WHEN creation_source = 'AI'
 - **creation_source**: TEXT NOT NULL
   - _Constraint_: CHECK (creation_source IN ('Manual', 'AI'))
-- **last_reviewed**: TIMESTAMP WITH TIME ZONE
-- **next_review**: TIMESTAMP WITH TIME ZONE
+- **reviewed_at**: TIMESTAMP WITH TIME ZONE  # Replaces last_reviewed and next_review
 - **archived_at**: TIMESTAMP WITH TIME ZONE  # Used for soft-archiving flashcards
 - **tags**: TEXT[]
 - **category**: TEXT[]
 - **sm2_repetitions**: INTEGER NOT NULL DEFAULT 0
 - **sm2_interval**: INTEGER NOT NULL DEFAULT 0
-- **sm2_efactor**: NUMERIC NOT NULL
+- **sm2_efactor**: NUMERIC NOT NULL DEFAULT 2.5
 - **sm2_due_date**: TIMESTAMP WITH TIME ZONE
 - **created_at**: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 - **updated_at**: TIMESTAMP WITH TIME ZONE
@@ -61,8 +62,9 @@
 
 > **Archiving logic:**
 > - If all flashcards in a collection are archived, the collection is automatically archived (archived_at set).
-> - Collections with archived_at set are not visible in dashboard endpoints.
-> - Flashcards are only accessible via their parent collection; there are no global flashcard tables/views.
+> - Collections with archived_at set are only returned when archived=true query parameter is used.
+> - Flashcards are included in their parent collection response.
+> - Collection responses include a flashcards array with all related flashcard objects.
 
 ## 6. Indexes
 
@@ -77,6 +79,10 @@
 - **B-tree Index** on `collection_id` column in `study_sessions` table:
   ```sql
   CREATE INDEX idx_study_sessions_collection_id ON study_sessions (collection_id);
+  ```
+- **B-tree Index** on `reviewed_at` column in `flashcards` table:
+  ```sql
+  CREATE INDEX idx_flashcards_reviewed_at ON flashcards (reviewed_at);
   ```
 
 ## 7. Security Rules (RLS)
@@ -107,6 +113,8 @@
 - All IDs use UUID type for better scalability and security
 - Timestamps use WITH TIME ZONE for proper timezone handling
 - The schema supports the SuperMemo2 (SM2) algorithm parameters for spaced repetition
-- Collections table added to support grouping of flashcards
-- Study sessions table added to track learning progress
-- Proper foreign key constraints and cascading deletes implemented
+- Collections require name and color fields, with description being optional
+- Flashcards created manually default to 'Approved' status
+- Flashcards created by AI default to 'New' status
+- reviewed_at timestamp is updated whenever review_status changes
+- Pagination uses limit and offset with totalCount for all list endpoints
