@@ -51,12 +51,7 @@ export default function Archive() {
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
                 {archivedCollections.map(collection => (
-                  <CollectionCard
-                    key={collection.id}
-                    collection={collection}
-                    onStudy={() => {}}
-                    onView={() => {}}
-                  />
+                  <CollectionCard key={collection.id} collection={collection} onStudy={() => {}} onView={() => {}} />
                 ))}
               </div>
             )}

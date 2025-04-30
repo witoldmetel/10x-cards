@@ -1,5 +1,3 @@
-
-
 export interface CollectionResponseDto {
   id: string;
   name: string;

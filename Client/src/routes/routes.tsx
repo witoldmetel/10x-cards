@@ -10,7 +10,7 @@ import Archive from './Archive';
 import Settings from './Settings';
 import AuthLayout from '@/layouts/AuthLayout';
 import ProtectedLayout from '@/layouts/ProtectedLayout';
-import ManualGenerate  from './ManualGenerate';
+import ManualGenerate from './ManualGenerate';
 import AIGenerate from './AIGenerate';
 import CollectionDetails from './CollectionDetails';
 

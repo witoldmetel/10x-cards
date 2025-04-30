@@ -89,7 +89,7 @@ export default function ManualGenerate() {
   const selectedCollectionId = watch('selectedCollectionId');
   const watched = watch();
   const isNew = isNewCollectionForm(watched);
-  const errorsCollection = isNew ? (errors as any).collection ?? {} : {};
+  const errorsCollection = isNew ? ((errors as any).collection ?? {}) : {};
 
   const onSubmit = async (data: FormValues) => {
     let targetCollectionId: string | null = null;
@@ -150,29 +150,29 @@ export default function ManualGenerate() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="h-9 w-9 p-0">
-          <ArrowLeft className="h-5 w-5" />
+      <div className='flex items-center gap-3 mb-6'>
+        <Button variant='ghost' onClick={() => navigate(-1)} className='h-9 w-9 p-0'>
+          <ArrowLeft className='h-5 w-5' />
         </Button>
-        <h1 className="text-3xl font-bold">Create Flashcards</h1>
+        <h1 className='text-3xl font-bold'>Create Flashcards</h1>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <Card className="mb-6">
+      <div className='grid md:grid-cols-3 gap-8'>
+        <div className='md:col-span-2'>
+          <Card className='mb-6'>
             <CardHeader>
               <CardTitle>Collection</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
-                <label htmlFor="collection-select" className="block text-sm font-medium text-neutral-700 mb-1">
+              <div className='mb-4'>
+                <label htmlFor='collection-select' className='block text-sm font-medium text-neutral-700 mb-1'>
                   Select Collection
                 </label>
                 <select
-                  id="collection-select"
-                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200"
-                  value={selectedCollectionId || "new"}
-                  onChange={(e) => {
+                  id='collection-select'
+                  className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
+                  value={selectedCollectionId || 'new'}
+                  onChange={e => {
                     const value = e.target.value;
 
                     if (value === 'new') {
@@ -187,9 +187,8 @@ export default function ManualGenerate() {
                         selectedCollectionId: value,
                       });
                     }
-                  }}
-                >
-                  <option value="new">Create New Collection</option>
+                  }}>
+                  <option value='new'>Create New Collection</option>
                   {collections?.map(collection => (
                     <option key={collection.id} value={collection.id}>
                       {collection.name}
@@ -199,51 +198,46 @@ export default function ManualGenerate() {
               </div>
 
               {isNew && (
-                <div className="space-y-4">
+                <div className='space-y-4'>
                   <Controller
-                    name="collection.name"
+                    name='collection.name'
                     control={control}
                     render={({ field }) => (
                       <Input
-                        label="Collection Name"
+                        label='Collection Name'
                         {...field}
-                        placeholder="e.g., Spanish Vocabulary"
+                        placeholder='e.g., Spanish Vocabulary'
                         error={errorsCollection?.name?.message}
                       />
                     )}
                   />
 
                   <Controller
-                    name="collection.description"
+                    name='collection.description'
                     control={control}
                     render={({ field }) => (
                       <Textarea
-                        label="Description"
+                        label='Description'
                         {...field}
-                        placeholder="Describe what this collection is about..."
+                        placeholder='Describe what this collection is about...'
                         error={errorsCollection?.description?.message}
                       />
                     )}
                   />
 
                   <div>
-                    <label htmlFor="color" className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label htmlFor='color' className='block text-sm font-medium text-neutral-700 mb-1'>
                       Color
                     </label>
-                    <div className="flex items-center gap-3">
+                    <div className='flex items-center gap-3'>
                       <Controller
-                        name="collection.color"
+                        name='collection.color'
                         control={control}
                         render={({ field }) => (
-                          <input
-                            type="color"
-                            id="color"
-                            {...field}
-                            className="h-10 w-10 rounded cursor-pointer"
-                          />
+                          <input type='color' id='color' {...field} className='h-10 w-10 rounded cursor-pointer' />
                         )}
                       />
-                      <span className="text-neutral-600">{watched.collection?.color}</span>
+                      <span className='text-neutral-600'>{watched.collection?.color}</span>
                     </div>
                   </div>
                 </div>
@@ -251,31 +245,29 @@ export default function ManualGenerate() {
             </CardContent>
           </Card>
 
-          <div className="mb-4 flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Flashcards</h2>
+          <div className='mb-4 flex justify-between items-center'>
+            <h2 className='text-xl font-semibold'>Flashcards</h2>
             <Button
-              variant="outline"
-              leftIcon={<Plus className="h-4 w-4" />}
-              onClick={() => append({ front: '', back: '' })}
-            >
+              variant='outline'
+              leftIcon={<Plus className='h-4 w-4' />}
+              onClick={() => append({ front: '', back: '' })}>
               Add Card
             </Button>
           </div>
 
           {fields.map((field, index) => (
-            <Card key={field.id} className="mb-4">
-              <CardContent className="pt-5">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium">Card {index + 1}</h3>
+            <Card key={field.id} className='mb-4'>
+              <CardContent className='pt-5'>
+                <div className='space-y-4'>
+                  <div className='flex justify-between items-center'>
+                    <h3 className='font-medium'>Card {index + 1}</h3>
                     {fields.length > 1 && (
                       <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 text-error-500 hover:bg-error-50"
+                        variant='ghost'
+                        className='h-8 w-8 p-0 text-error-500 hover:bg-error-50'
                         onClick={() => remove(index)}
-                        aria-label="Remove card"
-                      >
-                        <Plus className="h-5 w-5 rotate-45" />
+                        aria-label='Remove card'>
+                        <Plus className='h-5 w-5 rotate-45' />
                       </Button>
                     )}
                   </div>
@@ -285,9 +277,9 @@ export default function ManualGenerate() {
                     control={control}
                     render={({ field }) => (
                       <Textarea
-                        label="front"
+                        label='front'
                         {...field}
-                        placeholder="Enter your front..."
+                        placeholder='Enter your front...'
                         error={errors.flashcards?.[index]?.front?.message}
                       />
                     )}
@@ -298,9 +290,9 @@ export default function ManualGenerate() {
                     control={control}
                     render={({ field }) => (
                       <Textarea
-                        label="back"
+                        label='back'
                         {...field}
-                        placeholder="Enter the back..."
+                        placeholder='Enter the back...'
                         error={errors.flashcards?.[index]?.back?.message}
                       />
                     )}
@@ -311,42 +303,43 @@ export default function ManualGenerate() {
           ))}
         </div>
 
-        <div className="md:col-span-1">
-          <div className="sticky top-20">
+        <div className='md:col-span-1'>
+          <div className='sticky top-20'>
             <Card>
               <CardHeader>
                 <CardTitle>Save Flashcards</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-neutral-600 mb-4">
+                <p className='text-neutral-600 mb-4'>
                   You're creating {fields.length} flashcard{fields.length !== 1 ? 's' : ''} in{' '}
                   {selectedCollectionId ? 'an existing collection' : 'a new collection'}.
                 </p>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between">
+                <div className='space-y-2'>
+                  <div className='flex justify-between'>
                     <span>Cards:</span>
                     <span>{fields.length}</span>
                   </div>
 
-                  <div className="flex justify-between">
+                  <div className='flex justify-between'>
                     <span>Collection:</span>
                     <span>
                       {selectedCollectionId
                         ? collections?.find(c => c.id === selectedCollectionId)?.name || 'Loading...'
-                        : isNew ? 'New - ' + (watched.collection?.name || 'Unnamed') : 'Select a collection'}
+                        : isNew
+                          ? 'New - ' + (watched.collection?.name || 'Unnamed')
+                          : 'Select a collection'}
                     </span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter>
                 <Button
-                  variant="primary"
-                  className="w-full"
-                  leftIcon={<Save className="h-4 w-4" />}
+                  variant='primary'
+                  className='w-full'
+                  leftIcon={<Save className='h-4 w-4' />}
                   onClick={handleSubmit(onSubmit)}
-                  isLoading={isLoadingCollections || isCreatingCollection || isCreatingFlashcard}
-                >
+                  isLoading={isLoadingCollections || isCreatingCollection || isCreatingFlashcard}>
                   Save Flashcards
                 </Button>
               </CardFooter>

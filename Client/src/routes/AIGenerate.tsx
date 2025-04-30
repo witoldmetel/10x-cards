@@ -9,29 +9,37 @@ import { Input } from '@/components/ui/input';
 import { useCollections } from '@/api/collections/queries';
 import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
-import type { GenerateFlashcardsAIRequest, GeneratedAICard, CreateFlashcardDTO, FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
+import type {
+  GenerateFlashcardsAIRequest,
+  GeneratedAICard,
+  CreateFlashcardDTO,
+  FlashcardCreationSource,
+  ReviewStatus,
+} from '@/api/flashcard/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
 // Zod schema for AI generation form
-const aiGenerateSchema = z.object({
-  sourceText: z.string().min(1, 'Please enter some text to generate flashcards from'),
-  collectionName: z.string().optional(),
-  selectedCollectionId: z.string(), // always a string, never null
-  numberOfCards: z.number().min(3).max(20),
-}).superRefine((data, ctx) => {
-  // Require collectionName if selectedCollectionId is 'new'
-  if (data.selectedCollectionId === 'new') {
-    if (!data.collectionName || !data.collectionName.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Collection name is required',
-        path: ['collectionName'],
-      });
+const aiGenerateSchema = z
+  .object({
+    sourceText: z.string().min(1, 'Please enter some text to generate flashcards from'),
+    collectionName: z.string().optional(),
+    selectedCollectionId: z.string(), // always a string, never null
+    numberOfCards: z.number().min(3).max(20),
+  })
+  .superRefine((data, ctx) => {
+    // Require collectionName if selectedCollectionId is 'new'
+    if (data.selectedCollectionId === 'new') {
+      if (!data.collectionName || !data.collectionName.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Collection name is required',
+          path: ['collectionName'],
+        });
+      }
     }
-  }
-});
+  });
 type AIGenerateFormValues = z.infer<typeof aiGenerateSchema>;
 
 export default function AIGenerate() {
@@ -177,8 +185,7 @@ export default function AIGenerate() {
                         className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
                         value={selectedCollectionId}
                         onChange={handleSelectCollection}
-                        {...register('selectedCollectionId')}
-                      >
+                        {...register('selectedCollectionId')}>
                         <option value='new'>Create New Collection</option>
                         {collections.map(collection => (
                           <option key={collection.id} value={collection.id}>
@@ -222,8 +229,7 @@ export default function AIGenerate() {
                     className='w-full'
                     leftIcon={<Sparkles className='h-4 w-4' />}
                     isLoading={isGenerating}
-                    disabled={isGenerating}
-                  >
+                    disabled={isGenerating}>
                     {isGenerating ? 'Generating...' : 'Generate Flashcards'}
                   </Button>
                 </form>
@@ -248,8 +254,7 @@ export default function AIGenerate() {
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
+                    transition={{ delay: index * 0.1 }}>
                     <Card>
                       <CardContent className='pt-5'>
                         <div className='space-y-4'>
@@ -293,8 +298,7 @@ export default function AIGenerate() {
                   onClick={() => {
                     setGeneratedCards([]);
                     setTargetCollectionId(null);
-                  }}
-                >
+                  }}>
                   Go Back
                 </Button>
                 <Button variant='primary' onClick={handleSaveCards} isLoading={isSaving} disabled={isSaving}>

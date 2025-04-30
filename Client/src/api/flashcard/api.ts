@@ -27,10 +27,7 @@ export async function createFlashcard(flashcard: CreateFlashcardDTO): Promise<Fl
     throw new Error('createFlashcard: collectionId is required in flashcard DTO');
   }
   const { collectionId, ...payload } = flashcard as any;
-  const { data } = await instance.post<Flashcard>(
-    `/collections/${collectionId}/flashcards`,
-    payload
-  );
+  const { data } = await instance.post<Flashcard>(`/collections/${collectionId}/flashcards`, payload);
   return data;
 }
 
@@ -45,11 +42,11 @@ export async function deleteFlashcard(id: string): Promise<void> {
 
 export async function generateFlashcardsAI(
   collectionId: string,
-  payload: GenerateFlashcardsAIRequest
+  payload: GenerateFlashcardsAIRequest,
 ): Promise<GenerateFlashcardsAIResponse> {
   const { data } = await instance.post<GenerateFlashcardsAIResponse>(
     `/collections/${collectionId}/flashcards/generate`,
-    payload
+    payload,
   );
   return data;
 }

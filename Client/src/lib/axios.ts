@@ -4,9 +4,9 @@ export const instance: AxiosInstance = axios.create({
   baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    Accept: 'application/json',
   },
-  withCredentials: true
+  withCredentials: true,
 });
 
 // Request interceptor to add Authorization header from localStorage
@@ -41,7 +41,7 @@ instance.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default instance;
