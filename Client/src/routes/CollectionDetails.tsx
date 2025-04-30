@@ -43,7 +43,6 @@ export default function CollectionDetails() {
 
   const handleBack = () => navigate('/dashboard');
   const handleStudy = () => collectionId && navigate(`/study/${collectionId}`);
-  const handleAddFlashcard = () => collectionId && navigate('/create', { state: { collectionId } });
   const handleDeleteCollection = async () => {
     if (!collectionId) return;
     await deleteCollectionMutation.mutateAsync(collectionId);
@@ -125,7 +124,7 @@ export default function CollectionDetails() {
               <Button 
                 variant="primary"
                 leftIcon={<Plus className="h-4 w-4" />}
-                onClick={handleAddFlashcard}
+                onClick={() => navigate('/generate/manual')}
               >
                 Add Flashcard
               </Button>
@@ -140,7 +139,7 @@ export default function CollectionDetails() {
                 <p className="text-neutral-600 mb-4">
                   Start adding flashcards to build your collection
                 </p>
-                <Button variant="primary" onClick={handleAddFlashcard}>
+                <Button variant="primary" onClick={() => navigate('/generate/manual')}>
                   Add First Flashcard
                 </Button>
               </CardContent>

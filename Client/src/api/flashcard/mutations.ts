@@ -16,11 +16,8 @@ export const useCreateFlashcard = () => {
       createFlashcard(collectionId, flashcard),
     onSuccess: (newFlashcard: Flashcard) => {
       queryClient.invalidateQueries({ queryKey: ['collections', newFlashcard.collectionId] });
-      // Update the flashcards list cache
-      queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
-        if (!oldData) return [newFlashcard];
-        return [newFlashcard, ...oldData];
-      });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', newFlashcard.collectionId] });
     },
   });
 };
@@ -33,13 +30,8 @@ export const useUpdateFlashcard = () => {
       updateFlashcard(id, flashcard),
     onSuccess: (updatedFlashcard: Flashcard) => {
       queryClient.invalidateQueries({ queryKey: ['collections', updatedFlashcard.collectionId] });
-
-      // Update both the single flashcard and the list cache
-      queryClient.setQueryData(['flashcard', updatedFlashcard.id], updatedFlashcard);
-      queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
-        if (!oldData) return [updatedFlashcard];
-        return oldData.map(card => (card.id === updatedFlashcard.id ? updatedFlashcard : card));
-      });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', updatedFlashcard.collectionId] });
     },
   });
 };
@@ -49,16 +41,9 @@ export const useDeleteFlashcard = () => {
 
   return useMutation({
     mutationFn: (id: string) => deleteFlashcard(id),
-    onSuccess: (_, deletedId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
-
-      // Remove the flashcard from the list cache
-      queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
-        if (!oldData) return [];
-        return oldData.filter(card => card.id !== deletedId);
-      });
-      // Remove the single flashcard cache
-      queryClient.removeQueries({ queryKey: ['flashcard', deletedId] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
     },
   });
 };

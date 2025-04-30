@@ -56,19 +56,10 @@ export function useDeleteCollection() {
   return useMutation({
     mutationFn: (id: string) => deleteCollection(id),
     onSuccess: (_, deletedId) => {
-      queryClient.removeQueries({ queryKey: ['collections', deletedId] });
-      // Remove from collections list cache
-      queryClient.setQueryData<PaginatedCollectionsResponse>(['collections'], (oldData) => {
-        if (!oldData) return { collections: [], totalCount: 0, limit: 10, offset: 0 };
-        return {
-          ...oldData,
-          collections: oldData.collections.filter((collection: CollectionResponseDto) => collection.id !== deletedId),
-          totalCount: oldData.totalCount - 1
-        };
-      });
-      
-
-
+      // Invalidate all collection-related queries
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      // Also invalidate any flashcards queries related to this collection
+      queryClient.invalidateQueries({ queryKey: ['flashcards', deletedId] });
     },
   });
 }

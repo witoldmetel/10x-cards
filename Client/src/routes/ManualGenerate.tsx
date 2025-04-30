@@ -12,7 +12,6 @@ import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser } from '@/api/user/queries';
 import { useAuth } from '@/contexts/AuthContext';
 
 // --- SCHEMA DEFINITION ---
@@ -57,7 +56,7 @@ function isExistingCollectionForm(data: FormValues): data is z.infer<typeof exis
 export default function ManualGenerate() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: collections, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
+  const { data, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
   const { mutateAsync: createCollection, isPending: isCreatingCollection } = useCreateCollection();
   const { mutateAsync: createFlashcard, isPending: isCreatingFlashcard } = useCreateFlashcard();
   const {  userId } = useAuth();
@@ -194,7 +193,7 @@ export default function ManualGenerate() {
                     }
                   }}>
                   <option value='new'>Create New Collection</option>
-                  {Array.isArray(collections) && collections.map(collection => (
+                  {data?.collections.map(collection => (
                     <option key={collection.id} value={collection.id}>
                       {collection.name}
                     </option>
@@ -330,7 +329,7 @@ export default function ManualGenerate() {
                     <span>Collection:</span>
                     <span>
                       {selectedCollectionId
-                        ? (Array.isArray(collections) && collections.find(c => c.id === selectedCollectionId)?.name) || 'Loading...'
+                        ? (data?.collections.find(c => c.id === selectedCollectionId)?.name) || 'Loading...'
                         : isNew
                           ? 'New - ' + (watched.collection?.name || 'Unnamed')
                           : 'Select a collection'}
