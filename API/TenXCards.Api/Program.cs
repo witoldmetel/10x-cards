@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TenXCards.API.Middleware;
+using TenXCards.Core.Configuration;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
@@ -124,11 +125,20 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 builder.Services.AddScoped<IFlashcardService, FlashcardService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
+
+// Configure OpenRouter
+builder.Services.Configure<OpenRouterOptions>(
+    builder.Configuration.GetSection(OpenRouterOptions.SectionName));
+
+builder.Services.AddHttpClient<IAIService, AIService>(client =>
+{
+    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 120);
+    client.Timeout = TimeSpan.FromSeconds(timeout);
+});
 
 // Register middleware
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();

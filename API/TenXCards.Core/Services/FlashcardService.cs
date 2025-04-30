@@ -12,12 +12,16 @@ namespace TenXCards.Core.Services
     public class FlashcardService : IFlashcardService
     {
         private readonly IFlashcardRepository _repository;
-        private readonly ICollectionService _collectionService; // Assuming _collectionService is injected through the constructor
-
-        public FlashcardService(IFlashcardRepository repository, ICollectionService collectionService)
+        private readonly ICollectionService _collectionService;
+        private readonly IAIService _aiService;
+        public FlashcardService(
+            IFlashcardRepository repository, 
+            ICollectionService collectionService,
+            IAIService aiService)
         {
             _repository = repository;
             _collectionService = collectionService;
+            _aiService = aiService;
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -188,6 +192,33 @@ namespace TenXCards.Core.Services
             {
                 TotalArchived = archivedCards.Count(),
                 ArchivedByCategory = categoryStats
+            };
+        }
+
+        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request)
+        {
+            // Generate flashcards using AI
+            var generatedFlashcards = await _aiService.GenerateFlashcardsAsync(
+                request.SourceText,
+                request.NumberOfCards,
+                request.ApiModelKey
+            );
+
+            // Create all flashcards in the collection
+            var createdFlashcards = new List<CreateFlashcardDto>();
+            foreach (var flashcard in generatedFlashcards)
+            {
+                var created = await CreateForCollectionAsync(collectionId, flashcard);
+                if (created != null)
+                {
+                    createdFlashcards.Add(flashcard);
+                }
+            }
+
+            return new GenerateFlashcardsResponse
+            {
+                Flashcards = createdFlashcards,
+                CollectionId = collectionId
             };
         }
 

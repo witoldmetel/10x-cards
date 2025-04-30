@@ -282,16 +282,17 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 
 ### D. AI Flashcard Generation
 
-#### 1. Generate Flashcards using AI
+#### 1. Generate Flashcards using OpenRouter
 - **Method:** POST
 - **Path:** `/api/collections/{collection_id}/flashcards/generate`
-- **Description:** Generate flashcards for a collection using AI.
+- **Description:** Generate flashcards for a collection using OpenRouter's AI models.
 - **Request Payload JSON:**
   ```json
   {
     "source_text": "Long source text...",
     "number_of_cards": 10,
-    "api_model_key": "optional_api_key"
+    "model_name": "openai/gpt-4",  // Optional, defaults to configuration
+    "api_model_key": "optional_api_key"  // Optional, falls back to configuration
   }
   ```
 - **Response Payload JSON:**
@@ -301,8 +302,8 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
       {
         "front": "Generated question",
         "back": "Generated answer",
-        "tags": ["ai-generated"],
-        "category": ["auto-detected"],
+        "tags": ["ai-generated", "topic-specific-tag"],
+        "category": ["auto-detected-category"],
         "creation_source": "AI",
         "review_status": "New"
       }
@@ -311,7 +312,54 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   }
   ```
 - **Success Codes:** 201 Created
-- **Error Codes:** 400 Bad Request, 401 Unauthorized
+- **Error Codes:** 
+  - 400 Bad Request (invalid input)
+  - 401 Unauthorized (invalid API key)
+  - 408 Request Timeout (AI service timeout)
+  - 429 Too Many Requests (rate limit exceeded)
+
+#### 2. Configuration (appsettings.json)
+```json
+{
+  "OpenRouter": {
+    "ApiKey": "your-openrouter-api-key",
+    "BaseUrl": "https://openrouter.ai/api/v1",
+    "DefaultModel": "openai/gpt-4",
+    "TimeoutSeconds": 120,
+    "SiteUrl": "https://10xcards.com",
+    "SiteName": "10X Cards"
+  }
+}
+```
+
+#### 3. Generation Process
+1. Request is authenticated and validated
+2. Source text is sent to OpenRouter API with specific prompt format
+3. AI generates flashcards in JSON format with:
+   - Front (question/term)
+   - Back (answer/definition)
+   - Automatically detected tags
+   - Automatically categorized content
+4. Generated flashcards are:
+   - Marked as `CreationSource.AI`
+   - Set to `ReviewStatus.New`
+   - Added to specified collection
+   - Included in collection statistics
+
+#### 4. Error Handling
+- Invalid API key returns 401
+- Malformed AI response triggers retry
+- Timeout after configured seconds
+- Rate limiting applied per user
+- JSON parsing errors return 400 with details
+
+#### 5. Security Measures
+- API key stored in configuration
+- Rate limiting per user/IP
+- Maximum source text length enforced
+- Maximum number of cards per request (50)
+- Request timeout protection
+- Sanitized AI response parsing
 
 ### E. Study Session Management
 

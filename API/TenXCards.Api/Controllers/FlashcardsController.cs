@@ -46,6 +46,19 @@ namespace TenXCards.API.Controllers
             return CreatedAtAction(nameof(GetByCollection), new { collectionId = collectionId }, flashcard);
         }
 
+        // POST: api/collections/{collectionId}/flashcards/generate
+        [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
+        [Authorize]
+        [ProducesResponseType(typeof(GenerateFlashcardsResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<GenerateFlashcardsResponse>> GenerateForCollection(
+            Guid collectionId, 
+            [FromBody] GenerateFlashcardsRequest request)
+        {
+            var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request);
+            return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
+        }
+
         // PUT: api/flashcards/{id}
         [HttpPut("{id}")]
         [Authorize]
