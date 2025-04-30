@@ -1,27 +1,14 @@
 import { createContext, useContext, useState } from 'react';
-import { useNavigate, Navigate, useLocation } from 'react-router';
-
-type ProtectedRouteProps = {
-  children: React.ReactNode;
-};
-
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { token } = useAuth();
-  const location = useLocation();
-
-  if (!token) {
-    return <Navigate to='/' replace state={{ from: location }} />;
-  }
-
-  return children;
-};
+import { useNavigate, useLocation } from 'react-router';
 
 const AuthContext = createContext<{
-  token: string;
-  onLogin: (token: string) => void;
+  isAuth: boolean;
+  userId: string | undefined;
+  onLogin: (token: string, userId: string) => void;
   onLogout: () => void;
 }>({
-  token: '',
+  isAuth: false,
+  userId: undefined,
   onLogin: () => {},
   onLogout: () => {},
 });
@@ -34,31 +21,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize token from localStorage
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
+  const [userId, setUserId] = useState(() => localStorage.getItem('userId') || undefined);
 
-  const handleLogin = async (token: string) => {
+  const handleLogin = async (token: string, userId: string) => {
     if (!token) {
       throw new Error('Token is required');
     }
-
     setToken(token);
-    // Store token in localStorage
+    setUserId(userId);
+
     localStorage.setItem('token', token);
+    localStorage.setItem('userId', userId);
 
     const origin = location.state?.from?.pathname || '/dashboard';
+
     navigate(origin);
   };
 
   const handleLogout = () => {
     setToken('');
-    // Remove token from localStorage
+    setUserId('');
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     navigate('/');
   };
 
   const value = {
-    token,
+    isAuth: !!token,
+    userId,
     onLogin: handleLogin,
     onLogout: handleLogout,
   };
@@ -66,6 +57,4 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

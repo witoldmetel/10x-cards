@@ -1,5 +1,5 @@
 export const USER_API_ROUTES = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
-  PROFILE: '/users/profile',
+  PROFILE: (id: string) => `/users/${id}`,
 } as const;

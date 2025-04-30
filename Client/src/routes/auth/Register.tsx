@@ -1,41 +1,49 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Lock, Mail } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { CardHeader } from '@/components/ui/card';
-import { CardContent } from '@/components/ui/card';
+import { ArrowLeft, Lock, Mail, User } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+
+const registerSchema = z
+  .object({
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { onLogin } = useAuth();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const onSubmit = async (formData: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
-
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const confirmPassword = formData.get('confirm-password') as string;
-
-    // Client-side validation
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setIsLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch('http://localhost:5001/api/users/register', {
@@ -43,7 +51,11 @@ export default function Register() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
       const data = await response.json();
@@ -52,23 +64,22 @@ export default function Register() {
         throw new Error(data.message || 'Failed to create account');
       }
 
-      // Store in localStorage
       const session = {
         user: {
           id: data.id,
           email: data.email,
+          name: data.name,
         },
         token: data.token,
       };
 
-      // Validate required data
       if (!session.user.id || !session.user.email || !session.token) {
         throw new Error('Invalid response from server');
       }
 
       localStorage.setItem('flashcards_auth', JSON.stringify(session));
 
-      onLogin(session.token);
+      onLogin(session.token, session.user.id);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create account');
     } finally {
@@ -77,83 +88,78 @@ export default function Register() {
   };
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
-      <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <Link
-          to='/'
-          className='absolute top-8 left-8 inline-flex items-center text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors'>
-          <ArrowLeft className='w-4 h-4 mr-2' />
-          Back to home
-        </Link>
+    <div className='min-h-screen flex items-center justify-center bg-neutral-50'>
+      <Link
+        to='/'
+        className='absolute top-8 left-8 inline-flex items-center text-sm font-medium text-neutral-600 hover:text-primary-600 transition-colors'>
+        <ArrowLeft className='h-4 w-4 mr-2' />
+        Back to home
+      </Link>
 
-        <h2 className='text-center text-4xl font-bold text-gray-900 mb-2'>Create your account</h2>
-        <p className='text-center text-lg text-gray-600'>
-          Already have an account?{' '}
-          <Link to='/login' className='font-medium text-blue-600 hover:text-blue-700'>
-            Sign in
-          </Link>
-        </p>
-      </div>
+      <div className='max-w-md w-full bg-white p-8 rounded-lg shadow-sm'>
+        <h2 className='text-3xl font-bold mb-2'>Create your account</h2>
+        <p className='text-neutral-600 mb-6'>Enter your details to get started</p>
 
-      <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
-        <Card>
-          <CardHeader>
-            {error && (
-              <div className='mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md'>{error}</div>
-            )}
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className='space-y-6'>
-              <div className='space-y-2'>
-                <Label htmlFor='email'>Email address</Label>
-                <div className='relative'>
-                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <Mail className='h-5 w-5 text-gray-400' />
-                  </div>
-                  <Input
-                    id='email'
-                    name='email'
-                    type='email'
-                    className='pl-10'
-                    placeholder='you@example.com'
-                    required
-                  />
-                </div>
-              </div>
+        {error && <div className='mb-4 p-3 bg-error-50 text-error-700 rounded-lg border border-error-200'>{error}</div>}
 
-              <div className='space-y-2'>
-                <Label htmlFor='password'>Password</Label>
-                <div className='relative'>
-                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <Lock className='h-5 w-5 text-gray-400' />
-                  </div>
-                  <Input id='password' name='password' type='password' className='pl-10' minLength={6} required />
-                </div>
-              </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className='space-y-4'>
+            <Input
+              type='text'
+              label='Full Name'
+              placeholder='Your name'
+              {...register('name')}
+              error={errors.name?.message}
+              leftElement={<User className='h-4 w-4' />}
+              autoComplete='name'
+            />
 
-              <div className='space-y-2'>
-                <Label htmlFor='confirm-password'>Confirm Password</Label>
-                <div className='relative'>
-                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <Lock className='h-5 w-5 text-gray-400' />
-                  </div>
-                  <Input
-                    id='confirm-password'
-                    name='confirm-password'
-                    type='password'
-                    className='pl-10'
-                    minLength={6}
-                    required
-                  />
-                </div>
-              </div>
+            <Input
+              type='email'
+              label='Email'
+              placeholder='your@email.com'
+              {...register('email')}
+              error={errors.email?.message}
+              leftElement={<Mail className='h-4 w-4' />}
+              autoComplete='email'
+            />
 
-              <Button type='submit' className='w-full' size='lg' disabled={isLoading}>
+            <Input
+              type='password'
+              label='Password'
+              placeholder='••••••••'
+              {...register('password')}
+              error={errors.password?.message}
+              leftElement={<Lock className='h-4 w-4' />}
+              autoComplete='new-password'
+            />
+
+            <Input
+              type='password'
+              label='Confirm Password'
+              placeholder='••••••••'
+              {...register('confirmPassword')}
+              error={errors.confirmPassword?.message}
+              leftElement={<Lock className='h-4 w-4' />}
+              autoComplete='new-password'
+            />
+
+            <div>
+              <Button type='submit' variant='primary' className='w-full' isLoading={isLoading}>
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </form>
+
+        <div className='mt-6 text-center'>
+          <p className='text-neutral-600'>
+            Already have an account?{' '}
+            <Link to='/login' className='text-primary-600 hover:underline'>
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

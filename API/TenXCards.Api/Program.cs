@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TenXCards.API.Middleware;
+using TenXCards.Core.Configuration;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
@@ -124,8 +125,20 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 builder.Services.AddScoped<IFlashcardService, FlashcardService>();
+builder.Services.AddScoped<ICollectionService, CollectionService>();
+builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
+builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
+
+// Configure OpenRouter
+builder.Services.Configure<OpenRouterOptions>(
+    builder.Configuration.GetSection(OpenRouterOptions.SectionName));
+
+builder.Services.AddHttpClient<IAIService, AIService>(client =>
+{
+    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 120);
+    client.Timeout = TimeSpan.FromSeconds(timeout);
+});
 
 // Register middleware
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
@@ -191,38 +204,5 @@ catch (Exception ex)
 logger.LogInformation("🚀 API is running on:");
 logger.LogInformation("   - Main API: http://localhost:5001");
 logger.LogInformation("   - Swagger UI: http://localhost:5001/swagger");
-
-// User endpoints
-app.MapPost("/api/users/register", async (IUserService userService, UserRegistrationRequest request) =>
-{
-    try
-    {
-        var response = await userService.RegisterAsync(request);
-        return Results.Created($"/api/users/{response.Id}", response);
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { message = ex.Message });
-    }
-})
-.WithName("RegisterUser")
-.WithOpenApi()
-.RequireRateLimiting("fixed");
-
-app.MapPost("/api/users/login", async (IUserService userService, UserLoginRequest request) =>
-{
-    try
-    {
-        var response = await userService.LoginAsync(request);
-        return Results.Ok(response);
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.BadRequest(new { message = ex.Message });
-    }
-})
-.WithName("LoginUser")
-.WithOpenApi()
-.RequireRateLimiting("fixed");
 
 app.Run();

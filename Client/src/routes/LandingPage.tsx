@@ -10,7 +10,7 @@ export default function LandingPage() {
           <div className='flex justify-between h-16 items-center'>
             <div className='flex items-center'>
               <Brain className='h-8 w-8 text-blue-600' />
-              <span className='ml-2 text-xl font-bold text-gray-900'>FlashCard Pro</span>
+              <span className='ml-2 text-xl font-bold text-gray-900'>10xCards</span>
             </div>
             <div className='flex items-center space-x-4'>
               <Link to='/login' className='text-gray-900 hover:text-blue-600 px-3 py-2'>

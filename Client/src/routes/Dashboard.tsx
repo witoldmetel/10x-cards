@@ -1,159 +1,112 @@
-import { Brain, PenTool, Plus, Wand2 } from 'lucide-react';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-import { FlashcardList } from '../components/FlashcardList';
-import { TextInput } from '../components/TextInput';
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import { Brain, Plus } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFlashcards } from '@/api/flashcard/queries';
-import { useCreateFlashcard } from '@/api/flashcard/mutations';
+import CollectionCard from '@/components/CollectionCard';
+import { useCollections } from '@/api/collections/queries';
+import { useNavigate } from 'react-router';
+
+type EmptyStateProps = {
+  onCreateCollection: () => void;
+  onGenerateWithAI: () => void;
+};
 
 export default function Dashboard() {
-  const [manualQuestion, setManualQuestion] = useState('');
-  const [manualAnswer, setManualAnswer] = useState('');
-  const { data: flashcards = [], isLoading, error } = useFlashcards();
-  console.log(' Dashboard ~ flashcards:', flashcards);
-  const { mutate: createFlashcard } = useCreateFlashcard();
+  const { data, isLoading } = useCollections({ archived: false });
 
-  const handleSubmit = async (text: string) => {
-    createFlashcard({
-      front: text,
-      back: 'Generated content will go here',
-      tags: [],
-      category: [],
-      creationSource: 'AI',
-      reviewStatus: 'New',
-    });
-  };
+  const navigate = useNavigate();
 
-  const handleManualSubmit = async () => {
-    createFlashcard({
-      front: manualQuestion,
-      back: manualAnswer,
-      tags: [],
-      category: [],
-      creationSource: 'Manual',
-      reviewStatus: 'New',
-    });
-  };
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='space-y-8'>
-          <Tabs defaultValue='ai' className='w-full'>
-            <TabsList className='grid w-full max-w-md mx-auto grid-cols-2 mb-8'>
-              <TabsTrigger value='ai' className='flex items-center gap-2 cursor-pointer hover:text-blue-600'>
-                <Brain className='w-4 h-4' />
-                AI Generation
-              </TabsTrigger>
-              <TabsTrigger value='manual' className='flex items-center gap-2 cursor-pointer hover:text-blue-600'>
-                <PenTool className='w-4 h-4' />
-                Manual Creation
-              </TabsTrigger>
-            </TabsList>
+    <div>
+      {data && data.totalCount !== 0 && (
+        <div className='flex justify-between items-center mb-8'>
+          <h1 className='text-3xl font-bold'>My Flashcard collections</h1>
+          <div className='flex gap-3'>
+            <Button variant='outline' leftIcon={<Brain className='h-4 w-4' />} onClick={() => navigate('/generate/ai')}>
+              Generate with AI
+            </Button>
+            <Button
+              variant='primary'
+              leftIcon={<Plus className='h-4 w-4' />}
+              onClick={() => navigate('/generate/manual')}>
+              Create Collection
+            </Button>
+          </div>
+        </div>
+      )}
 
-            <TabsContent value='ai'>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Wand2 className='w-5 h-5' />
-                    AI-Powered Flashcard Generation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <TextInput onSubmit={handleSubmit} isLoading={isLoading} />
-                </CardContent>
-              </Card>
-            </TabsContent>
+      {!data || data.totalCount === 0 ? (
+        <EmptyState
+          onCreateCollection={() => navigate('/generate/manual')}
+          onGenerateWithAI={() => navigate('/generate/ai')}
+        />
+      ) : (
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+          {data.collections.map(collection => (
+            <CollectionCard
+              key={collection.id}
+              collection={collection}
+              onStudy={() => console.log(collection.id)}
+              onView={() => navigate(`/collections/${collection.id}`)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-            <TabsContent value='manual'>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <PenTool className='w-5 h-5' />
-                    Create Flashcard Manually
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleManualSubmit} className='space-y-6'>
-                    <div className='space-y-4'>
-                      <div>
-                        <Label htmlFor='question'>Question</Label>
-                        <Input
-                          id='question'
-                          value={manualQuestion}
-                          onChange={e => setManualQuestion(e.target.value)}
-                          placeholder='Enter the question...'
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor='answer'>Answer</Label>
-                        <Input
-                          id='answer'
-                          value={manualAnswer}
-                          onChange={e => setManualAnswer(e.target.value)}
-                          placeholder='Enter the answer...'
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button type='submit' className='w-full'>
-                      <Plus className='w-4 h-4 mr-2' />
-                      Create Flashcard
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+function LoadingState() {
+  return (
+    <div>
+      <div className='flex justify-between items-center mb-8'>
+        <div className='h-8 w-48 bg-neutral-200 animate-pulse rounded'></div>
+        <div className='h-10 w-32 bg-neutral-200 animate-pulse rounded-lg'></div>
+      </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className='bg-red-50 text-red-700 p-4 rounded-lg'>
-              {error}
-            </motion.div>
-          )}
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+        {[1, 2, 3].map(i => (
+          <Card key={i} className='h-64'>
+            <CardHeader>
+              <div className='flex justify-between'>
+                <div className='flex-1'>
+                  <div className='h-6 w-3/4 bg-neutral-200 animate-pulse rounded mb-2'></div>
+                  <div className='h-4 w-full bg-neutral-200 animate-pulse rounded'></div>
+                </div>
+                <div className='h-10 w-10 bg-neutral-200 animate-pulse rounded-full'></div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className='h-4 w-full bg-neutral-200 animate-pulse rounded mt-4'></div>
+              <div className='h-4 w-3/4 bg-neutral-200 animate-pulse rounded mt-2'></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-          <AnimatePresence>
-            {isLoading ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className='text-center py-12 bg-white rounded-lg shadow-sm'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto'></div>
-                <h3 className='mt-4 text-lg font-medium text-gray-900'>Loading flashcards...</h3>
-              </motion.div>
-            ) : flashcards && flashcards.length > 0 ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className='space-y-6'>
-                <h2 className='text-2xl font-semibold text-gray-900'>Your Flashcards</h2>
-                <FlashcardList flashcards={flashcards} />
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className='text-center py-12 bg-white rounded-lg shadow-sm'>
-                <Plus className='mx-auto h-12 w-12 text-gray-400' />
-                <h3 className='mt-4 text-lg font-medium text-gray-900'>No flashcards yet</h3>
-                <p className='mt-2 text-gray-600'>Get started by using AI generation or creating cards manually.</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </main>
+function EmptyState({ onCreateCollection, onGenerateWithAI }: EmptyStateProps) {
+  return (
+    <div className='flex flex-col items-center justify-center py-12'>
+      <Brain className='h-16 w-16 text-neutral-300 mb-4' />
+      <h2 className='text-2xl font-semibold mb-2'>No active collections</h2>
+      <p className='text-neutral-600 mb-6 text-center max-w-md'>
+        You don't have any active collections. Create a new flashcard collection, generate one with AI, or check your
+        archived collections to restore previous ones.
+      </p>
+      <div className='flex gap-4'>
+        <Button variant='outline' onClick={onGenerateWithAI}>
+          Generate with AI
+        </Button>
+        <Button variant='primary' onClick={onCreateCollection}>
+          Create Collection
+        </Button>
+      </div>
     </div>
   );
 }

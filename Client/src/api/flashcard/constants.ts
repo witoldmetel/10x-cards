@@ -1,4 +1,6 @@
 export const FLASHCARD_API_ROUTES = {
-  BASE: '/flashcards',
-  BY_ID: (id: string) => `/flashcards/${id}`,
+  GET_FLASHCARDS: '/flashcards',
+  BATCH_UPDATE: '/flashcards/batch',
+  ARCHIVED: '/flashcards/archived',
+  ARCHIVED_STATISTICS: '/flashcards/archived/statistics',
 } as const;

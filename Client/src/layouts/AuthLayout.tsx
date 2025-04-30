@@ -3,9 +3,9 @@ import { Navigate } from 'react-router';
 import { Outlet } from 'react-router';
 
 export default function AuthLayout() {
-  const { token } = useAuth();
+  const { isAuth } = useAuth();
 
-  if (token) {
+  if (isAuth) {
     return <Navigate to='/dashboard' replace />;
   }
 

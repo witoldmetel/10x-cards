@@ -1,18 +1,23 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFlashcard, deleteFlashcard, updateFlashcard } from './api';
-import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO } from './types';
+import { UseMutationResult, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard, archiveFlashcard } from './api';
+import type {
+  CreateFlashcardDTO,
+  Flashcard,
+  UpdateFlashcardDTO,
+  GenerateFlashcardsRequest,
+  GenerateFlashcardsResponse,
+} from './types';
 
 export const useCreateFlashcard = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (flashcard: CreateFlashcardDTO) => createFlashcard(flashcard),
+    mutationFn: ({ collectionId, flashcard }: { collectionId: string; flashcard: CreateFlashcardDTO }) =>
+      createFlashcard(collectionId, flashcard),
     onSuccess: (newFlashcard: Flashcard) => {
-      // Update the flashcards list cache
-      queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
-        if (!oldData) return [newFlashcard];
-        return [newFlashcard, ...oldData];
-      });
+      queryClient.invalidateQueries({ queryKey: ['collections', newFlashcard.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', newFlashcard.collectionId] });
     },
   });
 };
@@ -21,14 +26,11 @@ export const useUpdateFlashcard = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (flashcard: UpdateFlashcardDTO) => updateFlashcard(flashcard),
+    mutationFn: ({ id, flashcard }: { id: string; flashcard: UpdateFlashcardDTO }) => updateFlashcard(id, flashcard),
     onSuccess: (updatedFlashcard: Flashcard) => {
-      // Update both the single flashcard and the list cache
-      queryClient.setQueryData(['flashcard', updatedFlashcard.id], updatedFlashcard);
-      queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
-        if (!oldData) return [updatedFlashcard];
-        return oldData.map(card => (card.id === updatedFlashcard.id ? updatedFlashcard : card));
-      });
+      queryClient.invalidateQueries({ queryKey: ['collections', updatedFlashcard.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', updatedFlashcard.collectionId] });
     },
   });
 };
@@ -38,14 +40,31 @@ export const useDeleteFlashcard = () => {
 
   return useMutation({
     mutationFn: (id: string) => deleteFlashcard(id),
-    onSuccess: (_, deletedId) => {
-      // Remove the flashcard from the list cache
-      queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
-        if (!oldData) return [];
-        return oldData.filter(card => card.id !== deletedId);
-      });
-      // Remove the single flashcard cache
-      queryClient.removeQueries({ queryKey: ['flashcard', deletedId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+    },
+  });
+};
+
+export const useGenerateFlashcardsAI = (): UseMutationResult<
+  GenerateFlashcardsResponse,
+  unknown,
+  { collectionId: string; payload: GenerateFlashcardsRequest }
+> =>
+  useMutation({
+    mutationFn: ({ collectionId, payload }: { collectionId: string; payload: GenerateFlashcardsRequest }) =>
+      generateFlashcards(collectionId, payload),
+  });
+
+export const useArchiveFlashcard = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => archiveFlashcard(id),
+    onSuccess: (archivedFlashcard: Flashcard) => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', archivedFlashcard.collectionId] });
     },
   });
 };

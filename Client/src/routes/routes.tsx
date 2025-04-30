@@ -6,10 +6,13 @@ import Register from './auth/Register';
 import ForgotPassword from './auth/ForgotPassword';
 import ResetPassword from './auth/ResetPassword';
 import Dashboard from './Dashboard';
-import ArchivedFlashcards from './ArchivedFlashcards';
-import UserSettings from './UserSettings';
+import Archive from './Archive';
+import Settings from './Settings';
 import AuthLayout from '@/layouts/AuthLayout';
 import ProtectedLayout from '@/layouts/ProtectedLayout';
+import ManualGenerate from './ManualGenerate';
+import AIGenerate from './AIGenerate';
+import CollectionDetails from './CollectionDetails';
 
 export const routes = (
   <Routes>
@@ -24,8 +27,11 @@ export const routes = (
 
     <Route element={<ProtectedLayout />}>
       <Route path='dashboard' element={<Dashboard />} />
-      <Route path='archived' element={<ArchivedFlashcards />} />
-      <Route path='settings' element={<UserSettings />} />
+      <Route path='archive' element={<Archive />} />
+      <Route path='generate/ai' element={<AIGenerate />} />
+      <Route path='generate/manual' element={<ManualGenerate />} />
+      <Route path='collections/:collectionId' element={<CollectionDetails />} />
+      <Route path='settings' element={<Settings />} />
     </Route>
 
     <Route path='*' element={<div>404</div>} />
