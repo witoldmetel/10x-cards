@@ -9,4 +9,3 @@ export function useFlashcards(collectionId: string) {
     enabled: !!collectionId,
   });
 }
-

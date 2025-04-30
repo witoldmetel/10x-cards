@@ -1,5 +1,5 @@
 import { UseMutationResult, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard } from './api';
+import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard, archiveFlashcard } from './api';
 import type {
   CreateFlashcardDTO,
   Flashcard,
@@ -26,8 +26,7 @@ export const useUpdateFlashcard = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, flashcard }: { id: string; flashcard: UpdateFlashcardDTO }) =>
-      updateFlashcard(id, flashcard),
+    mutationFn: ({ id, flashcard }: { id: string; flashcard: UpdateFlashcardDTO }) => updateFlashcard(id, flashcard),
     onSuccess: (updatedFlashcard: Flashcard) => {
       queryClient.invalidateQueries({ queryKey: ['collections', updatedFlashcard.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
@@ -57,3 +56,16 @@ export const useGenerateFlashcardsAI = (): UseMutationResult<
     mutationFn: ({ collectionId, payload }: { collectionId: string; payload: GenerateFlashcardsRequest }) =>
       generateFlashcards(collectionId, payload),
   });
+
+export const useArchiveFlashcard = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => archiveFlashcard(id),
+    onSuccess: (archivedFlashcard: Flashcard) => {
+      // Invalidate both collections and flashcards queries
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', archivedFlashcard.collectionId] });
+    },
+  });
+};

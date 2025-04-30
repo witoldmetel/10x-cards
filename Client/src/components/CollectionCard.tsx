@@ -2,17 +2,17 @@ import { BookOpen, Clock } from 'lucide-react';
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Card } from './ui/card';
 import { cn } from '@/lib/tailwind';
 import { Button } from './ui/button';
-import { Collection } from '@/db/database.types';
+import type { CollectionResponseDto } from '@/api/collections/types';
 
 interface CollectionCardProps {
-  collection: Collection;
+  collection: CollectionResponseDto;
   onStudy: () => void;
   onView: () => void;
   className?: string;
 }
 
 export default function CollectionCard({ collection, onStudy, onView, className }: CollectionCardProps) {
-  const { name, description, totalCards, dueCards, color } = collection;
+  const { name, description, totalCards, dueCards, color, archivedAt } = collection;
 
   return (
     <Card className={cn('h-full flex flex-col', className)}>
@@ -45,9 +45,11 @@ export default function CollectionCard({ collection, onStudy, onView, className 
         <Button variant='outline' onClick={onView} className='flex-1'>
           View
         </Button>
-        <Button variant='primary' onClick={onStudy} className='flex-1' disabled={dueCards === 0}>
-          Study
-        </Button>
+        {!archivedAt && (
+          <Button variant='primary' onClick={onStudy} className='flex-1' disabled={dueCards === 0}>
+            Study
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

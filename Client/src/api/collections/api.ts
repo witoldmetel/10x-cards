@@ -1,11 +1,11 @@
 import { instance } from '@/lib/axios';
 import { COLLECTIONS_API_BASE } from './constants';
-import type { 
-  CollectionResponseDto, 
-  CreateCollectionDto, 
+import type {
+  CollectionResponseDto,
+  CreateCollectionDto,
   UpdateCollectionDto,
   PaginatedCollectionsResponse,
-  CollectionsQueryParams 
+  CollectionsQueryParams,
 } from './types';
 
 export async function getCollections(params?: CollectionsQueryParams): Promise<PaginatedCollectionsResponse> {
@@ -30,6 +30,14 @@ export async function updateCollection(id: string, collection: UpdateCollectionD
   const { data } = await instance.put<CollectionResponseDto>(`${COLLECTIONS_API_BASE}/${id}`, collection);
 
   return data;
+}
+
+export async function archiveCollection(id: string): Promise<void> {
+  await instance.put(`${COLLECTIONS_API_BASE}/${id}/archive`);
+}
+
+export async function unarchiveCollection(id: string): Promise<void> {
+  await instance.put(`${COLLECTIONS_API_BASE}/${id}/unarchive`);
 }
 
 export async function deleteCollection(id: string): Promise<void> {

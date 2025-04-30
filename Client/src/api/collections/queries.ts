@@ -16,3 +16,10 @@ export function useCollection(id: string) {
     enabled: !!id,
   });
 }
+
+export function useArchivedCollections() {
+  return useQuery<PaginatedCollectionsResponse>({
+    queryKey: ['collections', { archived: true }],
+    queryFn: () => getCollections({ archived: true }),
+  });
+}

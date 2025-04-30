@@ -9,11 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useCollections } from '@/api/collections/queries';
 import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
-import type {
-  GenerateFlashcardsRequest,
-  GenerateFlashcardsResponse,
-  CreateFlashcardDTO,
-} from '@/api/flashcard/types';
+import type { GenerateFlashcardsRequest, GenerateFlashcardsResponse, CreateFlashcardDTO } from '@/api/flashcard/types';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,7 +40,7 @@ type AIGenerateFormValues = z.infer<typeof aiGenerateSchema>;
 export default function AIGenerate() {
   const navigate = useNavigate();
   const { data } = useCollections();
-  
+
   const generateAI = useGenerateFlashcardsAI();
   const createFlashcard = useCreateFlashcard();
 
@@ -129,8 +125,8 @@ export default function AIGenerate() {
             tags: card.tags,
             category: card.category,
             creationSource: FlashcardCreationSource.AI,
-            reviewStatus: ReviewStatus.New
-          }
+            reviewStatus: ReviewStatus.New,
+          },
         };
         await createFlashcard.mutateAsync(createPayload);
       }

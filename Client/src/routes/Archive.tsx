@@ -1,58 +1,95 @@
-
-import { useCollections } from '@/api/collections/queries';
+import { useArchivedCollections } from '@/api/collections/queries';
+import { useUnarchiveCollection } from '@/api/collections/mutations';
 import CollectionCard from '@/components/CollectionCard';
-import { useMemo } from 'react';
-
-import type { CollectionResponseDto } from '@/api/collections/types';
-
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router';
+import { RotateCcw } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export default function Archive() {
-  const { data: collectionsData, isLoading: isLoadingCollections, error: errorCollections } = useCollections();
+  const navigate = useNavigate();
+  const { data, isLoading } = useArchivedCollections();
+  const unarchiveCollectionMutation = useUnarchiveCollection();
 
+  const handleUnarchive = async (collectionId: string) => {
+    await unarchiveCollectionMutation.mutateAsync(collectionId);
+  };
 
-
-  // Only show archived collections
-  const archivedCollections: CollectionResponseDto[] = useMemo(() => {
-    if (!collectionsData || !Array.isArray(collectionsData)) return [];
-    return collectionsData.filter((col: CollectionResponseDto) => col.archivedAt);
-  }, [collectionsData]);
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
   return (
-    <div className='min-h-screen bg-gray-50'>
-      <main className='container mx-auto px-4 py-8'>
-        <div className='max-w-4xl mx-auto'>
-          <div className='flex justify-between items-center mb-6'>
-            <h1 className='text-3xl font-bold text-gray-900'>Archive</h1>
-          </div>
+    <div>
+      <div className='flex justify-between items-center mb-8'>
+        <h1 className='text-3xl font-bold'>Archived Collections</h1>
+      </div>
 
-          {/* Archived Collections Section */}
-          <section className='mb-10'>
-            <h2 className='text-2xl font-semibold mb-4'>Archived Collections</h2>
-            {errorCollections && (
-              <div className='bg-red-50 text-red-700 p-4 rounded-lg mb-6'>
-                <p className='font-medium'>Error</p>
-                <p>{errorCollections instanceof Error ? errorCollections.message : String(errorCollections)}</p>
-              </div>
-            )}
-            {isLoadingCollections ? (
-              <div className='text-center py-12 bg-white rounded-lg shadow-sm'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto' />
-                <p className='mt-4 text-gray-600'>Loading archived collections...</p>
-              </div>
-            ) : archivedCollections.length === 0 ? (
-              <div className='text-center py-12 bg-white rounded-lg shadow-sm'>
-                <p className='text-lg text-gray-600'>No archived collections found.</p>
-              </div>
-            ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                {archivedCollections.map(collection => (
-                  <CollectionCard key={collection.id} collection={collection} onStudy={() => {}} onView={() => {}} />
-                ))}
-              </div>
-            )}
-          </section>
+      {!data || data.totalCount === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+          {data.collections.map(collection => (
+            <div key={collection.id} className='relative'>
+              <CollectionCard
+                collection={collection}
+                onView={() => navigate(`/collections/${collection.id}`)}
+                onStudy={() => {}}
+              />
+              <Button
+                variant='outline'
+                size='sm'
+                className='absolute top-4 right-4'
+                onClick={() => handleUnarchive(collection.id)}>
+                <RotateCcw className='h-4 w-4 mr-2' />
+                Unarchive
+              </Button>
+            </div>
+          ))}
         </div>
-      </main>
+      )}
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div>
+      <div className='flex justify-between items-center mb-8'>
+        <div className='h-8 w-48 bg-neutral-200 animate-pulse rounded'></div>
+      </div>
+
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+        {[1, 2, 3].map(i => (
+          <Card key={i} className='h-64'>
+            <CardHeader>
+              <div className='flex justify-between'>
+                <div className='flex-1'>
+                  <div className='h-6 w-3/4 bg-neutral-200 animate-pulse rounded mb-2'></div>
+                  <div className='h-4 w-full bg-neutral-200 animate-pulse rounded'></div>
+                </div>
+                <div className='h-10 w-10 bg-neutral-200 animate-pulse rounded-full'></div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className='h-4 w-full bg-neutral-200 animate-pulse rounded mt-4'></div>
+              <div className='h-4 w-3/4 bg-neutral-200 animate-pulse rounded mt-2'></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className='flex flex-col items-center justify-center py-12'>
+      <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
+      <h2 className='text-2xl font-semibold mb-2'>No archived collections</h2>
+      <p className='text-neutral-600 mb-6 text-center max-w-md'>
+        Collections that you archive will appear here.
+      </p>
     </div>
   );
 }

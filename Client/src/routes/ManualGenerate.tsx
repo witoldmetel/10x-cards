@@ -59,7 +59,7 @@ export default function ManualGenerate() {
   const { data, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
   const { mutateAsync: createCollection, isPending: isCreatingCollection } = useCreateCollection();
   const { mutateAsync: createFlashcard, isPending: isCreatingFlashcard } = useCreateFlashcard();
-  const {  userId } = useAuth();
+  const { userId } = useAuth();
 
   const {
     control,
@@ -133,8 +133,8 @@ export default function ManualGenerate() {
             tags: [],
             category: [],
             creationSource: FlashcardCreationSource.Manual,
-            reviewStatus: ReviewStatus.Approved
-          }
+            reviewStatus: ReviewStatus.Approved,
+          },
         });
       } catch (e) {
         console.error('Error creating flashcard:', e);
@@ -329,7 +329,7 @@ export default function ManualGenerate() {
                     <span>Collection:</span>
                     <span>
                       {selectedCollectionId
-                        ? (data?.collections.find(c => c.id === selectedCollectionId)?.name) || 'Loading...'
+                        ? data?.collections.find(c => c.id === selectedCollectionId)?.name || 'Loading...'
                         : isNew
                           ? 'New - ' + (watched.collection?.name || 'Unnamed')
                           : 'Select a collection'}

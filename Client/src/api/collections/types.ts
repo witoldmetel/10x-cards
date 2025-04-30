@@ -37,4 +37,3 @@ export interface PaginatedCollectionsResponse {
   offset: number;
   totalCount: number;
 }
-
