@@ -12,7 +12,6 @@ type EmptyStateProps = {
 
 export default function Dashboard() {
   const { data, isLoading } = useCollections();
-  console.log(' Dashboard ~ data:', data);
 
   const navigate = useNavigate();
 
@@ -95,9 +94,10 @@ function EmptyState({ onCreateCollection, onGenerateWithAI }: EmptyStateProps) {
   return (
     <div className='flex flex-col items-center justify-center py-12'>
       <Brain className='h-16 w-16 text-neutral-300 mb-4' />
-      <h2 className='text-2xl font-semibold mb-2'>No collections yet</h2>
+      <h2 className='text-2xl font-semibold mb-2'>No active collections</h2>
       <p className='text-neutral-600 mb-6 text-center max-w-md'>
-        Create your first flashcard collection or generate one with AI to get started with your learning journey.
+        You don't have any active collections. Create a new flashcard collection, generate one with AI, or check your
+        archived collections to restore previous ones.
       </p>
       <div className='flex gap-4'>
         <Button variant='outline' onClick={onGenerateWithAI}>

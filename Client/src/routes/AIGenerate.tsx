@@ -55,7 +55,6 @@ export default function AIGenerate() {
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<AIGenerateFormValues>({
     resolver: zodResolver(aiGenerateSchema),
@@ -74,9 +73,6 @@ export default function AIGenerate() {
     navigate(-1);
   };
 
-  const handleSelectCollection = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setValue('selectedCollectionId', e.target.value);
-  };
 
   const onSubmit = async (data: AIGenerateFormValues) => {
     if (!data.sourceText.trim()) {

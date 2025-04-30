@@ -75,6 +75,36 @@ namespace TenXCards.API.Controllers
             return Ok(flashcard);
         }
 
+        // PUT: api/flashcards/{id}/archive
+        [HttpPut("{id}/archive")]
+        [Authorize]
+        [ProducesResponseType(typeof(FlashcardResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<FlashcardResponseDto>> Archive(Guid id)
+        {
+            var flashcard = await _flashcardService.ArchiveAsync(id);
+            if (flashcard == null)
+            {
+                return NotFound();
+            }
+            return Ok(flashcard);
+        }
+
+        // PUT: api/flashcards/{id}/unarchive
+        [HttpPut("{id}/unarchive")]
+        [Authorize] 
+        [ProducesResponseType(typeof(FlashcardResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<FlashcardResponseDto>> Unarchive(Guid id)
+        {
+            var flashcard = await _flashcardService.UnarchiveAsync(id);
+            if (flashcard == null)
+            {
+                return NotFound();
+            }
+            return Ok(flashcard);
+        }
+
         // DELETE: api/flashcards/{id}
         [HttpDelete("{id}")]
         [Authorize]

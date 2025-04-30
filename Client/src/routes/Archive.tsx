@@ -1,7 +1,7 @@
 import { useArchivedCollections } from '@/api/collections/queries';
-import { useUnarchiveCollection } from '@/api/collections/mutations';
+
 import CollectionCard from '@/components/CollectionCard';
-import { Button } from '@/components/ui/button';
+
 import { useNavigate } from 'react-router';
 import { RotateCcw } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -9,11 +9,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 export default function Archive() {
   const navigate = useNavigate();
   const { data, isLoading } = useArchivedCollections();
-  const unarchiveCollectionMutation = useUnarchiveCollection();
-
-  const handleUnarchive = async (collectionId: string) => {
-    await unarchiveCollectionMutation.mutateAsync(collectionId);
-  };
 
   if (isLoading) {
     return <LoadingState />;
@@ -30,21 +25,11 @@ export default function Archive() {
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
           {data.collections.map(collection => (
-            <div key={collection.id} className='relative'>
-              <CollectionCard
-                collection={collection}
-                onView={() => navigate(`/collections/${collection.id}`)}
-                onStudy={() => {}}
-              />
-              <Button
-                variant='outline'
-                size='sm'
-                className='absolute top-4 right-4'
-                onClick={() => handleUnarchive(collection.id)}>
-                <RotateCcw className='h-4 w-4 mr-2' />
-                Unarchive
-              </Button>
-            </div>
+            <CollectionCard
+              collection={collection}
+              onView={() => navigate(`/collections/${collection.id}`)}
+              onStudy={() => {}}
+            />
           ))}
         </div>
       )}
@@ -87,9 +72,7 @@ function EmptyState() {
     <div className='flex flex-col items-center justify-center py-12'>
       <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
       <h2 className='text-2xl font-semibold mb-2'>No archived collections</h2>
-      <p className='text-neutral-600 mb-6 text-center max-w-md'>
-        Collections that you archive will appear here.
-      </p>
+      <p className='text-neutral-600 mb-6 text-center max-w-md'>Collections that you archive will appear here.</p>
     </div>
   );
 }

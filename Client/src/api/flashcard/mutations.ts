@@ -63,7 +63,6 @@ export const useArchiveFlashcard = () => {
   return useMutation({
     mutationFn: (id: string) => archiveFlashcard(id),
     onSuccess: (archivedFlashcard: Flashcard) => {
-      // Invalidate both collections and flashcards queries
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', archivedFlashcard.collectionId] });
     },

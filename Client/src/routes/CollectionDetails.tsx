@@ -4,7 +4,6 @@ import { Plus, Edit, Trash2, ArrowLeft, BookOpen, X, Check, Archive } from 'luci
 
 import { useCollection } from '../api/collections/queries';
 import { useDeleteCollection, useArchiveCollection } from '../api/collections/mutations';
-import { useFlashcards } from '@/api/flashcard/queries';
 import { useDeleteFlashcard, useUpdateFlashcard, useArchiveFlashcard } from '@/api/flashcard/mutations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,13 +21,6 @@ export default function CollectionDetails() {
     isLoading: isCollectionLoading,
     isError: isCollectionError,
   } = useCollection(collectionId || '');
-  console.log(collection);
-  const {
-    data: flashcardsResp,
-    isLoading: isFlashcardsLoading,
-    isError: isFlashcardsError,
-  } = useFlashcards(collectionId || '');
-  console.log(flashcardsResp);
   // Delete collection mutation
   const deleteCollectionMutation = useDeleteCollection();
   const archiveCollectionMutation = useArchiveCollection();
@@ -43,9 +35,9 @@ export default function CollectionDetails() {
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ front: '', back: '' });
 
+
   const handleBack = () => navigate('/dashboard');
   const handleStudy = () => collectionId && navigate(`/study/${collectionId}`);
-  const handleAddFlashcard = () => collectionId && navigate('/create', { state: { collectionId } });
   const handleArchiveCollection = async () => {
     if (!collectionId) return;
     await archiveCollectionMutation.mutateAsync(collectionId);
@@ -103,13 +95,12 @@ export default function CollectionDetails() {
     setEditForm({ front: '', back: '' });
   };
 
-  const flashcards = flashcardsResp?.items ?? [];
 
-  if (isCollectionLoading || isFlashcardsLoading) {
+  if (isCollectionLoading) {
     return <LoadingState />;
   }
 
-  if (isCollectionError || isFlashcardsError || !collection || !flashcardsResp) {
+  if (isCollectionError || !collection) {
     return (
       <div className='text-center py-12'>
         <h2 className='text-2xl font-semibold mb-4'>Collection not found</h2>
@@ -132,7 +123,7 @@ export default function CollectionDetails() {
       <div className='grid md:grid-cols-3 gap-8'>
         <div className='md:col-span-2'>
           <div className='flex justify-between items-center mb-4'>
-            <h2 className='text-xl font-semibold'>Flashcards ({flashcards.length})</h2>
+            <h2 className='text-xl font-semibold'>Flashcards ({collection.flashcards.length})</h2>
             <div className='flex gap-2'>
               <Button variant='outline' onClick={() => setIsDeleteModalOpen(true)}>
                 Delete Collection
@@ -140,26 +131,26 @@ export default function CollectionDetails() {
               <Button variant='outline' onClick={handleArchiveCollection} leftIcon={<Archive className='h-4 w-4' />}>
                 Archive Collection
               </Button>
-              <Button variant='primary' leftIcon={<Plus className='h-4 w-4' />} onClick={handleAddFlashcard}>
+              <Button variant='primary' leftIcon={<Plus className='h-4 w-4' />} onClick={() => navigate('/generate/manual')}>
                 Add Flashcard
               </Button>
             </div>
           </div>
 
-          {flashcards.length === 0 ? (
+          {collection.flashcards.length === 0 ? (
             <Card>
               <CardContent className='py-12 text-center'>
                 <BookOpen className='h-12 w-12 mx-auto text-neutral-300 mb-4' />
                 <h3 className='text-xl font-semibold mb-2'>No flashcards yet</h3>
                 <p className='text-neutral-600 mb-4'>Start adding flashcards to build your collection</p>
-                <Button variant='primary' onClick={handleAddFlashcard}>
+                <Button variant='primary' onClick={() => navigate('/generate/manual')}>
                   Add First Flashcard
                 </Button>
               </CardContent>
             </Card>
           ) : (
             <div className='space-y-4'>
-              {flashcards.map(card => (
+              {collection.flashcards.map(card => (
                 <Card
                   key={card.id}
                   className={`hover:border-primary-300 transition-colors ${editingCard === card.id ? 'border-primary-300' : ''}`}
@@ -254,11 +245,11 @@ export default function CollectionDetails() {
                   </div>
                   <div>
                     <p className='text-sm text-neutral-500'>Total Cards</p>
-                    <p>{flashcards.length}</p>
+                    <p>{collection.flashcards.length}</p>
                   </div>
                   <div>
                     <p className='text-sm text-neutral-500'>Cards Due for Review</p>
-                    <p>{flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length}</p>
+                    <p>{collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length}</p>
                   </div>
                   <div>
                     <p className='text-sm text-neutral-500'>Created</p>
@@ -270,7 +261,7 @@ export default function CollectionDetails() {
                 <Button
                   variant='primary'
                   className='w-full'
-                  disabled={flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length === 0}
+                  disabled={collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length === 0}
                   onClick={handleStudy}>
                   Study Now
                 </Button>

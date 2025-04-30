@@ -47,19 +47,46 @@ namespace TenXCards.Core.Services
         public async Task<CollectionsResponse> GetAllArchivedAsync()
         {
             var collections = await _collectionRepository.GetAllArchivedAsync();
-            return new CollectionsResponse
+            var response = new CollectionsResponse
             {
                 Collections = collections.Select(MapToResponseDto),
                 Limit = 0,
                 Offset = 0,
                 TotalCount = collections.Count()
             };
+
+            foreach (var collection in response.Collections)
+            {
+                var archivedFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+                { 
+                    CollectionId = collection.Id,
+                    Archived = true,
+                    Offset = 0,
+                    Limit = int.MaxValue 
+                });
+                collection.ArchivedFlashcards = archivedFlashcards.Items.Select(MapFlashcardToDto).ToList();
+            }
+
+            return response;
         }
 
         public async Task<CollectionResponseDto?> GetByIdAsync(Guid id)
         {
             var collection = await _collectionRepository.GetByIdAsync(id);
-            return collection == null ? null : MapToResponseDto(collection);
+            if (collection == null) return null;
+
+            var dto = MapToResponseDto(collection);
+
+            var archivedFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+            { 
+                CollectionId = id,
+                Archived = true,
+                Offset = 0,
+                Limit = int.MaxValue 
+            });
+            dto.ArchivedFlashcards = archivedFlashcards.Items.Select(MapFlashcardToDto).ToList();
+
+            return dto;
         }
 
         public async Task<CollectionResponseDto?> UpdateAsync(Guid id, UpdateCollectionDto updateDto)
@@ -134,7 +161,36 @@ namespace TenXCards.Core.Services
                 ArchivedAt = collection.ArchivedAt,
                 TotalCards = collection.TotalCards,
                 DueCards = collection.DueCards,
-                Color = collection.Color
+                Color = collection.Color,
+                Flashcards = collection.Flashcards
+                    .Where(f => f.ArchivedAt == null)
+                    .Select(MapFlashcardToDto)
+                    .ToList(),
+                ArchivedFlashcards = new List<FlashcardResponseDto>()
+            };
+        }
+
+        private static FlashcardResponseDto MapFlashcardToDto(Flashcard f)
+        {
+            return new FlashcardResponseDto
+            {
+                Id = f.Id,
+                UserId = f.UserId,
+                CollectionId = f.CollectionId,
+                Front = f.Front,
+                Back = f.Back,
+                CreatedAt = f.CreatedAt,
+                UpdatedAt = f.UpdatedAt,
+                ArchivedAt = f.ArchivedAt,
+                CreationSource = f.CreationSource,
+                ReviewStatus = f.ReviewStatus,
+                ReviewedAt = f.ReviewedAt,
+                Tags = f.Tags,
+                Category = f.Category,
+                Sm2Repetitions = f.Sm2Repetitions,
+                Sm2Interval = f.Sm2Interval,
+                Sm2Efactor = f.Sm2Efactor,
+                Sm2DueDate = f.Sm2DueDate
             };
         }
     }

@@ -1,8 +1,10 @@
-import { BookOpen, Clock } from 'lucide-react';
+import { BookOpen, Clock, RotateCcw } from 'lucide-react';
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Card } from './ui/card';
 import { cn } from '@/lib/tailwind';
 import { Button } from './ui/button';
 import type { CollectionResponseDto } from '@/api/collections/types';
+import { useUnarchiveCollection } from '@/api/collections/mutations';
+import { useNavigate } from 'react-router';
 
 interface CollectionCardProps {
   collection: CollectionResponseDto;
@@ -12,7 +14,15 @@ interface CollectionCardProps {
 }
 
 export default function CollectionCard({ collection, onStudy, onView, className }: CollectionCardProps) {
+  const navigate = useNavigate();
+  const unarchiveCollectionMutation = useUnarchiveCollection();
+
   const { name, description, totalCards, dueCards, color, archivedAt } = collection;
+
+  const handleUnarchive = async (collectionId: string) => {
+    await unarchiveCollectionMutation.mutateAsync(collectionId);
+    navigate('/dashboard');
+  };
 
   return (
     <Card className={cn('h-full flex flex-col', className)}>
@@ -45,8 +55,21 @@ export default function CollectionCard({ collection, onStudy, onView, className 
         <Button variant='outline' onClick={onView} className='flex-1'>
           View
         </Button>
-        {!archivedAt && (
-          <Button variant='primary' onClick={onStudy} className='flex-1' disabled={dueCards === 0}>
+
+        {Boolean(archivedAt) ? (
+          <Button
+            variant='primary'
+            onClick={() => handleUnarchive(collection.id)}
+            className='flex-1'
+            disabled={totalCards === 0}>
+            <div className='flex items-center gap-2'>
+              <RotateCcw className='h-4 w-4' />
+              <span>Unarchive</span>
+            </div>
+          </Button>
+        ) : (
+          // @todo: temporarily disabled
+          <Button variant='primary' onClick={onStudy} className='flex-1' disabled={true}>
             Study
           </Button>
         )}

@@ -17,5 +17,7 @@ namespace TenXCards.Core.Services
         Task<BatchUpdateResponse> BatchUpdateAsync(BatchUpdateRequest request);
         Task<ArchivedStatisticsDto> GetArchivedStatisticsAsync();
         Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request);
+        Task<FlashcardResponseDto?> ArchiveAsync(Guid id);
+        Task<FlashcardResponseDto?> UnarchiveAsync(Guid id);
     }
 } 

@@ -15,6 +15,7 @@ namespace TenXCards.Core.DTOs
         public int TotalCards { get; set; }
         public int DueCards { get; set; }
         public required string Color { get; set; }
+        public List<FlashcardResponseDto> ArchivedFlashcards { get; set; } = new();
         public List<FlashcardResponseDto> Flashcards { get; set; } = new();
     }
 

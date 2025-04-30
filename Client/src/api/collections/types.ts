@@ -1,3 +1,5 @@
+import { Flashcard } from "../flashcard/types";
+
 export interface CollectionResponseDto {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ export interface CollectionResponseDto {
   totalCards: number;
   dueCards: number;
   color: string;
+  flashcards: Flashcard[];
 }
 
 export interface CreateCollectionDto {
