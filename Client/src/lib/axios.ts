@@ -1,8 +1,12 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 export const instance: AxiosInstance = axios.create({
-  // @todo: use env variable
-  baseURL: 'http://localhost:3000/api/',
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  },
+  withCredentials: true
 });
 
 // Request interceptor to add Authorization header from localStorage
@@ -17,6 +21,27 @@ instance.interceptors.request.use(
     return config;
   },
   error => Promise.reject(error),
+);
+
+// Add response interceptor to handle errors
+instance.interceptors.response.use(
+  response => response,
+  error => {
+    if (process.env.NODE_ENV === 'development') {
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Response error:', error.response.data);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('Request error:', error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error:', error.message);
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default instance;

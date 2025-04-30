@@ -12,7 +12,7 @@ using TenXCards.Core.Models;
 namespace TenXCards.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/flashcards")]
     [Produces("application/json")]
     public class FlashcardsController : ControllerBase
     {

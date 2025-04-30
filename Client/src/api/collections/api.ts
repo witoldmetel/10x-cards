@@ -6,21 +6,25 @@ import type { CollectionResponseDto, CreateCollectionDto, UpdateCollectionDto } 
 
 export async function getCollections(): Promise<CollectionResponseDto[]> {
   const { data } = await instance.get<CollectionResponseDto[]>(COLLECTIONS_API_BASE);
+  
   return data;
 }
 
 export async function getCollection(id: string): Promise<CollectionResponseDto> {
   const { data } = await instance.get<CollectionResponseDto>(`${COLLECTIONS_API_BASE}/${id}`);
+ 
   return data;
 }
 
 export async function createCollection(collection: CreateCollectionDto): Promise<CollectionResponseDto> {
   const { data } = await instance.post<CollectionResponseDto>(COLLECTIONS_API_BASE, collection);
+ 
   return data;
 }
 
 export async function updateCollection(id: string, collection: UpdateCollectionDto): Promise<CollectionResponseDto> {
   const { data } = await instance.put<CollectionResponseDto>(`${COLLECTIONS_API_BASE}/${id}`, collection);
+ 
   return data;
 }
 

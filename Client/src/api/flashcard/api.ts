@@ -12,7 +12,7 @@ interface PaginatedResponse<T> {
 }
 
 export async function getFlashcards(collectionId: string): Promise<PaginatedResponse<Flashcard>> {
-  const { data } = await instance.get<PaginatedResponse<Flashcard>>(`/api/collections/${collectionId}/flashcards`);
+  const { data } = await instance.get<PaginatedResponse<Flashcard>>(`/collections/${collectionId}/flashcards`);
   return data;
 }
 
@@ -28,7 +28,7 @@ export async function createFlashcard(flashcard: CreateFlashcardDTO): Promise<Fl
   }
   const { collectionId, ...payload } = flashcard as any;
   const { data } = await instance.post<Flashcard>(
-    `/api/collections/${collectionId}/flashcards`,
+    `/collections/${collectionId}/flashcards`,
     payload
   );
   return data;
@@ -48,7 +48,7 @@ export async function generateFlashcardsAI(
   payload: GenerateFlashcardsAIRequest
 ): Promise<GenerateFlashcardsAIResponse> {
   const { data } = await instance.post<GenerateFlashcardsAIResponse>(
-    `/api/collections/${collectionId}/flashcards/generate`,
+    `/collections/${collectionId}/flashcards/generate`,
     payload
   );
   return data;
