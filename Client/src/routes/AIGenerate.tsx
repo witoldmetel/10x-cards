@@ -10,12 +10,11 @@ import { useCollections } from '@/api/collections/queries';
 import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
 import type {
-  GenerateFlashcardsAIRequest,
-  GeneratedAICard,
+  GenerateFlashcardsRequest,
+  GenerateFlashcardsResponse,
   CreateFlashcardDTO,
-  FlashcardCreationSource,
-  ReviewStatus,
 } from '@/api/flashcard/types';
+import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -44,12 +43,13 @@ type AIGenerateFormValues = z.infer<typeof aiGenerateSchema>;
 
 export default function AIGenerate() {
   const navigate = useNavigate();
-  const { data: collections = [] } = useCollections();
+  const { data } = useCollections();
+  
   const generateAI = useGenerateFlashcardsAI();
   const createFlashcard = useCreateFlashcard();
 
   const [error, setError] = useState<string | null>(null);
-  const [generatedCards, setGeneratedCards] = useState<GeneratedAICard[]>([]);
+  const [generatedCards, setGeneratedCards] = useState<GenerateFlashcardsResponse['flashcards']>([]);
   const [targetCollectionId, setTargetCollectionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -97,7 +97,7 @@ export default function AIGenerate() {
     setTargetCollectionId(null);
 
     const collectionId = data.selectedCollectionId;
-    const payload: GenerateFlashcardsAIRequest = {
+    const payload: GenerateFlashcardsRequest = {
       source_text: data.sourceText,
       number_of_cards: data.numberOfCards,
     };
@@ -121,14 +121,16 @@ export default function AIGenerate() {
     setError(null);
     try {
       for (const card of generatedCards) {
-        const createPayload: CreateFlashcardDTO = {
-          front: card.front,
-          back: card.back,
-          tags: card.tags,
-          category: card.category,
-          creationSource: card.creation_source as FlashcardCreationSource,
-          reviewStatus: card.review_status as ReviewStatus,
+        const createPayload: { collectionId: string; flashcard: CreateFlashcardDTO } = {
           collectionId: targetCollectionId,
+          flashcard: {
+            front: card.front,
+            back: card.back,
+            tags: card.tags,
+            category: card.category,
+            creationSource: FlashcardCreationSource.AI,
+            reviewStatus: ReviewStatus.New
+          }
         };
         await createFlashcard.mutateAsync(createPayload);
       }
@@ -184,10 +186,9 @@ export default function AIGenerate() {
                         id='collection-select'
                         className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
                         value={selectedCollectionId}
-                        onChange={handleSelectCollection}
                         {...register('selectedCollectionId')}>
                         <option value='new'>Create New Collection</option>
-                        {collections.map(collection => (
+                        {data?.collections.map(collection => (
                           <option key={collection.id} value={collection.id}>
                             {collection.name}
                           </option>

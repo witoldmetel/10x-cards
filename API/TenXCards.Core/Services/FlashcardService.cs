@@ -13,14 +13,17 @@ namespace TenXCards.Core.Services
     {
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
+        private readonly ICollectionRepository _collectionRepository;
         private readonly IAIService _aiService;
         public FlashcardService(
             IFlashcardRepository repository, 
             ICollectionService collectionService,
+            ICollectionRepository collectionRepository,
             IAIService aiService)
         {
             _repository = repository;
             _collectionService = collectionService;
+            _collectionRepository = collectionRepository;
             _aiService = aiService;
         }
 
@@ -77,17 +80,22 @@ namespace TenXCards.Core.Services
 
         public async Task<FlashcardResponseDto> CreateForCollectionAsync(Guid collectionId, CreateFlashcardDto createDto)
         {
+            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            if (collection == null)
+                throw new Exception($"Collection with id {collectionId} not found");
+
             var flashcard = new Flashcard
             {
                 Id = Guid.NewGuid(),
                 Front = createDto.Front,
                 Back = createDto.Back,
                 CreationSource = createDto.CreationSource,
-                Tags = createDto.Tags,
-                Category = createDto.Category,
+                Tags = createDto.Tags ?? new List<string>(),
+                Category = createDto.Category ?? new List<string>(),
                 ReviewStatus = createDto.ReviewStatus,
                 Sm2Efactor = 2.5, // Default value for new cards
-                CollectionId = collectionId
+                CollectionId = collectionId,
+                UserId = collection.UserId // Now this will work as we're using the entity
             };
             var created = await _repository.CreateAsync(flashcard);
             return MapToResponseDto(created);

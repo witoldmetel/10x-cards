@@ -1,13 +1,9 @@
 export interface Flashcard {
   id: string;
-  userId: string;
-  collectionId: string;
-  lastReviewed?: string;
-  nextReview?: string;
   front: string;
   back: string;
   reviewStatus: ReviewStatus;
-  archivedAt?: string | null;
+  reviewedAt?: string | null;
   creationSource: FlashcardCreationSource;
   tags: string[];
   category: string[];
@@ -17,6 +13,7 @@ export interface Flashcard {
   sm2DueDate?: string | null;
   createdAt: string;
   updatedAt?: string | null;
+  archivedAt?: string | null;
 }
 
 export enum FlashcardCreationSource {
@@ -37,30 +34,58 @@ export interface CreateFlashcardDTO {
   tags: string[];
   category: string[];
   creationSource: FlashcardCreationSource;
-  reviewStatus: ReviewStatus;
-  collectionId: string;
+  reviewStatus?: ReviewStatus;
 }
 
-export interface UpdateFlashcardDTO extends Partial<CreateFlashcardDTO> {
-  id: string;
+export interface UpdateFlashcardDTO {
+  front?: string;
+  back?: string;
+  tags?: string[];
+  category?: string[];
+  reviewStatus?: ReviewStatus;
+  archivedAt?: string | null;
 }
 
-export interface GenerateFlashcardsAIRequest {
+export interface GenerateFlashcardsRequest {
   source_text: string;
   number_of_cards: number;
+  model_name?: string;
   api_model_key?: string;
 }
 
-export interface GeneratedAICard {
-  front: string;
-  back: string;
-  tags: string[];
-  category: string[];
-  creation_source: FlashcardCreationSource;
-  review_status: ReviewStatus;
+export interface GenerateFlashcardsResponse {
+  flashcards: CreateFlashcardDTO[];
+  collection_id: string;
 }
 
-export interface GenerateFlashcardsAIResponse {
-  flashcards: GeneratedAICard[];
-  collection_id: string;
+export interface PaginatedResponse<T> {
+  items: T[];
+  limit: number;
+  offset: number;
+  totalCount: number;
+}
+
+export interface BatchUpdateRequest {
+  flashcardIds: string[];
+  update: UpdateFlashcardDTO;
+}
+
+export interface BatchUpdateResponse {
+  updatedIds: string[];
+  message: string;
+}
+
+export interface ArchivedStatisticsDto {
+  totalArchived: number;
+  archivedByCategory: Record<string, number>;
+}
+
+export interface FlashcardsQueryParams {
+  offset?: number;
+  limit?: number;
+  reviewStatus?: ReviewStatus;
+  searchPhrase?: string;
+  tag?: string;
+  category?: string;
+  archived?: boolean;
 }

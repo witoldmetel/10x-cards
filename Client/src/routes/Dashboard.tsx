@@ -12,6 +12,7 @@ type EmptyStateProps = {
 
 export default function Dashboard() {
   const { data, isLoading } = useCollections();
+  console.log(" Dashboard ~ data:", data)
 
   const navigate = useNavigate();
 
@@ -21,7 +22,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      {data && data.length !== 0 && (
+      {data && data.totalCount !== 0 && (
         <div className='flex justify-between items-center mb-8'>
           <h1 className='text-3xl font-bold'>My Flashcard collections</h1>
           <div className='flex gap-3'>
@@ -38,14 +39,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      {!data || data.length === 0 ? (
+      {!data || data.totalCount === 0 ? (
         <EmptyState
           onCreateCollection={() => navigate('/generate/manual')}
           onGenerateWithAI={() => navigate('/generate/ai')}
         />
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {data.map(collection => (
+          {data.collections.map(collection => (
             <CollectionCard
               key={collection.id}
               collection={collection}

@@ -83,7 +83,7 @@ namespace TenXCards.Core.Services
                 Name = createDto.Name,
                 Description = createDto.Description,
                 Color = createDto.Color,
-                CreatedAt = DateTime.UtcNow
+                UserId = createDto.UserId
             };
             var created = await _collectionRepository.CreateAsync(collection);
             return MapToResponseDto(created);

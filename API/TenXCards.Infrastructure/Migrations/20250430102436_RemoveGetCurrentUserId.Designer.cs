@@ -13,8 +13,8 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250429125543_Initial")]
-    partial class Initial
+    [Migration("20250430102436_RemoveGetCurrentUserId")]
+    partial class RemoveGetCurrentUserId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -58,7 +58,12 @@ namespace TenXCards.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Collections");
                 });
@@ -108,6 +113,9 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("review_status");
 
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("Sm2DueDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("sm2_due_date");
@@ -139,7 +147,14 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CollectionId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("flashcards", (string)null);
                 });
@@ -181,6 +196,41 @@ namespace TenXCards.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("TenXCards.Core.Models.Collection", b =>
+                {
+                    b.HasOne("TenXCards.Core.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TenXCards.Core.Models.Flashcard", b =>
+                {
+                    b.HasOne("TenXCards.Core.Models.Collection", "Collection")
+                        .WithMany("Flashcards")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TenXCards.Core.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TenXCards.Core.Models.Collection", b =>
+                {
+                    b.Navigation("Flashcards");
                 });
 #pragma warning restore 612, 618
         }

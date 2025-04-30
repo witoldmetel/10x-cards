@@ -1,9 +1,15 @@
 import { instance } from '@/lib/axios';
 import { COLLECTIONS_API_BASE } from './constants';
-import type { CollectionResponseDto, CreateCollectionDto, UpdateCollectionDto } from './types';
+import type { 
+  CollectionResponseDto, 
+  CreateCollectionDto, 
+  UpdateCollectionDto,
+  PaginatedCollectionsResponse,
+  CollectionsQueryParams 
+} from './types';
 
-export async function getCollections(): Promise<CollectionResponseDto[]> {
-  const { data } = await instance.get<CollectionResponseDto[]>(COLLECTIONS_API_BASE);
+export async function getCollections(params?: CollectionsQueryParams): Promise<PaginatedCollectionsResponse> {
+  const { data } = await instance.get<PaginatedCollectionsResponse>(COLLECTIONS_API_BASE, { params });
 
   return data;
 }

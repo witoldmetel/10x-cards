@@ -1,15 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { getCollections, getCollection } from './api';
+import type { CollectionResponseDto, CollectionsQueryParams, PaginatedCollectionsResponse } from './types';
 
-export const useCollections = () =>
-  useQuery({
-    queryKey: ['collections'],
-    queryFn: getCollections,
+export function useCollections(params?: CollectionsQueryParams) {
+  return useQuery<PaginatedCollectionsResponse>({
+    queryKey: ['collections', params],
+    queryFn: () => getCollections(params),
   });
+}
 
-export const useCollection = (id: string) =>
-  useQuery({
+export function useCollection(id: string) {
+  return useQuery<CollectionResponseDto>({
     queryKey: ['collections', id],
     queryFn: () => getCollection(id),
     enabled: !!id,
   });
+}

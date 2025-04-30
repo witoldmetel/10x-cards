@@ -28,6 +28,9 @@ namespace TenXCards.Core.DTOs
         
         [Required]
         public string Color { get; set; } = string.Empty;
+
+        [Required]
+        public Guid UserId { get; set; }
     }
 
     public class UpdateCollectionDto

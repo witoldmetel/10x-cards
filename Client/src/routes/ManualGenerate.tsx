@@ -8,11 +8,12 @@ import { useCollections } from '@/api/collections/queries';
 import { useCreateCollection } from '@/api/collections/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
 import type { CreateCollectionDto } from '@/api/collections/types';
-import type { CreateFlashcardDTO } from '@/api/flashcard/types';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useUser } from '@/api/user/queries';
+import { useAuth } from '@/contexts/AuthContext';
 
 // --- SCHEMA DEFINITION ---
 const flashcardSchema = z.object({
@@ -59,6 +60,7 @@ export default function ManualGenerate() {
   const { data: collections, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
   const { mutateAsync: createCollection, isPending: isCreatingCollection } = useCreateCollection();
   const { mutateAsync: createFlashcard, isPending: isCreatingFlashcard } = useCreateFlashcard();
+  const {  userId } = useAuth();
 
   const {
     control,
@@ -94,12 +96,13 @@ export default function ManualGenerate() {
   const onSubmit = async (data: FormValues) => {
     let targetCollectionId: string | null = null;
 
-    if (isNew) {
+    if (isNewCollectionForm(data) && userId) {
       // Create new collection
       const payload: CreateCollectionDto = {
-        name: data.collection?.name,
-        description: data.collection?.description,
-        color: data.collection?.color,
+        name: data.collection.name,
+        description: data.collection.description,
+        color: data.collection.color,
+        userId: userId,
       };
       try {
         const collection = await createCollection(payload);
@@ -122,18 +125,20 @@ export default function ManualGenerate() {
     let hasFlashcardErrors = false;
     for (let i = 0; i < data.flashcards.length; i++) {
       const card = data.flashcards[i];
-      const payload: CreateFlashcardDTO = {
-        front: card.front,
-        back: card.back,
-        tags: [],
-        category: [],
-        creationSource: FlashcardCreationSource.Manual,
-        reviewStatus: ReviewStatus.New,
-        collectionId: targetCollectionId!,
-      };
       try {
-        await createFlashcard(payload);
+        await createFlashcard({
+          collectionId: targetCollectionId!,
+          flashcard: {
+            front: card.front,
+            back: card.back,
+            tags: [],
+            category: [],
+            creationSource: FlashcardCreationSource.Manual,
+            reviewStatus: ReviewStatus.Approved
+          }
+        });
       } catch (e) {
+        console.error('Error creating flashcard:', e);
         flashcardCreationErrors[i] = { front: 'Failed to create flashcard' };
         hasFlashcardErrors = true;
       }
@@ -189,7 +194,7 @@ export default function ManualGenerate() {
                     }
                   }}>
                   <option value='new'>Create New Collection</option>
-                  {collections?.map(collection => (
+                  {Array.isArray(collections) && collections.map(collection => (
                     <option key={collection.id} value={collection.id}>
                       {collection.name}
                     </option>
@@ -325,7 +330,7 @@ export default function ManualGenerate() {
                     <span>Collection:</span>
                     <span>
                       {selectedCollectionId
-                        ? collections?.find(c => c.id === selectedCollectionId)?.name || 'Loading...'
+                        ? (Array.isArray(collections) && collections.find(c => c.id === selectedCollectionId)?.name) || 'Loading...'
                         : isNew
                           ? 'New - ' + (watched.collection?.name || 'Unnamed')
                           : 'Select a collection'}

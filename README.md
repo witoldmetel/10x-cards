@@ -107,7 +107,7 @@ All services use fixed ports for consistency:
 
 ```bash
 # Start all services
-docker-compose up -d
+docker-compose up -d --build
 
 # Start only database
 docker-compose up db -d
@@ -143,6 +143,9 @@ dotnet ef migrations add MigrationName -p ../TenXCards.Infrastructure/TenXCards.
 
 # Apply pending migrations
 dotnet ef database update
+
+# Clear cache
+dotnet ef database update 0
 
 # Remove the last migration (only if not applied to database)
 dotnet ef migrations remove
