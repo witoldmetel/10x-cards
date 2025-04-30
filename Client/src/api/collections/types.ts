@@ -7,6 +7,7 @@ export interface CollectionResponseDto {
   createdAt: string;
   updatedAt?: string;
   archivedAt?: string;
+  archivedFlashcards: Flashcard[];
   totalCards: number;
   dueCards: number;
   color: string;

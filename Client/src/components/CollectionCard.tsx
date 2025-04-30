@@ -19,6 +19,11 @@ export default function CollectionCard({ collection, onStudy, onView, className 
 
   const { name, description, totalCards, dueCards, color, archivedAt } = collection;
 
+
+
+
+  const isArchived = archivedAt !== null && collection?.archivedFlashcards?.length > 0;
+
   const handleUnarchive = async (collectionId: string) => {
     await unarchiveCollectionMutation.mutateAsync(collectionId);
     navigate('/dashboard');
@@ -43,7 +48,7 @@ export default function CollectionCard({ collection, onStudy, onView, className 
         <div className='flex justify-between text-sm text-neutral-600 mt-2'>
           <div className='flex items-center'>
             <BookOpen className='h-4 w-4 mr-1' />
-            <span>{totalCards} cards</span>
+            <span>{isArchived ? collection?.archivedFlashcards?.length : collection?.flashcards?.length} cards</span>
           </div>
           <div className='flex items-center'>
             <Clock className='h-4 w-4 mr-1' />
@@ -56,7 +61,7 @@ export default function CollectionCard({ collection, onStudy, onView, className 
           View
         </Button>
 
-        {Boolean(archivedAt) ? (
+        {isArchived ? (
           <Button
             variant='primary'
             onClick={() => handleUnarchive(collection.id)}

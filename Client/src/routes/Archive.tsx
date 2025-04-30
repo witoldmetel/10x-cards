@@ -1,4 +1,4 @@
-import { useArchivedCollections } from '@/api/collections/queries';
+import {  useCollections } from '@/api/collections/queries';
 
 import CollectionCard from '@/components/CollectionCard';
 
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export default function Archive() {
   const navigate = useNavigate();
-  const { data, isLoading } = useArchivedCollections();
+  const { data, isLoading } = useCollections()
 
   if (isLoading) {
     return <LoadingState />;

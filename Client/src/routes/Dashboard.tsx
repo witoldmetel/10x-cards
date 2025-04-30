@@ -11,7 +11,7 @@ type EmptyStateProps = {
 };
 
 export default function Dashboard() {
-  const { data, isLoading } = useCollections();
+  const { data, isLoading } = useCollections({ archived: false });
 
   const navigate = useNavigate();
 
