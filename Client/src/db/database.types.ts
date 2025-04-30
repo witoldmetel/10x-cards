@@ -20,7 +20,7 @@ export type User = {
 export type Collection = {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   createdAt: string;
   updatedAt?: string | null;
   totalCards: number;

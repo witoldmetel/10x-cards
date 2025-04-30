@@ -1,6 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFlashcard, deleteFlashcard, updateFlashcard } from './api';
-import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO } from './types';
+import { UseMutationResult, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createFlashcard, deleteFlashcard, updateFlashcard, generateFlashcardsAI } from './api';
+import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsAIRequest, GenerateFlashcardsAIResponse } from './types';
 
 export const useCreateFlashcard = () => {
   const queryClient = useQueryClient();
@@ -49,3 +49,13 @@ export const useDeleteFlashcard = () => {
     },
   });
 };
+
+export const useGenerateFlashcardsAI = (): UseMutationResult<
+  GenerateFlashcardsAIResponse,
+  unknown,
+  { collectionId: string; payload: GenerateFlashcardsAIRequest }
+> =>
+  useMutation({
+    mutationFn: ({ collectionId, payload }: { collectionId: string; payload: GenerateFlashcardsAIRequest }) =>
+      generateFlashcardsAI(collectionId, payload)
+  });

@@ -1,9 +1,9 @@
 import { Brain, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useFlashcards } from '@/api/flashcard/queries';
 import CollectionCard from '@/components/CollectionCard';
-import { FlashcardsListResponse } from '@/db/database.types';
+import { useCollections } from '@/api/collections/queries';
+import { useNavigate } from 'react-router';
 
 type EmptyStateProps = {
   onCreateCollection: () => void;
@@ -11,7 +11,8 @@ type EmptyStateProps = {
 };
 
 export default function Dashboard() {
-  const { data, isLoading } = useFlashcards<FlashcardsListResponse>();
+  const { data, isLoading } = useCollections();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return <LoadingState />;
@@ -19,28 +20,36 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className='flex justify-between items-center mb-8'>
-        <h1 className='text-3xl font-bold'>My Flashcards</h1>
+      {data && data.length !== 0 &&<div className='flex justify-between items-center mb-8'>
+        <h1 className='text-3xl font-bold'>My Flashcard collections</h1>
         <div className='flex gap-3'>
-          <Button variant='outline' leftIcon={<Brain className='h-4 w-4' />} onClick={() => {}}>
+          <Button
+            variant='outline'
+            leftIcon={<Brain className='h-4 w-4' />}
+            onClick={() => navigate('/generate/ai')}
+          >
             Generate with AI
           </Button>
-          <Button variant='primary' leftIcon={<Plus className='h-4 w-4' />} onClick={() => {}}>
+          <Button
+            variant='primary'
+            leftIcon={<Plus className='h-4 w-4' />}
+            onClick={() => navigate('/generate/manual')}
+          >
             Create Collection
           </Button>
         </div>
-      </div>
+      </div>}
 
-      {data?.pagination?.total === 0 ? (
-        <EmptyState onCreateCollection={() => {}} onGenerateWithAI={() => {}} />
+      {(!data || data.length === 0) ? (
+        <EmptyState onCreateCollection={() => navigate('/generate/manual')} onGenerateWithAI={() => navigate('/generate/ai')} />
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-          {data?.items.map(collection => (
+          {data.map(collection => (
             <CollectionCard
               key={collection.id}
               collection={collection}
               onStudy={() => console.log(collection.id)}
-              onView={() => console.log(collection.id)}
+              onView={() => navigate(`/collections/${collection.id}`)}
             />
           ))}
         </div>
@@ -51,13 +60,31 @@ export default function Dashboard() {
 
 function LoadingState() {
   return (
-    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-      {[1, 2, 3].map(i => (
-        <Card key={i} className='h-[200px] animate-pulse'>
-          <CardHeader className='h-full bg-neutral-100 rounded-lg' />
-          <CardContent className='h-16 bg-neutral-100 rounded-lg mt-4' />
-        </Card>
-      ))}
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <div className="h-8 w-48 bg-neutral-200 animate-pulse rounded"></div>
+        <div className="h-10 w-32 bg-neutral-200 animate-pulse rounded-lg"></div>
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="h-64">
+            <CardHeader>
+              <div className="flex justify-between">
+                <div className="flex-1">
+                  <div className="h-6 w-3/4 bg-neutral-200 animate-pulse rounded mb-2"></div>
+                  <div className="h-4 w-full bg-neutral-200 animate-pulse rounded"></div>
+                </div>
+                <div className="h-10 w-10 bg-neutral-200 animate-pulse rounded-full"></div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-4 w-full bg-neutral-200 animate-pulse rounded mt-4"></div>
+              <div className="h-4 w-3/4 bg-neutral-200 animate-pulse rounded mt-2"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

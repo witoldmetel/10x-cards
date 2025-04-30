@@ -44,3 +44,23 @@ export interface CreateFlashcardDTO {
 export interface UpdateFlashcardDTO extends Partial<CreateFlashcardDTO> {
   id: string;
 }
+
+export interface GenerateFlashcardsAIRequest {
+  source_text: string;
+  number_of_cards: number;
+  api_model_key?: string;
+}
+
+export interface GeneratedAICard {
+  front: string;
+  back: string;
+  tags: string[];
+  category: string[];
+  creation_source: FlashcardCreationSource;
+  review_status: ReviewStatus;
+}
+
+export interface GenerateFlashcardsAIResponse {
+  flashcards: GeneratedAICard[];
+  collection_id: string;
+}

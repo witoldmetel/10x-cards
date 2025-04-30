@@ -28,7 +28,7 @@ export default function Header() {
             {isAuth && (
               <>
                 <NavLink to='/dashboard'>Dashboard</NavLink>
-                <NavLink to='/archived'>Archived</NavLink>
+                <NavLink to='/archive'>Archive</NavLink>
               </>
             )}
           </nav>
@@ -92,13 +92,13 @@ export default function Header() {
                 <Home className='h-5 w-5' />
                 Dashboard
               </NavLink>
-              <NavLink to='/create' onClick={closeMenu} className='flex items-center gap-2 py-2'>
+              <NavLink to='/generate/ai' onClick={closeMenu} className='flex items-center gap-2 py-2'>
                 <Plus className='h-5 w-5' />
-                Create
-              </NavLink>
-              <NavLink to='/generate' onClick={closeMenu} className='flex items-center gap-2 py-2'>
-                <Brain className='h-5 w-5' />
                 AI Generate
+              </NavLink>
+              <NavLink to='/generate/manual' onClick={closeMenu} className='flex items-center gap-2 py-2'>
+                <Brain className='h-5 w-5' />
+                Manual Generate
               </NavLink>
               <NavLink to='/settings' onClick={closeMenu} className='flex items-center gap-2 py-2'>
                 <Settings className='h-5 w-5' />
