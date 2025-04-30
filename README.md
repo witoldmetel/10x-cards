@@ -144,9 +144,6 @@ dotnet ef migrations add MigrationName -p ../TenXCards.Infrastructure/TenXCards.
 # Apply pending migrations
 dotnet ef database update
 
-# Clear cache
-dotnet ef database update 0
-
 # Remove the last migration (only if not applied to database)
 dotnet ef migrations remove
 
@@ -155,6 +152,33 @@ dotnet ef migrations list
 
 # Generate SQL script for migrations
 dotnet ef migrations script
+
+### Fixing "relation already exists" Error
+# If you encounter the "42P07: relation already exists" error, follow these steps:
+
+# 1. Stop the API and DB containers
+docker-compose down
+
+# 2. Start only the database
+docker-compose up db -d
+
+# 3. Reset the database schema (this will delete all data)
+docker exec -it db psql -U postgres -d ten_x_cards_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+
+# 4. Navigate to Infrastructure project
+cd API/TenXCards.Infrastructure
+
+# 5. Remove existing migrations
+rm -rf Migrations/*
+
+# 6. Create a fresh initial migration
+dotnet ef migrations add InitialCreate
+
+# 7. Apply the migration
+dotnet ef database update
+
+# 8. Start the API
+docker-compose up api -d
 ```
 
 ### Backend (API) Development

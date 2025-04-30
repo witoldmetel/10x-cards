@@ -235,6 +235,8 @@ namespace TenXCards.Core.Services
             return new FlashcardResponseDto
             {
                 Id = flashcard.Id,
+                UserId = flashcard.UserId,
+                CollectionId = flashcard.CollectionId,
                 Front = flashcard.Front,
                 Back = flashcard.Back,
                 CreatedAt = flashcard.CreatedAt,
@@ -242,6 +244,7 @@ namespace TenXCards.Core.Services
                 ArchivedAt = flashcard.ArchivedAt,
                 CreationSource = flashcard.CreationSource,
                 ReviewStatus = flashcard.ReviewStatus,
+                ReviewedAt = flashcard.ReviewedAt,
                 Tags = flashcard.Tags,
                 Category = flashcard.Category,
                 Sm2Repetitions = flashcard.Sm2Repetitions,

@@ -14,6 +14,8 @@ export interface Flashcard {
   createdAt: string;
   updatedAt?: string | null;
   archivedAt?: string | null;
+  userId: string;
+  collectionId: string;
 }
 
 export enum FlashcardCreationSource {

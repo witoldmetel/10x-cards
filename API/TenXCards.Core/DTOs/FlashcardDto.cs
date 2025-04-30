@@ -28,6 +28,8 @@ namespace TenXCards.Core.DTOs
     public class FlashcardResponseDto
     {
         public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid CollectionId { get; set; }
         public required string Front { get; set; }
         public required string Back { get; set; }
         public ReviewStatus ReviewStatus { get; set; }

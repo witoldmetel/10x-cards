@@ -13,8 +13,8 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250430102436_RemoveGetCurrentUserId")]
-    partial class RemoveGetCurrentUserId
+    [Migration("20250430105842_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

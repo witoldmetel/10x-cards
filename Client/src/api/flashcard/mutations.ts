@@ -15,7 +15,6 @@ export const useCreateFlashcard = () => {
     mutationFn: ({ collectionId, flashcard }: { collectionId: string; flashcard: CreateFlashcardDTO }) =>
       createFlashcard(collectionId, flashcard),
     onSuccess: (newFlashcard: Flashcard) => {
-      console.log('newFlashcard', newFlashcard);
       queryClient.invalidateQueries({ queryKey: ['collections', newFlashcard.collectionId] });
       // Update the flashcards list cache
       queryClient.setQueryData<Flashcard[]>(['flashcards'], oldData => {
@@ -32,9 +31,8 @@ export const useUpdateFlashcard = () => {
   return useMutation({
     mutationFn: ({ id, flashcard }: { id: string; flashcard: UpdateFlashcardDTO }) =>
       updateFlashcard(id, flashcard),
-    onSuccess: (updatedFlashcard: Flashcard, variables: { id: string; flashcard: UpdateFlashcardDTO }) => {
-      console.log('updatedFlashcard', variables);
-      queryClient.invalidateQueries({ queryKey: ['collections', variables.id] });
+    onSuccess: (updatedFlashcard: Flashcard) => {
+      queryClient.invalidateQueries({ queryKey: ['collections', updatedFlashcard.collectionId] });
 
       // Update both the single flashcard and the list cache
       queryClient.setQueryData(['flashcard', updatedFlashcard.id], updatedFlashcard);
