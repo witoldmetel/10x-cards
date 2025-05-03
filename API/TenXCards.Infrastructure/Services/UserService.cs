@@ -69,6 +69,7 @@ public class UserService : IUserService
         var token = _jwtTokenService.GenerateToken(user);
         return new UserLoginResponse
         {
+            UserId = user.Id,
             Token = token,
             ExpiresIn = 604800 // 7 days
         };

@@ -29,26 +29,26 @@ namespace TenXCards.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Collections",
+                name: "collections",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ArchivedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    TotalCards = table.Column<int>(type: "integer", nullable: false),
-                    DueCards = table.Column<int>(type: "integer", nullable: false),
-                    Color = table.Column<string>(type: "text", nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
+                    description = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    archived_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    total_cards = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    due_cards = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    color = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Collections", x => x.Id);
+                    table.PrimaryKey("PK_collections", x => x.id);
                     table.ForeignKey(
-                        name: "FK_Collections_users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_collections_users_user_id",
+                        column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -59,8 +59,8 @@ namespace TenXCards.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    CollectionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    collection_id = table.Column<Guid>(type: "uuid", nullable: false),
                     front = table.Column<string>(type: "text", nullable: false),
                     back = table.Column<string>(type: "text", nullable: false),
                     review_status = table.Column<string>(type: "varchar(50)", nullable: false),
@@ -80,33 +80,33 @@ namespace TenXCards.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_flashcards", x => x.id);
                     table.ForeignKey(
-                        name: "FK_flashcards_Collections_CollectionId",
-                        column: x => x.CollectionId,
-                        principalTable: "Collections",
-                        principalColumn: "Id",
+                        name: "FK_flashcards_collections_collection_id",
+                        column: x => x.collection_id,
+                        principalTable: "collections",
+                        principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_flashcards_users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_flashcards_users_user_id",
+                        column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Collections_UserId",
-                table: "Collections",
-                column: "UserId");
+                name: "IX_collections_user_id",
+                table: "collections",
+                column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_flashcards_CollectionId",
+                name: "IX_flashcards_collection_id",
                 table: "flashcards",
-                column: "CollectionId");
+                column: "collection_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_flashcards_UserId",
+                name: "IX_flashcards_user_id",
                 table: "flashcards",
-                column: "UserId");
+                column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_users_email",
@@ -122,7 +122,7 @@ namespace TenXCards.Infrastructure.Migrations
                 name: "flashcards");
 
             migrationBuilder.DropTable(
-                name: "Collections");
+                name: "collections");
 
             migrationBuilder.DropTable(
                 name: "users");

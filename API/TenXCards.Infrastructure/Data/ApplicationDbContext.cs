@@ -45,12 +45,72 @@ namespace TenXCards.Infrastructure.Data
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
+            modelBuilder.Entity<Collection>(entity =>
+            {
+                entity.ToTable("collections");
+
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.UserId)
+                    .HasColumnName("user_id")
+                    .IsRequired();
+
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .IsRequired();
+
+                entity.Property(e => e.Description)
+                    .HasColumnName("description");
+
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnName("created_at")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                    .IsRequired();
+
+                entity.Property(e => e.UpdatedAt)
+                    .HasColumnName("updated_at");
+
+                entity.Property(e => e.ArchivedAt)
+                    .HasColumnName("archived_at");
+
+                entity.Property(e => e.TotalCards)
+                    .HasColumnName("total_cards")
+                    .HasDefaultValue(0);
+
+                entity.Property(e => e.DueCards)
+                    .HasColumnName("due_cards")
+                    .HasDefaultValue(0);
+
+                entity.Property(e => e.Color)
+                    .HasColumnName("color")
+                    .IsRequired();
+
+                entity.HasOne(c => c.User)
+                    .WithMany()
+                    .HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(c => c.Flashcards)
+                    .WithOne(f => f.Collection)
+                    .HasForeignKey(f => f.CollectionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<Flashcard>(entity =>
             {
                 entity.ToTable("flashcards");
 
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasColumnName("id");
+
+                entity.Property(e => e.CollectionId)
+                    .HasColumnName("collection_id")
+                    .IsRequired();
+
+                entity.Property(e => e.UserId)
+                    .HasColumnName("user_id")
+                    .IsRequired();
 
                 entity.Property(e => e.Front)
                     .HasColumnName("front")
@@ -105,6 +165,16 @@ namespace TenXCards.Infrastructure.Data
 
                 entity.Property(e => e.Sm2DueDate)
                     .HasColumnName("sm2_due_date");
+
+                entity.HasOne(f => f.User)
+                    .WithMany()
+                    .HasForeignKey(f => f.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(f => f.Collection)
+                    .WithMany(c => c.Flashcards)
+                    .HasForeignKey(f => f.CollectionId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
