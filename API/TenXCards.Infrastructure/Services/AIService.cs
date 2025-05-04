@@ -12,6 +12,8 @@ using TenXCards.Core.DTOs;
 using TenXCards.Core.DTOs.OpenAI;
 using TenXCards.Core.Models;
 using TenXCards.Core.Services;
+using System.Text.Json.Serialization;
+using System.Net.Http.Headers;
 
 namespace TenXCards.Infrastructure.Services
 {
@@ -21,6 +23,8 @@ namespace TenXCards.Infrastructure.Services
         private readonly OpenRouterOptions _options;
         private readonly ILogger<AIService> _logger;
         private const string API_ENDPOINT = "https://openrouter.ai/api/v1";
+        private const int MAX_SOURCE_TEXT_LENGTH = 10000;
+        private const int MAX_CARDS_PER_REQUEST = 50;
 
         public string DefaultModelName => _options.DefaultModel;
 
@@ -41,12 +45,12 @@ namespace TenXCards.Infrastructure.Services
                 _httpClient.BaseAddress = new Uri(API_ENDPOINT);
                 _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
                 
+                // Configure default headers
                 _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_options.ApiKey}");
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 _httpClient.DefaultRequestHeaders.Add("X-Title", _options.SiteName ?? "10X Cards");
                 _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", _options.SiteUrl ?? "http://localhost:3000");
-                _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
 
                 _logger.LogInformation("Successfully configured HttpClient for OpenRouter API at {BaseAddress}", _httpClient.BaseAddress);
             }
@@ -57,56 +61,79 @@ namespace TenXCards.Infrastructure.Services
             }
         }
 
-        public async Task<List<CreateFlashcardDto>> GenerateFlashcardsAsync(
+        public async Task<AIGenerationResult> GenerateFlashcardsAsync(
             string sourceText,
             int numberOfCards,
             string? modelName = null,
             string? apiModelKey = null,
             CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrWhiteSpace(sourceText))
+                throw new ArgumentException("Source text cannot be empty", nameof(sourceText));
+
+            if (sourceText.Length > MAX_SOURCE_TEXT_LENGTH)
+                throw new ArgumentException($"Source text exceeds maximum length of {MAX_SOURCE_TEXT_LENGTH} characters", nameof(sourceText));
+
+            if (numberOfCards <= 0 || numberOfCards > MAX_CARDS_PER_REQUEST)
+                throw new ArgumentException($"Number of cards must be between 1 and {MAX_CARDS_PER_REQUEST}", nameof(numberOfCards));
+
             _logger.LogInformation("Generating {NumberOfCards} flashcards using model {ModelName}", 
                 numberOfCards, 
                 modelName ?? _options.DefaultModel);
 
-            var prompt = $@"Generate {numberOfCards} flashcards from the following text. Each flashcard should have a question on the front and a concise answer on the back. Also include relevant tags and categories.
+            var systemPrompt = "You are a highly skilled AI specialized in creating educational flashcards. " +
+                             "Your task is to generate concise, clear, and effective flashcards from the provided text. " +
+                             "Each flashcard should capture a key concept, fact, or relationship. " +
+                             "Focus on accuracy and educational value. " +
+                             "Ensure questions are clear and answers are concise but complete.";
 
-You must respond with ONLY a valid JSON array of objects with this exact structure:
-[{{
-    ""front"": ""question text here"",
-    ""back"": ""answer text here"",
+            var userPrompt = $@"Analyze the following text and provide:
+1. A list of {numberOfCards} flashcards
+2. 2-4 relevant topic tags for the entire content
+3. 1-2 broad subject categories for the entire content
+
+Respond with ONLY a valid JSON object using this exact structure:
+{{
+    ""flashcards"": [
+        {{
+            ""front"": ""question text"",
+            ""back"": ""answer text""
+        }}
+    ],
     ""tags"": [""tag1"", ""tag2""],
-    ""category"": [""category1"", ""category2""]
-}}]
-
-Do not include any explanations or text outside of the JSON array.
+    ""categories"": [""category1""]
+}}
 
 Source text:
 {sourceText}";
 
-            var request = new OpenAIRequestDto
+            var request = new OpenRouterRequest
             {
                 Model = modelName ?? _options.DefaultModel,
-                Messages = new List<OpenAIRequestDto.Message>
+                Messages = new List<Message>
                 {
-                    new() { Role = "system", Content = "You are a helpful AI that generates high-quality flashcards from provided text. Focus on key concepts and ensure questions are clear and answers are concise. Always format output as valid JSON." },
-                    new() { Role = "user", Content = prompt }
+                    new() { Role = "system", Content = systemPrompt },
+                    new() { Role = "user", Content = userPrompt }
                 },
                 Temperature = 0.7f,
-                MaxTokens = 1000,
-                ResponseFormat = "json_object"
+                MaxTokens = 2000,
+                ResponseFormat = new ResponseFormat { Type = "json_object" }
             };
 
             if (apiModelKey != null)
             {
-                _httpClient.DefaultRequestHeaders.Remove("Authorization");
-                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiModelKey}");
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiModelKey);
             }
 
             try
             {
                 _logger.LogInformation("Sending request to OpenRouter API at {Endpoint}/chat/completions", API_ENDPOINT);
-                
-                using var response = await _httpClient.PostAsJsonAsync("chat/completions", request, cancellationToken);
+
+                // Create request message with proper content type header
+                var content = JsonContent.Create(request);
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+                using var response = await _httpClient.PostAsync("chat/completions", content, cancellationToken);
                 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -126,17 +153,45 @@ Source text:
                 var jsonResponse = result.Choices[0].Message.Content;
                 _logger.LogInformation("Received response from OpenRouter: {Response}", jsonResponse);
 
-                var flashcards = JsonSerializer.Deserialize<List<CreateFlashcardDto>>(jsonResponse) ?? 
-                    throw new Exception("Failed to parse flashcards from API response");
+                var generatedContent = JsonSerializer.Deserialize<AIGeneratedContent>(jsonResponse, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                }) ?? throw new Exception("Failed to parse AI response");
 
-                foreach (var flashcard in flashcards)
+                if (generatedContent.Flashcards.Count != numberOfCards)
                 {
-                    flashcard.CreationSource = FlashcardCreationSource.AI;
-                    flashcard.ReviewStatus = ReviewStatus.New;
+                    _logger.LogWarning("Received {ActualCount} flashcards instead of requested {RequestedCount}", 
+                        generatedContent.Flashcards.Count, numberOfCards);
                 }
 
-                _logger.LogInformation("Successfully generated {Count} flashcards", flashcards.Count);
-                return flashcards;
+                var flashcards = new List<CreateFlashcardDto>();
+                foreach (var card in generatedContent.Flashcards)
+                {
+                    if (string.IsNullOrWhiteSpace(card.Front) || string.IsNullOrWhiteSpace(card.Back))
+                    {
+                        throw new Exception("Invalid flashcard format: front and back must not be empty");
+                    }
+
+                    flashcards.Add(new CreateFlashcardDto
+                    {
+                        Front = card.Front,
+                        Back = card.Back,
+                        CreationSource = FlashcardCreationSource.AI,
+                        ReviewStatus = ReviewStatus.New
+                    });
+                }
+
+                _logger.LogInformation("Successfully generated {Count} flashcards with {TagCount} tags and {CategoryCount} categories", 
+                    flashcards.Count,
+                    generatedContent.Tags.Count,
+                    generatedContent.Categories.Count);
+
+                return new AIGenerationResult
+                {
+                    Flashcards = flashcards,
+                    Tags = generatedContent.Tags,
+                    Categories = generatedContent.Categories
+                };
             }
             catch (HttpRequestException ex)
             {
@@ -152,24 +207,74 @@ Source text:
             {
                 if (apiModelKey != null)
                 {
-                    _httpClient.DefaultRequestHeaders.Remove("Authorization");
-                    _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_options.ApiKey}");
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
                 }
             }
         }
 
+        private class AIGeneratedContent
+        {
+            [JsonPropertyName("flashcards")]
+            public List<AIGeneratedCard> Flashcards { get; set; } = new();
+
+            [JsonPropertyName("tags")]
+            public List<string> Tags { get; set; } = new();
+
+            [JsonPropertyName("categories")]
+            public List<string> Categories { get; set; } = new();
+        }
+
+        private class AIGeneratedCard
+        {
+            [JsonPropertyName("front")]
+            public string Front { get; set; } = string.Empty;
+
+            [JsonPropertyName("back")]
+            public string Back { get; set; } = string.Empty;
+        }
+
+        private class OpenRouterRequest
+        {
+            [JsonPropertyName("model")]
+            public string Model { get; set; } = string.Empty;
+
+            [JsonPropertyName("messages")]
+            public List<Message> Messages { get; set; } = new();
+
+            [JsonPropertyName("temperature")]
+            public float Temperature { get; set; }
+
+            [JsonPropertyName("max_tokens")]
+            public int MaxTokens { get; set; }
+
+            [JsonPropertyName("response_format")]
+            public ResponseFormat ResponseFormat { get; set; } = new();
+        }
+
+        private class Message
+        {
+            [JsonPropertyName("role")]
+            public string Role { get; set; } = string.Empty;
+
+            [JsonPropertyName("content")]
+            public string Content { get; set; } = string.Empty;
+        }
+
+        private class ResponseFormat
+        {
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+        }
+
         private class OpenRouterResponse
         {
+            [JsonPropertyName("choices")]
             public List<Choice> Choices { get; set; } = new();
 
             public class Choice
             {
+                [JsonPropertyName("message")]
                 public Message Message { get; set; } = new();
-            }
-
-            public class Message
-            {
-                public string Content { get; set; } = string.Empty;
             }
         }
     }

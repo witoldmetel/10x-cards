@@ -5,10 +5,17 @@ using System.Threading;
 
 namespace TenXCards.Core.Services
 {
+    public class AIGenerationResult
+    {
+        public List<CreateFlashcardDto> Flashcards { get; set; } = new();
+        public List<string> Tags { get; set; } = new();
+        public List<string> Categories { get; set; } = new();
+    }
+
     public interface IAIService
     {
         string DefaultModelName { get; }
-        Task<List<CreateFlashcardDto>> GenerateFlashcardsAsync(
+        Task<AIGenerationResult> GenerateFlashcardsAsync(
             string sourceText, 
             int numberOfCards, 
             string? modelName = null,

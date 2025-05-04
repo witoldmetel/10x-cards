@@ -31,7 +31,10 @@ export async function getArchivedFlashcards(params?: FlashcardsQueryParams): Pro
 }
 
 export async function createFlashcard(collectionId: string, flashcard: CreateFlashcardDTO): Promise<Flashcard> {
-  const { data } = await instance.post<Flashcard>(`/collections/${collectionId}/flashcards`, flashcard);
+  const { data } = await instance.post<Flashcard>(
+    `/collections/${collectionId}/flashcards`,
+    flashcard
+  );
   return data;
 }
 

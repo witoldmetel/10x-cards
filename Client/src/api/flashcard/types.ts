@@ -33,8 +33,6 @@ export enum ReviewStatus {
 export interface CreateFlashcardDTO {
   front: string;
   back: string;
-  tags: string[];
-  category: string[];
   creationSource: FlashcardCreationSource;
   reviewStatus?: ReviewStatus;
 }

@@ -196,15 +196,24 @@ namespace TenXCards.Core.Services
         public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request)
         {
             // Generate flashcards using AI
-            var generatedFlashcards = await _aiService.GenerateFlashcardsAsync(
+            var generatedContent = await _aiService.GenerateFlashcardsAsync(
                 request.SourceText,
                 request.NumberOfCards,
                 request.ApiModelKey
             );
 
+            // If this is a new collection, update its metadata
+            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            if (collection != null)
+            {
+                collection.Tags.AddRange(generatedContent.Tags.Where(t => !collection.Tags.Contains(t)));
+                collection.Categories.AddRange(generatedContent.Categories.Where(c => !collection.Categories.Contains(c)));
+                await _collectionRepository.UpdateAsync(collection);
+            }
+
             // Create all flashcards in the collection
             var createdFlashcards = new List<CreateFlashcardDto>();
-            foreach (var flashcard in generatedFlashcards)
+            foreach (var flashcard in generatedContent.Flashcards)
             {
                 var created = await CreateForCollectionAsync(collectionId, flashcard);
                 if (created != null)

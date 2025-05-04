@@ -42,12 +42,25 @@ namespace TenXCards.API.Controllers
         // POST: api/collections/{collectionId}/flashcards
         [HttpPost("/api/collections/{collectionId}/flashcards")]
         [Authorize]
+        [Consumes("application/json")]
         [ProducesResponseType(typeof(FlashcardResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<FlashcardResponseDto>> CreateForCollection(Guid collectionId, [FromBody] CreateFlashcardDto createDto)
         {
-            var flashcard = await _flashcardService.CreateForCollectionAsync(collectionId, createDto);
-            return CreatedAtAction(nameof(GetByCollection), new { collectionId = collectionId }, flashcard);
+            try 
+            {
+                var flashcard = await _flashcardService.CreateForCollectionAsync(collectionId, createDto);
+                return CreatedAtAction(nameof(GetByCollection), new { collectionId }, flashcard);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Bad Request",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
         }
 
         // POST: api/collections/{collectionId}/flashcards/generate
