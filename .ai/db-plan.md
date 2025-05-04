@@ -20,8 +20,8 @@
 - **total_cards**: INTEGER DEFAULT 0
 - **due_cards**: INTEGER DEFAULT 0
 - **color**: TEXT NOT NULL -- Required field
-- **tag**: TEXT[] -- Moved from flashcards
-- **category**: TEXT[] -- Moved from flashcards
+- **tags**: TEXT[] -- Moved from flashcards
+- **categories**: TEXT[] -- Moved from flashcards
 
 ## 3. Table `flashcards`
 

@@ -27,13 +27,25 @@ builder.Services.AddSwaggerGen(c =>
     { 
         Title = "TenXCards API", 
         Version = "v1",
-        Description = "API for managing flashcards with spaced repetition"
+        Description = "API for managing flashcards with spaced repetition",
+        Contact = new OpenApiContact
+        {
+            Name = "TenXCards Team",
+            Email = "support@tenxcards.com"
+        }
     });
 
-    // Set the comments path for the Swagger JSON and UI
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    // Include XML comments from all relevant assemblies
+    var xmlApiFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlApiPath = Path.Combine(AppContext.BaseDirectory, xmlApiFile);
+    c.IncludeXmlComments(xmlApiPath);
+
+    var xmlCoreFile = "TenXCards.Core.xml";
+    var xmlCorePath = Path.Combine(AppContext.BaseDirectory, xmlCoreFile);
+    if (File.Exists(xmlCorePath))
+    {
+        c.IncludeXmlComments(xmlCorePath);
+    }
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -58,6 +70,12 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    // Enable annotations
+    c.EnableAnnotations();
+
+    // Use full type names to avoid conflicts
+    c.CustomSchemaIds(type => type.FullName);
 });
 
 // Configure rate limiting

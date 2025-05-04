@@ -125,8 +125,8 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
         "total_cards": 50,
         "due_cards": 10,
         "color": "#FF5733",
-        "tag": ["technology"],
-        "category": ["programming"],
+        "tags": ["technology"],
+        "categories": ["programming"],
         "flashcards": [
           {
             "id": "uuid",
@@ -178,8 +178,8 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
     "name": "Programming Basics",
     "color": "#FF5733",
     "description": "Fundamental programming concepts",
-    "tag": ["technology"],
-    "category": ["programming"]
+    "tags": ["technology"],
+    "categories": ["programming"]
   }
   ```
 - **Response:** Created collection object
@@ -196,8 +196,8 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
     "name": "Updated Name",
     "description": "Updated description",
     "color": "#FF5733",
-    "tag": ["updated-tag"],
-    "category": ["updated-category"]
+    "tags": ["updated-tag"],
+    "categories": ["updated-category"]
   }
   ```
 - **Response:** Updated collection object
