@@ -69,6 +69,7 @@ namespace TenXCards.API.Controllers
         [Consumes("application/json")]
         [ProducesResponseType(typeof(GenerateFlashcardsResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<GenerateFlashcardsResponse>> GenerateForCollection(
             Guid collectionId,
             [FromBody] Core.DTOs.GenerateFlashcardsRequest request,
@@ -84,8 +85,34 @@ namespace TenXCards.API.Controllers
                 });
             }
 
-            var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request);
-            return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
+            try
+            {
+                var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request);
+                return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
+            }
+            catch (Exception ex)
+            {
+                // Get all nested exception messages
+                var allExceptions = new List<string>();
+                var currentEx = ex;
+                while (currentEx != null)
+                {
+                    allExceptions.Add($"{currentEx.GetType().Name}: {currentEx.Message}");
+                    currentEx = currentEx.InnerException;
+                }
+                
+                var errorMessage = string.Join(" -> ", allExceptions);
+                
+                // Log the detailed error
+                Console.WriteLine($"Error generating flashcards: {errorMessage}");
+                
+                return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+                {
+                    Title = "Error generating flashcards",
+                    Detail = errorMessage,
+                    Status = StatusCodes.Status500InternalServerError
+                });
+            }
         }
 
         // PUT: api/flashcards/{id}
