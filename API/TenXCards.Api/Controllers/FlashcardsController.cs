@@ -20,12 +20,12 @@ namespace TenXCards.API.Controllers
     public class FlashcardsController : ControllerBase
     {
         private readonly IFlashcardService _flashcardService;
-        private readonly IAIService _aiService;
+        private readonly IOpenRouterService _openRouterService;
 
-        public FlashcardsController(IFlashcardService flashcardService, IAIService aiService)
+        public FlashcardsController(IFlashcardService flashcardService, IOpenRouterService openRouterService)
         {
             _flashcardService = flashcardService;
-            _aiService = aiService;
+            _openRouterService = openRouterService;
         }
 
         // GET: api/collections/{collectionId}/flashcards

@@ -47,15 +47,15 @@ export interface UpdateFlashcardDTO {
 }
 
 export interface GenerateFlashcardsRequest {
-  source_text: string;
-  number_of_cards: number;
-  model_name?: string;
-  api_model_key?: string;
+  sourceText: string;
+  numberOfCards: number;
+  modelName?: string;
+  apiModelKey?: string;
 }
 
 export interface GenerateFlashcardsResponse {
   flashcards: CreateFlashcardDTO[];
-  collection_id: string;
+  collectionId: string;
 }
 
 export interface PaginatedResponse<T> {

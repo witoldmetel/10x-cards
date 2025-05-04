@@ -113,8 +113,8 @@ namespace TenXCards.Core.Services
                 Description = createDto.Description,
                 Color = createDto.Color,
                 UserId = userId,
-                Tags = createDto.Tags,
-                Categories = createDto.Categories
+                Tags = createDto.Tags ?? new List<string>(),
+                Categories = createDto.Categories ?? new List<string>()
             };
             var created = await _collectionRepository.CreateAsync(collection);
             return MapToResponseDto(created);

@@ -14,17 +14,17 @@ namespace TenXCards.Core.Services
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
-        private readonly IAIService _aiService;
+        private readonly IOpenRouterService _openRouterService;
         public FlashcardService(
             IFlashcardRepository repository, 
             ICollectionService collectionService,
             ICollectionRepository collectionRepository,
-            IAIService aiService)
+            IOpenRouterService openRouterService)
         {
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
-            _aiService = aiService;
+            _openRouterService = openRouterService;
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -196,9 +196,10 @@ namespace TenXCards.Core.Services
         public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request)
         {
             // Generate flashcards using AI
-            var generatedContent = await _aiService.GenerateFlashcardsAsync(
+            var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
                 request.SourceText,
                 request.NumberOfCards,
+                null, 
                 request.ApiModelKey
             );
 

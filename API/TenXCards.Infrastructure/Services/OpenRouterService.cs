@@ -7,28 +7,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using TenXCards.Core.Configuration;
 using TenXCards.Core.DTOs;
-using TenXCards.Core.DTOs.OpenAI;
 using TenXCards.Core.Models;
 using TenXCards.Core.Services;
 using System.Text.Json.Serialization;
 using System.Net.Http.Headers;
+using TenXCards.Infrastructure.Utils;
+using TenXCards.Infrastructure.Data;
 
 namespace TenXCards.Infrastructure.Services
 {
-    public class AIService : IAIService
+    public class OpenRouterService : IOpenRouterService
     {
         private readonly HttpClient _httpClient;
         private readonly OpenRouterOptions _options;
-        private readonly ILogger<AIService> _logger;
+        private readonly ILogger<OpenRouterService> _logger;
         private const string API_ENDPOINT = "https://openrouter.ai/api/v1";
         private const int MAX_SOURCE_TEXT_LENGTH = 10000;
         private const int MAX_CARDS_PER_REQUEST = 50;
 
         public string DefaultModelName => _options.DefaultModel;
 
-        public AIService(HttpClient httpClient, IOptions<OpenRouterOptions> options, ILogger<AIService> logger)
+        public OpenRouterService(HttpClient httpClient, IOptions<OpenRouterOptions> options, ILogger<OpenRouterService> logger)
         {
             _httpClient = httpClient;
             _options = options.Value;
@@ -70,6 +70,10 @@ namespace TenXCards.Infrastructure.Services
         {
             if (string.IsNullOrWhiteSpace(sourceText))
                 throw new ArgumentException("Source text cannot be empty", nameof(sourceText));
+
+            // Sanitize the input text
+            sourceText = TextSanitizer.SanitizeForJson(sourceText);
+            sourceText = TextSanitizer.SanitizeForAI(sourceText);
 
             if (sourceText.Length > MAX_SOURCE_TEXT_LENGTH)
                 throw new ArgumentException($"Source text exceeds maximum length of {MAX_SOURCE_TEXT_LENGTH} characters", nameof(sourceText));

@@ -245,15 +245,15 @@ namespace TenXCards.Core.DTOs
         public string SourceText { get; set; } = string.Empty;
 
         /// <summary>
-        /// Number of flashcards to generate (1-50)
+        /// Number of flashcards to generate (3-20)
         /// </summary>
-        [Range(1, 50)]
-        public int NumberOfCards { get; set; } = 10;
+        [Range(3, 20)]
+        public int NumberOfCards { get; set; } = 5;
 
         /// <summary>
         /// Optional API model key for generation
         /// </summary>
-        public string? ApiModelKey { get; set; }
+        public string? ApiModelKey { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -281,5 +281,26 @@ namespace TenXCards.Core.DTOs
         /// Total number of archived flashcards
         /// </summary>
         public int TotalArchived { get; set; }
+    }
+
+    /// <summary>
+    /// Result from AI generation of flashcards
+    /// </summary>
+    public class AIGenerationResult
+    {
+        /// <summary>
+        /// List of generated flashcards
+        /// </summary>
+        public List<CreateFlashcardDto> Flashcards { get; set; } = new();
+        
+        /// <summary>
+        /// Relevant topic tags for the content
+        /// </summary>
+        public List<string> Tags { get; set; } = new();
+        
+        /// <summary>
+        /// Broad subject categories for the content
+        /// </summary>
+        public List<string> Categories { get; set; } = new();
     }
 } 
