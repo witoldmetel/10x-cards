@@ -251,6 +251,11 @@ namespace TenXCards.Core.DTOs
         public int NumberOfCards { get; set; } = 5;
 
         /// <summary>
+        /// Optional custom API model name to use for generation
+        /// </summary>
+        public string? ApiModelName { get; set; } = null;
+
+        /// <summary>
         /// Optional API model key for generation
         /// </summary>
         public string? ApiModelKey { get; set; } = string.Empty;

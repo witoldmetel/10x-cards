@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using TenXCards.Core.Models;
 using System.Threading;
 using System.Text.Json;
+using TenXCards.Core.Exceptions;
 
 namespace TenXCards.API.Controllers
 {
@@ -112,6 +113,45 @@ namespace TenXCards.API.Controllers
                     Detail = errorMessage,
                     Status = StatusCodes.Status500InternalServerError
                 });
+            }
+        }
+
+        // POST: api/flashcards/generate
+        [HttpPost("generate")]
+        [Authorize]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(AIGenerationResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status502BadGateway)]
+        public async Task<ActionResult<AIGenerationResult>> GenerateFlashcards(
+            [FromBody] GenerateFlashcardsRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (request == null)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid Request",
+                    Detail = "Request body cannot be empty",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
+            try
+            {
+                var result = await _openRouterService.GenerateFlashcardsAsync(
+                    request.SourceText,
+                    request.NumberOfCards,
+                    request.ApiModelName,
+                    request.ApiModelKey,
+                    cancellationToken);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return this.HandleApiException(ex);
             }
         }
 

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Options;
 using TenXCards.Core.Models;
 
@@ -23,9 +25,23 @@ namespace TenXCards.Infrastructure.Services
                 errors.Add("Default model name is required");
             }
 
-            if (options.TimeoutSeconds < 10)
+            if (string.IsNullOrWhiteSpace(options.BaseUrl))
             {
-                errors.Add("Timeout must be at least 10 seconds");
+                errors.Add("Base URL is required");
+            }
+            else if (!Uri.IsWellFormedUriString(options.BaseUrl, UriKind.Absolute))
+            {
+                errors.Add("Base URL must be a valid absolute URL");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Referer))
+            {
+                errors.Add("HTTP Referer is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Title))
+            {
+                errors.Add("Title is required");
             }
 
             return errors.Count > 0

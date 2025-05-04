@@ -2,12 +2,10 @@ namespace TenXCards.Core.Models
 {
     public class OpenRouterOptions
     {
-        public const string SectionName = "OpenRouter";
-        
         public string ApiKey { get; set; } = string.Empty;
-        public string? DefaultModel { get; set; } = "gpt-4o-mini";
-        public string? SiteName { get; set; }
-        public string? SiteUrl { get; set; }
-        public int TimeoutSeconds { get; set; } = 60;
+        public string BaseUrl { get; set; } = "https://openrouter.ai";
+        public string DefaultModel { get; set; } = "openai/gpt-4o-mini";
+        public string Referer { get; set; } = "https://10x-cards.com";
+        public string Title { get; set; } = "10X Cards";
     }
 } 

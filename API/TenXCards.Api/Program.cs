@@ -154,15 +154,11 @@ builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 
 // Configure OpenRouter
 builder.Services.Configure<OpenRouterOptions>(
-    builder.Configuration.GetSection(OpenRouterOptions.SectionName));
+    builder.Configuration.GetSection("OpenRouter"));
 builder.Services.AddSingleton<IValidateOptions<OpenRouterOptions>, OpenRouterOptionsValidator>();
 
 // Register OpenRouter service
-builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>(client =>
-{
-    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 60);
-    client.Timeout = TimeSpan.FromSeconds(timeout);
-});
+builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>();
 builder.Services.AddScoped<IOpenRouterService, OpenRouterService>();
 
 // Register middleware
@@ -183,6 +179,7 @@ app.UseHttpsRedirection();
 // Add middleware to pipeline
 app.UseMiddleware<RequestValidationMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+app.UseMiddleware<OpenRouterMiddleware>();
 
 // Use CORS before auth middleware
 app.UseCors("AllowFrontend");
