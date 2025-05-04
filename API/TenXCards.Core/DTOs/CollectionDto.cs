@@ -34,9 +34,6 @@ namespace TenXCards.Core.DTOs
 
         public List<string> Tags { get; set; } = new();
         public List<string> Categories { get; set; } = new();
-
-        [Required]
-        public Guid UserId { get; set; }
     }
 
     public class UpdateCollectionDto

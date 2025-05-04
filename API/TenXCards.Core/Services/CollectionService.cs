@@ -104,7 +104,7 @@ namespace TenXCards.Core.Services
             return MapToResponseDto(updated);
         }
 
-        public async Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto)
+        public async Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto, Guid userId)
         {
             var collection = new Collection
             {
@@ -112,7 +112,7 @@ namespace TenXCards.Core.Services
                 Name = createDto.Name,
                 Description = createDto.Description,
                 Color = createDto.Color,
-                UserId = createDto.UserId,
+                UserId = userId,
                 Tags = createDto.Tags,
                 Categories = createDto.Categories
             };

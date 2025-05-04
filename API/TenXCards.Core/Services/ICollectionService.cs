@@ -11,7 +11,7 @@ namespace TenXCards.Core.Services
         Task<CollectionsResponse> GetAllForDashboardAsync();
         Task<CollectionsResponse> GetAllArchivedAsync();
         Task<CollectionResponseDto?> GetByIdAsync(Guid id);
-        Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto);
+        Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto, Guid userId);
         Task<CollectionResponseDto?> UpdateAsync(Guid id, UpdateCollectionDto updateDto);
         Task<bool> DeleteAsync(Guid id);
         Task<bool> ArchiveAsync(Guid id);

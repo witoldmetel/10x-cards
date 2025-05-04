@@ -82,8 +82,7 @@ namespace TenXCards.API.Controllers
             try
             {
                 var userId = _userContextService.GetUserId();
-                request.UserId = userId;
-                var collection = await _collectionService.CreateAsync(request);
+                var collection = await _collectionService.CreateAsync(request, userId);
                 return CreatedAtAction(nameof(GetById), new { id = collection.Id }, collection);
             }
             catch (Exception ex)
