@@ -5,10 +5,9 @@ namespace TenXCards.Core.Configuration
         public const string SectionName = "OpenRouter";
         
         public required string ApiKey { get; set; }
-        public required string BaseUrl { get; set; } = "https://openrouter.ai/api/v1";
-        public string DefaultModel { get; set; } = "openai/gpt-4";
-        public int TimeoutSeconds { get; set; } = 120;
-        public string? SiteUrl { get; set; }
+        public required string DefaultModel { get; set; }
         public string? SiteName { get; set; }
+        public string? SiteUrl { get; set; }
+        public int TimeoutSeconds { get; set; } = 30;
     }
 } 

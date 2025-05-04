@@ -8,6 +8,8 @@ using TenXCards.Core.DTOs;
 using TenXCards.Core.Services;
 using System.Text.Json.Serialization;
 using TenXCards.Core.Models;
+using System.Threading;
+using System.Text.Json;
 
 namespace TenXCards.API.Controllers
 {
@@ -18,10 +20,12 @@ namespace TenXCards.API.Controllers
     public class FlashcardsController : ControllerBase
     {
         private readonly IFlashcardService _flashcardService;
+        private readonly IAIService _aiService;
 
-        public FlashcardsController(IFlashcardService flashcardService)
+        public FlashcardsController(IFlashcardService flashcardService, IAIService aiService)
         {
             _flashcardService = flashcardService;
+            _aiService = aiService;
         }
 
         // GET: api/collections/{collectionId}/flashcards
@@ -49,12 +53,24 @@ namespace TenXCards.API.Controllers
         // POST: api/collections/{collectionId}/flashcards/generate
         [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
         [Authorize]
+        [Consumes("application/json")]
         [ProducesResponseType(typeof(GenerateFlashcardsResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<GenerateFlashcardsResponse>> GenerateForCollection(
-            Guid collectionId, 
-            [FromBody] GenerateFlashcardsRequest request)
+            Guid collectionId,
+            [FromBody] Core.DTOs.GenerateFlashcardsRequest request,
+            CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Invalid Request",
+                    Detail = "Request body cannot be empty",
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+
             var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request);
             return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
         }

@@ -152,14 +152,10 @@ builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 
 // Configure OpenRouter
-builder.Services.Configure<OpenRouterOptions>(
-    builder.Configuration.GetSection(OpenRouterOptions.SectionName));
+builder.Services.Configure<OpenRouterOptions>(builder.Configuration.GetSection(OpenRouterOptions.SectionName));
 
-builder.Services.AddHttpClient<IAIService, AIService>(client =>
-{
-    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 120);
-    client.Timeout = TimeSpan.FromSeconds(timeout);
-});
+// Register AI service
+builder.Services.AddHttpClient<IAIService, AIService>();
 
 // Register middleware
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
