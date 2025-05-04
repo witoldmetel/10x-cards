@@ -11,8 +11,8 @@ namespace TenXCards.Infrastructure.Data
         }
 
         public DbSet<User> Users => Set<User>();
-        public DbSet<Collection> Collections { get; set; }
-        public DbSet<Flashcard> Flashcards { get; set; }
+        public DbSet<Collection> Collections => Set<Collection>();
+        public DbSet<Flashcard> Flashcards => Set<Flashcard>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
