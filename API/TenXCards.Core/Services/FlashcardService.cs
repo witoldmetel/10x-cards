@@ -194,14 +194,15 @@ namespace TenXCards.Core.Services
             };
         }
 
-        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, Core.DTOs.GenerateFlashcardsRequest request)
+        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, Core.DTOs.GenerateFlashcardsRequest request, CancellationToken cancellationToken = default)
         {
             // Generate flashcards using AI
             var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
                 request.SourceText,
                 request.NumberOfCards,
                 null, 
-                request.ApiModelKey
+                request.ApiModelKey,
+                cancellationToken
             );
 
             // If this is a new collection, update its metadata
@@ -231,23 +232,15 @@ namespace TenXCards.Core.Services
             };
         }
 
-        public async Task<GenerationResponseDto> GenerateFlashcardsAsync(GenerationRequestDto request, int userId, CancellationToken cancellationToken = default)
+        public async Task<GenerationResponseDto> GenerateFlashcardsForUserAsync(GenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default)
         {
-            // Get or create the collection if needed
-            Guid collectionId = request.CollectionId ?? Guid.NewGuid();
-            
-            if (request.CollectionId == null)
+            // Find the collection to get the user ID
+            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            if (collection == null)
             {
-                // Create a new collection based on the first 30 chars of source text
-                string title = request.SourceText.Length > 30 
-                    ? request.SourceText.Substring(0, 30) + "..." 
-                    : request.SourceText;
-                
-                // Create collection logic here
-                // This would call the collection service
+                throw new ArgumentException($"Collection with ID {collectionId} not found");
             }
-            
-            // Generate flashcards using AI service
+
             var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
                 request.SourceText,
                 request.NumberOfCards,
@@ -269,7 +262,7 @@ namespace TenXCards.Core.Services
                     CreationSource = FlashcardCreationSource.AI,
                     ReviewStatus = flashcardDto.ReviewStatus,
                     CollectionId = collectionId,
-                    UserId = new Guid(userId.ToString()),
+                    UserId = collection.UserId,
                     Sm2Efactor = 2.5 // Default value
                 };
                 

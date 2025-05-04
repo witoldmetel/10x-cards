@@ -6,11 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Services;
-using System.Text.Json.Serialization;
 using TenXCards.Core.Models;
 using System.Threading;
-using System.Text.Json;
-using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace TenXCards.API.Controllers
 {
@@ -22,11 +20,16 @@ namespace TenXCards.API.Controllers
     {
         private readonly IFlashcardService _flashcardService;
         private readonly IOpenRouterService _openRouterService;
+        private readonly ILogger<FlashcardsController> _logger;
 
-        public FlashcardsController(IFlashcardService flashcardService, IOpenRouterService openRouterService)
+        public FlashcardsController(
+            IFlashcardService flashcardService, 
+            IOpenRouterService openRouterService,
+            ILogger<FlashcardsController> logger)
         {
             _flashcardService = flashcardService;
             _openRouterService = openRouterService;
+            _logger = logger;
         }
 
         // GET: api/collections/{collectionId}/flashcards
@@ -78,18 +81,6 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                // Debugging: Log the raw request body
-                Request.EnableBuffering();
-                string requestBody;
-                using (var reader = new StreamReader(Request.Body, leaveOpen: true))
-                {
-                    requestBody = await reader.ReadToEndAsync();
-                    // Reset the position for other middleware
-                    Request.Body.Position = 0;
-                }
-                
-                Console.WriteLine($"DEBUG - Raw Request: {requestBody}");
-                
                 if (request == null)
                 {
                     return BadRequest(new ProblemDetails
@@ -99,13 +90,8 @@ namespace TenXCards.API.Controllers
                         Status = StatusCodes.Status400BadRequest
                     });
                 }
-
-                // Debugging: Log the parsed request
-                var sourceText = request.SourceText;
-                var numberOfCards = request.NumberOfCards;
-                Console.WriteLine($"DEBUG - Parsed Request: SourceText='{sourceText}', NumberOfCards={numberOfCards}");
                 
-                var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request);
+                var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request, cancellationToken);
                 return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
             }
             catch (Exception ex)
@@ -122,7 +108,7 @@ namespace TenXCards.API.Controllers
                 var errorMessage = string.Join(" -> ", allExceptions);
                 
                 // Log the detailed error
-                Console.WriteLine($"Error generating flashcards: {errorMessage}");
+                _logger.LogError(ex, "Error generating flashcards: {ErrorMessage}", errorMessage);
                 
                 return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
                 {
