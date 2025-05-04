@@ -153,12 +153,16 @@ builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 
 // Configure OpenRouter
-builder.Services.Configure<OpenRouterOptions>(
+builder.Services.Configure<TenXCards.Infrastructure.Services.OpenRouterOptions>(
     builder.Configuration.GetSection("OpenRouter"));
-builder.Services.AddSingleton<IValidateOptions<OpenRouterOptions>, OpenRouterOptionsValidator>();
+builder.Services.AddSingleton<IValidateOptions<TenXCards.Infrastructure.Services.OpenRouterOptions>, TenXCards.Infrastructure.Services.OpenRouterOptionsValidator>();
 
 // Register OpenRouter service
-builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>();
+builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>(client =>
+{
+    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 120);
+    client.Timeout = TimeSpan.FromSeconds(timeout);
+});
 builder.Services.AddScoped<IOpenRouterService, OpenRouterService>();
 
 // Register middleware
@@ -179,7 +183,6 @@ app.UseHttpsRedirection();
 // Add middleware to pipeline
 app.UseMiddleware<RequestValidationMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-app.UseMiddleware<OpenRouterMiddleware>();
 
 // Use CORS before auth middleware
 app.UseCors("AllowFrontend");

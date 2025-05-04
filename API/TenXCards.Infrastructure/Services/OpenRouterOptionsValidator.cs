@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Options;
-using TenXCards.Core.Models;
 
 namespace TenXCards.Infrastructure.Services
 {
@@ -9,44 +8,17 @@ namespace TenXCards.Infrastructure.Services
     {
         public ValidateOptionsResult Validate(string? name, OpenRouterOptions options)
         {
-            var errors = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(options.ApiKey))
+            if (string.IsNullOrEmpty(options.ApiKey))
             {
-                errors.Add("API key is required");
-            }
-            else if (options.ApiKey.Length < 20)
-            {
-                errors.Add("API key appears to be invalid (too short)");
+                return ValidateOptionsResult.Fail("API key must be provided for OpenRouter service");
             }
 
-            if (string.IsNullOrWhiteSpace(options.DefaultModel))
+            if (string.IsNullOrEmpty(options.BaseUrl))
             {
-                errors.Add("Default model name is required");
+                return ValidateOptionsResult.Fail("Base URL must be provided for OpenRouter service");
             }
 
-            if (string.IsNullOrWhiteSpace(options.BaseUrl))
-            {
-                errors.Add("Base URL is required");
-            }
-            else if (!Uri.IsWellFormedUriString(options.BaseUrl, UriKind.Absolute))
-            {
-                errors.Add("Base URL must be a valid absolute URL");
-            }
-
-            if (string.IsNullOrWhiteSpace(options.Referer))
-            {
-                errors.Add("HTTP Referer is required");
-            }
-
-            if (string.IsNullOrWhiteSpace(options.Title))
-            {
-                errors.Add("Title is required");
-            }
-
-            return errors.Count > 0
-                ? ValidateOptionsResult.Fail(errors)
-                : ValidateOptionsResult.Success;
+            return ValidateOptionsResult.Success;
         }
     }
 } 

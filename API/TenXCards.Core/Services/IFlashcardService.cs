@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TenXCards.Core.DTOs;
+using System.Threading;
 
 namespace TenXCards.Core.Services
 {
@@ -19,5 +20,6 @@ namespace TenXCards.Core.Services
         Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request);
         Task<FlashcardResponseDto?> ArchiveAsync(Guid id);
         Task<FlashcardResponseDto?> UnarchiveAsync(Guid id);
+        Task<GenerationResponseDto> GenerateFlashcardsAsync(GenerationRequestDto request, int userId, CancellationToken cancellationToken = default);
     }
 } 

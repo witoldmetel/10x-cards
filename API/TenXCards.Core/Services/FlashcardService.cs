@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
-using TenXCards.Core.Services; 
+using TenXCards.Core.Services;
+using System.Threading;
 
 namespace TenXCards.Core.Services
 {
@@ -193,7 +194,7 @@ namespace TenXCards.Core.Services
             };
         }
 
-        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request)
+        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, Core.DTOs.GenerateFlashcardsRequest request)
         {
             // Generate flashcards using AI
             var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
@@ -223,10 +224,63 @@ namespace TenXCards.Core.Services
                 }
             }
 
-            return new GenerateFlashcardsResponse
+            return new Core.DTOs.GenerateFlashcardsResponse
             {
                 Flashcards = createdFlashcards,
                 CollectionId = collectionId
+            };
+        }
+
+        public async Task<GenerationResponseDto> GenerateFlashcardsAsync(GenerationRequestDto request, int userId, CancellationToken cancellationToken = default)
+        {
+            // Get or create the collection if needed
+            Guid collectionId = request.CollectionId ?? Guid.NewGuid();
+            
+            if (request.CollectionId == null)
+            {
+                // Create a new collection based on the first 30 chars of source text
+                string title = request.SourceText.Length > 30 
+                    ? request.SourceText.Substring(0, 30) + "..." 
+                    : request.SourceText;
+                
+                // Create collection logic here
+                // This would call the collection service
+            }
+            
+            // Generate flashcards using AI service
+            var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
+                request.SourceText,
+                request.NumberOfCards,
+                null,
+                request.ApiModelKey,
+                cancellationToken
+            );
+            
+            // Create the flashcards in the system
+            var createdFlashcards = new List<FlashcardResponseDto>();
+            
+            foreach (var flashcardDto in generatedContent.Flashcards)
+            {
+                var flashcard = new Flashcard
+                {
+                    Id = Guid.NewGuid(),
+                    Front = flashcardDto.Front,
+                    Back = flashcardDto.Back,
+                    CreationSource = FlashcardCreationSource.AI,
+                    ReviewStatus = flashcardDto.ReviewStatus,
+                    CollectionId = collectionId,
+                    UserId = new Guid(userId.ToString()),
+                    Sm2Efactor = 2.5 // Default value
+                };
+                
+                var created = await _repository.CreateAsync(flashcard);
+                createdFlashcards.Add(MapToResponseDto(created));
+            }
+            
+            return new GenerationResponseDto
+            {
+                CollectionId = collectionId,
+                GeneratedFlashcards = createdFlashcards
             };
         }
 

@@ -1,4 +1,4 @@
-namespace TenXCards.Core.Models
+namespace TenXCards.Infrastructure.Services
 {
     public class OpenRouterOptions
     {
