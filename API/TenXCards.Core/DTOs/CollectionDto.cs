@@ -15,6 +15,8 @@ namespace TenXCards.Core.DTOs
         public int TotalCards { get; set; }
         public int DueCards { get; set; }
         public required string Color { get; set; }
+        public List<string> Tags { get; set; } = new();
+        public List<string> Categories { get; set; } = new();
         public List<FlashcardResponseDto> ArchivedFlashcards { get; set; } = new();
         public List<FlashcardResponseDto> Flashcards { get; set; } = new();
     }
@@ -30,6 +32,9 @@ namespace TenXCards.Core.DTOs
         [Required]
         public string Color { get; set; } = string.Empty;
 
+        public List<string> Tags { get; set; } = new();
+        public List<string> Categories { get; set; } = new();
+
         [Required]
         public Guid UserId { get; set; }
     }
@@ -44,6 +49,9 @@ namespace TenXCards.Core.DTOs
         
         [Required]
         public string Color { get; set; } = string.Empty;
+
+        public List<string>? Tags { get; set; }
+        public List<string>? Categories { get; set; }
     }
 
     public class CollectionsQueryParams

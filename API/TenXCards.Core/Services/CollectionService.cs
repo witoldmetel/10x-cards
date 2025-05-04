@@ -96,6 +96,8 @@ namespace TenXCards.Core.Services
             collection.Name = updateDto.Name;
             collection.Description = updateDto.Description;
             collection.Color = updateDto.Color;
+            if (updateDto.Tags != null) collection.Tags = updateDto.Tags;
+            if (updateDto.Categories != null) collection.Categories = updateDto.Categories;
             collection.UpdatedAt = DateTime.UtcNow;
             var updated = await _collectionRepository.UpdateAsync(collection);
             if (updated == null) return null;
@@ -110,7 +112,9 @@ namespace TenXCards.Core.Services
                 Name = createDto.Name,
                 Description = createDto.Description,
                 Color = createDto.Color,
-                UserId = createDto.UserId
+                UserId = createDto.UserId,
+                Tags = createDto.Tags,
+                Categories = createDto.Categories
             };
             var created = await _collectionRepository.CreateAsync(collection);
             return MapToResponseDto(created);
@@ -162,6 +166,8 @@ namespace TenXCards.Core.Services
                 TotalCards = collection.TotalCards,
                 DueCards = collection.DueCards,
                 Color = collection.Color,
+                Tags = collection.Tags,
+                Categories = collection.Categories,
                 Flashcards = collection.Flashcards
                     .Where(f => f.ArchivedAt == null)
                     .Select(MapFlashcardToDto)
@@ -185,8 +191,6 @@ namespace TenXCards.Core.Services
                 CreationSource = f.CreationSource,
                 ReviewStatus = f.ReviewStatus,
                 ReviewedAt = f.ReviewedAt,
-                Tags = f.Tags,
-                Category = f.Category,
                 Sm2Repetitions = f.Sm2Repetitions,
                 Sm2Interval = f.Sm2Interval,
                 Sm2Efactor = f.Sm2Efactor,

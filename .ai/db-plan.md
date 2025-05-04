@@ -20,6 +20,8 @@
 - **total_cards**: INTEGER DEFAULT 0
 - **due_cards**: INTEGER DEFAULT 0
 - **color**: TEXT NOT NULL -- Required field
+- **tag**: TEXT[] -- Moved from flashcards
+- **category**: TEXT[] -- Moved from flashcards
 
 ## 3. Table `flashcards`
 
@@ -36,8 +38,6 @@
   - _Constraint_: CHECK (creation_source IN ('Manual', 'AI'))
 - **reviewed_at**: TIMESTAMP WITH TIME ZONE  # Replaces last_reviewed and next_review
 - **archived_at**: TIMESTAMP WITH TIME ZONE  # Used for soft-archiving flashcards
-- **tags**: TEXT[]
-- **category**: TEXT[]
 - **sm2_repetitions**: INTEGER NOT NULL DEFAULT 0
 - **sm2_interval**: INTEGER NOT NULL DEFAULT 0
 - **sm2_efactor**: NUMERIC NOT NULL DEFAULT 2.5

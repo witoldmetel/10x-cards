@@ -1,0 +1,105 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# API Changes Guide for 10x-Cards
+
+## Model-First Approach
+
+When making changes to the API, always follow this model-first approach:
+
+1. Core Models (in [API/TenXCards.Core/Models](mdc:API/TenXCards.Core/Models)):
+   - Start with model changes (e.g., `Collection.cs`, `Flashcard.cs`)
+   - These define the core domain entities
+
+2. DTOs (in [API/TenXCards.Core/DTOs](mdc:API/TenXCards.Core/DTOs)):
+   - Update corresponding DTOs (e.g., `CollectionDto.cs`, `FlashcardDto.cs`)
+   - Ensure all request/response DTOs are synchronized with model changes
+
+3. Repository Interfaces (in [API/TenXCards.Core/Repositories](mdc:API/TenXCards.Core/Repositories)):
+   - Update repository interfaces (e.g., `ICollectionRepository.cs`)
+   - Define new query methods if needed
+   - Keep interfaces focused on domain operations
+
+4. Repository Implementations (in [API/TenXCards.Infrastructure/Repositories](mdc:API/TenXCards.Infrastructure/Repositories)):
+   - Implement new repository methods
+   - Update existing queries to handle new properties
+   - Optimize database operations where needed
+
+5. Services (in [API/TenXCards.Core/Services](mdc:API/TenXCards.Core/Services)):
+   - Update service interfaces (e.g., `ICollectionService.cs`)
+   - Update service implementations (e.g., `CollectionService.cs`)
+   - Pay special attention to mapping methods between Models and DTOs
+
+6. Controllers (in [API/TenXCards.API/Controllers](mdc:API/TenXCards.API/Controllers)):
+   - Update API controllers if endpoint changes are needed
+   - Controllers should only work with DTOs, never with domain models directly
+
+7. Documentation (in [api-plan.md](mdc:.ai/api-plan.md) and [db-plan.md](mdc:.ai/db-plan.md))
+   - Update documentation
+
+## Common Patterns
+
+1. Collection-Flashcard Relationship:
+   - Collections own Flashcards (one-to-many)
+   - Cascade deletes are configured
+   - Archive operations affect both entities
+
+2. Common Repository Operations:
+   - Include related entities with `Include()`
+   - Use `IQueryable` for composable queries
+   - Handle soft deletes if implemented
+   - Implement pagination
+   - Use transactions when needed
+
+## Database Changes
+
+For database changes:
+
+1. Entity Configuration:
+   - Update [ApplicationDbContext.cs](mdc:API/TenXCards.Infrastructure/Data/ApplicationDbContext.cs)
+   - Configure new properties in `OnModelCreating`
+   - Update repository queries if needed
+
+2. Migration Process:
+   ```bash
+   # From API/TenXCards.API directory:
+   
+   # 1. Drop existing database (if needed)
+   dotnet ef database drop -f
+   
+   # 2. Remove existing migrations
+   rm -rf ../TenXCards.Infrastructure/Migrations/
+   
+   # 3. Create new migration
+   dotnet ef migrations add InitialCreate -p ../TenXCards.Infrastructure/TenXCards.Infrastructure.csproj
+   
+   # 4. Apply migration
+   dotnet ef database update
+   ```
+
+## Validation Checklist
+
+Before committing changes:
+
+1. Model Synchronization:
+   - All models and their corresponding DTOs are in sync
+   - All required properties are marked with `required` keyword
+   - Navigation properties are properly configured
+
+2. Repository Layer:
+   - Repository interfaces are updated
+   - Implementations handle all new properties
+   - Queries are optimized
+   - Related entities are properly included
+
+3. Service Layer:
+   - All mapping methods are updated
+   - CRUD operations handle new properties
+   - Validation logic is in place
+
+4. Database:
+   - Column types are appropriate
+   - Indexes are configured if needed
+   - Default values are set where necessary

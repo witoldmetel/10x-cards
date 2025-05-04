@@ -31,8 +31,6 @@ namespace TenXCards.Core.Models
         public FlashcardCreationSource CreationSource { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public DateTime? ArchivedAt { get; set; }
-        public List<string> Tags { get; set; } = new();
-        public List<string> Category { get; set; } = new();
         
         // SM2 Algorithm fields
         public int Sm2Repetitions { get; set; }

@@ -10,8 +10,6 @@ namespace TenXCards.Core.DTOs
         public required string Front { get; set; }
         public required string Back { get; set; }
         public FlashcardCreationSource CreationSource { get; set; } = FlashcardCreationSource.Manual;
-        public List<string> Tags { get; set; } = new();
-        public List<string> Category { get; set; } = new();
         public ReviewStatus ReviewStatus { get; set; } = ReviewStatus.Approved;
     }
 
@@ -19,8 +17,6 @@ namespace TenXCards.Core.DTOs
     {
         public string? Front { get; set; }
         public string? Back { get; set; }
-        public List<string>? Tags { get; set; }
-        public List<string>? Category { get; set; }
         public ReviewStatus? ReviewStatus { get; set; }
         public DateTime? ArchivedAt { get; set; }
     }
@@ -35,8 +31,6 @@ namespace TenXCards.Core.DTOs
         public ReviewStatus ReviewStatus { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public FlashcardCreationSource CreationSource { get; set; }
-        public List<string> Tags { get; set; } = new();
-        public List<string> Category { get; set; } = new();
         public int Sm2Repetitions { get; set; }
         public int Sm2Interval { get; set; }
         public double Sm2Efactor { get; set; }
@@ -55,8 +49,6 @@ namespace TenXCards.Core.DTOs
 
         public ReviewStatus? ReviewStatus { get; set; }
         public string? SearchPhrase { get; set; }
-        public string? Tag { get; set; }
-        public string? Category { get; set; }
         public bool? Archived { get; set; }
         public Guid? CollectionId { get; set; }
     }
@@ -101,6 +93,5 @@ namespace TenXCards.Core.DTOs
     public class ArchivedStatisticsDto
     {
         public int TotalArchived { get; set; }
-        public Dictionary<string, int> ArchivedByCategory { get; set; } = new();
     }
 } 

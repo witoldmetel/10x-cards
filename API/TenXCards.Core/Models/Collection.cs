@@ -15,6 +15,8 @@ namespace TenXCards.Core.Models
         public int TotalCards { get; set; }
         public int DueCards { get; set; }
         public required string Color { get; set; }
+        public List<string> Tags { get; set; } = new();
+        public List<string> Categories { get; set; } = new();
         
         // Navigation properties
         public User? User { get; set; }

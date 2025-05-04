@@ -8,11 +8,11 @@ Key fields: id (UUID), name, email, password, api_model_key, created_at.
 
 ### Collection
 Maps to `collections` table  
-Key fields: id (UUID), name, description (optional), color, created_at, updated_at, total_cards, due_cards, flashcards (array of Flashcard objects).
+Key fields: id (UUID), name, description (optional), color, created_at, updated_at, total_cards, due_cards, tag (array of strings), category (array of strings), flashcards (array of Flashcard objects).
 
 ### Flashcard
 Maps to `flashcards` table  
-Key fields: id (UUID), user_id, collection_id, front, back, review_status, reviewed_at, archived_at, creation_source, tags, category, sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date, created_at, updated_at.
+Key fields: id (UUID), user_id, collection_id, front, back, review_status, reviewed_at, archived_at, creation_source, sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date, created_at, updated_at.
 
 ### StudySession
 Maps to `study_sessions` table  
@@ -125,6 +125,8 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
         "total_cards": 50,
         "due_cards": 10,
         "color": "#FF5733",
+        "tag": ["technology"],
+        "category": ["programming"],
         "flashcards": [
           {
             "id": "uuid",
@@ -132,8 +134,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
             "back": "An application programming interface...",
             "review_status": "Approved",
             "reviewed_at": "2024-03-20T12:34:56Z",
-            "tags": ["technology"],
-            "category": ["programming"],
             "created_at": "2024-03-20T12:34:56Z",
             "updated_at": null,
             "archived_at": null,
@@ -177,7 +177,9 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "name": "Programming Basics",
     "color": "#FF5733",
-    "description": "Fundamental programming concepts"
+    "description": "Fundamental programming concepts",
+    "tag": ["technology"],
+    "category": ["programming"]
   }
   ```
 - **Response:** Created collection object
@@ -193,7 +195,9 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "name": "Updated Name",
     "description": "Updated description",
-    "color": "#FF5733"
+    "color": "#FF5733",
+    "tag": ["updated-tag"],
+    "category": ["updated-category"]
   }
   ```
 - **Response:** Updated collection object
@@ -232,8 +236,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "front": "What is REST API?",
     "back": "An application programming interface...",
-    "tags": ["technology"],
-    "category": ["programming"],
     "creation_source": "Manual"
   }
   ```
@@ -250,8 +252,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "front": "Updated front",
     "back": "Updated back",
-    "tags": ["updated-tag"],
-    "category": ["updated-category"],
     "review_status": "Approved"
   }
   ```
@@ -302,8 +302,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
       {
         "front": "Generated question",
         "back": "Generated answer",
-        "tags": ["ai-generated", "topic-specific-tag"],
-        "category": ["auto-detected-category"],
         "creation_source": "AI",
         "review_status": "New"
       }
@@ -338,8 +336,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 3. AI generates flashcards in JSON format with:
    - Front (question/term)
    - Back (answer/definition)
-   - Automatically detected tags
-   - Automatically categorized content
 4. Generated flashcards are:
    - Marked as `CreationSource.AI`
    - Set to `ReviewStatus.New`
@@ -441,7 +437,7 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 - Study session completion updates relevant flashcard reviewed_at dates
 - reviewed_at is updated whenever review_status changes
 - Search is case-insensitive
-- Tags and categories are case-insensitive for comparison
+- Tag and category are case-insensitive for comparison
 - Collections include their flashcards in the response
 - Collections can be filtered by archived status
 
