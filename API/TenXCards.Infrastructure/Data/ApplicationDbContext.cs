@@ -86,6 +86,14 @@ namespace TenXCards.Infrastructure.Data
                     .HasColumnName("color")
                     .IsRequired();
 
+                entity.Property(e => e.Tags)
+                    .HasColumnName("tags")
+                    .HasColumnType("text[]");
+
+                entity.Property(e => e.Categories)
+                    .HasColumnName("categories")
+                    .HasColumnType("text[]");
+
                 entity.HasOne(c => c.User)
                     .WithMany()
                     .HasForeignKey(c => c.UserId)
@@ -142,14 +150,6 @@ namespace TenXCards.Infrastructure.Data
                     .HasConversion<string>()
                     .HasColumnType("varchar(50)")
                     .IsRequired();
-
-                entity.Property(e => e.Tags)
-                    .HasColumnName("tags")
-                    .HasColumnType("text[]");
-
-                entity.Property(e => e.Category)
-                    .HasColumnName("category")
-                    .HasColumnType("text[]");
 
                 entity.Property(e => e.Sm2Repetitions)
                     .HasColumnName("sm2_repetitions")

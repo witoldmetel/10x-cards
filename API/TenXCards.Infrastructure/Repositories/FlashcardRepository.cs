@@ -82,8 +82,6 @@ namespace TenXCards.Infrastructure.Repositories
 
             existingFlashcard.Front = flashcard.Front;
             existingFlashcard.Back = flashcard.Back;
-            existingFlashcard.Tags = flashcard.Tags;
-            existingFlashcard.Category = flashcard.Category;
 
             if (flashcard.ReviewStatus != existingFlashcard.ReviewStatus)
             {
@@ -176,18 +174,6 @@ namespace TenXCards.Infrastructure.Repositories
             return true;
         }
 
-        public async Task<Dictionary<string, int>> GetArchivedCountByCategory()
-        {
-            var query = await _context.Flashcards
-                .Where(f => f.ArchivedAt != null)
-                .SelectMany(f => f.Category)
-                .GroupBy(c => c)
-                .Select(g => new { Category = g.Key, Count = g.Count() })
-                .ToListAsync();
-
-            return query.ToDictionary(x => x.Category, x => x.Count);
-        }
-
         private static IQueryable<Flashcard> ApplyFilters(IQueryable<Flashcard> query, FlashcardsQueryParams queryParams)
         {
             if (queryParams.ReviewStatus.HasValue)
@@ -201,18 +187,6 @@ namespace TenXCards.Infrastructure.Repositories
                 query = query.Where(f => 
                     f.Front.ToLower().Contains(searchPhrase) || 
                     f.Back.ToLower().Contains(searchPhrase));
-            }
-
-            if (!string.IsNullOrWhiteSpace(queryParams.Tag))
-            {
-                var tag = queryParams.Tag.ToLower();
-                query = query.Where(f => f.Tags.Any(t => t.ToLower() == tag));
-            }
-
-            if (!string.IsNullOrWhiteSpace(queryParams.Category))
-            {
-                var category = queryParams.Category.ToLower();
-                query = query.Where(f => f.Category.Any(c => c.ToLower() == category));
             }
 
             return query;

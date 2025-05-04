@@ -84,6 +84,8 @@ namespace TenXCards.Infrastructure.Repositories
             existing.Name = collection.Name;
             existing.Description = collection.Description;
             existing.Color = collection.Color;
+            existing.Tags = collection.Tags;
+            existing.Categories = collection.Categories;
             existing.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

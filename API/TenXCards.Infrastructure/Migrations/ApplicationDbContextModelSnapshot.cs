@@ -34,6 +34,11 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("archived_at");
 
+                    b.Property<List<string>>("Categories")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("categories");
+
                     b.Property<string>("Color")
                         .IsRequired()
                         .HasColumnType("text")
@@ -59,6 +64,11 @@ namespace TenXCards.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
+
+                    b.Property<List<string>>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("tags");
 
                     b.Property<int>("TotalCards")
                         .ValueGeneratedOnAdd()
@@ -96,11 +106,6 @@ namespace TenXCards.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("back");
-
-                    b.Property<List<string>>("Category")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("category");
 
                     b.Property<Guid>("CollectionId")
                         .HasColumnType("uuid")
@@ -151,11 +156,6 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("sm2_repetitions");
-
-                    b.Property<List<string>>("Tags")
-                        .IsRequired()
-                        .HasColumnType("text[]")
-                        .HasColumnName("tags");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
