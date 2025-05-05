@@ -8,6 +8,7 @@ using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
+using TenXCards.Core.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
@@ -20,30 +21,23 @@ namespace TenXCards.Core.Services
     public class FlashcardService : IFlashcardService
     {
         private readonly ILogger<FlashcardService> _logger;
-        private readonly HttpClient _httpClient;
-        private readonly OpenRouterOptions _options;
+        private readonly IOpenRouterService _openRouterService;
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
 
         public FlashcardService(
             ILogger<FlashcardService> logger,
-            HttpClient httpClient,
-            IOptions<OpenRouterOptions> options,
+            IOpenRouterService openRouterService,
             IFlashcardRepository repository, 
             ICollectionService collectionService,
             ICollectionRepository collectionRepository)
         {
             _logger = logger;
-            _httpClient = httpClient;
-            _options = options.Value;
+            _openRouterService = openRouterService;
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
-
-            _httpClient.BaseAddress = new Uri(_options.BaseUrl);
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_options.ApiKey}");
-            _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -247,19 +241,22 @@ namespace TenXCards.Core.Services
 
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(_options.ApiEndpoint, request, cancellationToken);
-                response.EnsureSuccessStatusCode();
-                
-                var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);
-                var content = openRouterResponse?.Choices?.FirstOrDefault()?.Message?.Content;
-                
-                if (string.IsNullOrEmpty(content))
+                // Build the prompt for flashcard generation
+                var prompt = $"Generate {request.Count} flashcards from the following text. Each flashcard should have a front (question/term) and back (answer/definition). Return them in a JSON array format: {request.SourceText}";
+                if (!string.IsNullOrEmpty(request.Instructions))
                 {
-                    throw new Exception("Empty response from OpenRouter API");
+                    prompt += $"\nAdditional instructions: {request.Instructions}";
                 }
-                
-                content = SanitizeJsonResponse(content);
-                
+
+                // Use OpenRouterService to generate flashcards
+                var content = await _openRouterService.GetChatResponseAsync(
+                    userMessage: prompt,
+                    modelName: request.Model,
+                    responseFormat: new ResponseFormat { Type = "json_object" },
+                    cancellationToken: cancellationToken
+                );
+
+                // Parse the response
                 var jsonOptions = new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true,
@@ -272,6 +269,7 @@ namespace TenXCards.Core.Services
                     throw new Exception("Failed to parse flashcards from API response");
                 }
 
+                // Create flashcards in the collection
                 var createdFlashcards = new List<FlashcardResponseDto>();
                 foreach (var flashcard in generatedFlashcards)
                 {
@@ -296,6 +294,21 @@ namespace TenXCards.Core.Services
                     CreatedAt = DateTime.UtcNow,
                     Flashcards = createdFlashcards
                 };
+            }
+            catch (OpenRouterAuthenticationException ex)
+            {
+                _logger.LogError(ex, "Authentication failed with OpenRouter API");
+                throw;
+            }
+            catch (OpenRouterValidationException ex)
+            {
+                _logger.LogError(ex, "Invalid response from OpenRouter API");
+                throw;
+            }
+            catch (OpenRouterCommunicationException ex)
+            {
+                _logger.LogError(ex, "Communication error with OpenRouter API");
+                throw;
             }
             catch (Exception ex)
             {

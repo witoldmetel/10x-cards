@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -5,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -128,6 +130,10 @@ namespace TenXCards.Infrastructure.Services
         {
             try
             {
+                // Hash the source text to help with caching and tracking
+                var sourceHash = ComputeHash(userMessage);
+                _logger.LogInformation("Processing request with hash: {Hash}", sourceHash);
+
                 var request = BuildRequest(userMessage, systemMessage, modelName, parameters);
                 
                 if (responseFormat != null)
@@ -178,14 +184,14 @@ namespace TenXCards.Infrastructure.Services
                         throw new OpenRouterValidationException("Response contains no valid content");
                     }
                     
-                    // format the response to valid JSON
-                    string messageContent = result.Choices[0].Message.Content;
-                    messageContent = FormatResponseToValidFlashcardsJson(messageContent);
+                    var messageContent = result.Choices[0].Message?.Content ?? throw new OpenRouterValidationException("Message content is null");
+                    messageContent = SanitizeJsonResponse(messageContent);
                     
                     if (result.Usage != null)
                     {
                         _logger.LogInformation(
-                            "API usage - Prompt tokens: {PromptTokens}, Completion tokens: {CompletionTokens}, Total: {TotalTokens}",
+                            "API usage for request {Hash} - Prompt tokens: {PromptTokens}, Completion tokens: {CompletionTokens}, Total: {TotalTokens}",
+                            sourceHash,
                             result.Usage.PromptTokens,
                             result.Usage.CompletionTokens,
                             result.Usage.TotalTokens);
@@ -215,11 +221,20 @@ namespace TenXCards.Infrastructure.Services
             }
         }
 
-        private string FormatResponseToValidFlashcardsJson(string content)
+        private static string ComputeHash(string input)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = sha256.ComputeHash(bytes);
+
+            return Convert.ToBase64String(hash);
+        }
+
+        private static string SanitizeJsonResponse(string content)
         {
             content = content.Trim();
             
-            // remove all markdown code blocks
+            // Remove markdown headers
             if (content.StartsWith("```json") || content.StartsWith("```"))
             {
                 var startIndex = content.IndexOf('[');
@@ -231,81 +246,36 @@ namespace TenXCards.Infrastructure.Services
                 }
             }
             
-            // check if the content is a valid JSON array
+            // Check if we already have a JSON array
             if (!content.StartsWith("[") || !content.EndsWith("]"))
             {
-                // if not, try to find the first array
+                // Find the start of the array
                 var startIndex = content.IndexOf('[');
                 
                 if (startIndex >= 0)
                 {
-                    // cut the content to the first array
+                    // Cut text from array start
                     content = content.Substring(startIndex);
                     
-                    // check if the content ends with a closing bracket
+                    // Check if array is properly terminated
                     var endIndex = content.LastIndexOf(']');
                     
                     if (endIndex > 0)
                     {
-                        // find the last closing bracket
+                        // We have start and end of array
                         content = content.Substring(0, endIndex + 1);
                     }
                     else
                     {
                         // No closing bracket - we need to add it
-                        // But first check if it ends with a comma
+                        // But first check if it ends with comma
                         content = content.TrimEnd();
                         if (content.EndsWith(","))
                         {
                             content = content.Substring(0, content.Length - 1);
                         }
-                        // add closing bracket
+                        // Add closing bracket
                         content += "]";
-                        _logger.LogWarning("Found incomplete JSON array, adding closing bracket");
-                    }
-                }
-            }
-            
-            // check if the content is a valid JSON
-            try 
-            {
-                // parsing JSON to check if it's valid
-                using var doc = JsonDocument.Parse(content);
-                
-                // check if the root element is an array
-                if (doc.RootElement.ValueKind != JsonValueKind.Array)
-                {
-                    _logger.LogWarning("API response is not a JSON array, trying to wrap it");
-                    content = $"[{content}]";
-                }
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogWarning(ex, "Failed to validate JSON response, attempting to fix");
-                
-                // Attempt to fix common JSON problems
-                // 1. Unclosed last object
-                if (content.Contains("{") && !content.EndsWith("}]"))
-                {
-                    // count open and close braces
-                    int openBraces = content.Count(c => c == '{');
-                    int closeBraces = content.Count(c => c == '}');
-                    
-                    if (openBraces > closeBraces)
-                    {
-                        // Missing closing braces
-                        for (int i = 0; i < openBraces - closeBraces; i++)
-                        {
-                            content += "}";
-                        }
-                        
-                        // add missing closing brackets
-                        if (!content.TrimEnd().EndsWith("]"))
-                        {
-                            content += "]";
-                        }
-                        
-                        _logger.LogWarning("Fixed incomplete JSON by adding closing braces");
                     }
                 }
             }
