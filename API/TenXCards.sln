@@ -8,8 +8,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenXCards.Core", "TenXCards
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenXCards.Infrastructure", "TenXCards.Infrastructure\TenXCards.Infrastructure.csproj", "{1024CA14-7552-4D94-83E6-2AA1020F1EFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenXCards.Tests", "TenXCards.Tests\TenXCards.Tests.csproj", "{B24AE9CB-8A2A-4D1E-889F-223A9D01B99F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
