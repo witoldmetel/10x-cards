@@ -233,49 +233,6 @@ namespace TenXCards.Core.DTOs
         public required string Message { get; set; }
     }
 
-    /// <summary>
-    /// Request for generating flashcards using AI
-    /// </summary>
-    public class GenerateFlashcardsRequest
-    {
-        /// <summary>
-        /// Source text to generate flashcards from
-        /// </summary>
-        [Required]
-        public string SourceText { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Number of flashcards to generate (3-20)
-        /// </summary>
-        [Range(3, 20)]
-        public int NumberOfCards { get; set; } = 5;
-
-        /// <summary>
-        /// Optional custom API model name to use for generation
-        /// </summary>
-        public string? ApiModelName { get; set; } = null;
-
-        /// <summary>
-        /// Optional API model key for generation
-        /// </summary>
-        public string? ApiModelKey { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Response for flashcard generation
-    /// </summary>
-    public class GenerateFlashcardsResponse
-    {
-        /// <summary>
-        /// List of generated flashcards
-        /// </summary>
-        public List<CreateFlashcardDto> Flashcards { get; set; } = new();
-
-        /// <summary>
-        /// ID of the collection the flashcards were generated for
-        /// </summary>
-        public Guid CollectionId { get; set; }
-    }
 
     /// <summary>
     /// Statistics about archived flashcards

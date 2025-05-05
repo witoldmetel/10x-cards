@@ -17,9 +17,7 @@ namespace TenXCards.Core.Services
         Task<bool> DeleteAsync(Guid id);
         Task<BatchUpdateResponse> BatchUpdateAsync(BatchUpdateRequest request);
         Task<ArchivedStatisticsDto> GetArchivedStatisticsAsync();
-        Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request, CancellationToken cancellationToken = default);
         Task<FlashcardResponseDto?> ArchiveAsync(Guid id);
         Task<FlashcardResponseDto?> UnarchiveAsync(Guid id);
-        Task<GenerationResponseDto> GenerateFlashcardsForUserAsync(GenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default);
     }
 } 

@@ -15,17 +15,14 @@ namespace TenXCards.Core.Services
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
-        private readonly IOpenRouterService _openRouterService;
         public FlashcardService(
             IFlashcardRepository repository, 
             ICollectionService collectionService,
-            ICollectionRepository collectionRepository,
-            IOpenRouterService openRouterService)
+            ICollectionRepository collectionRepository)
         {
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
-            _openRouterService = openRouterService;
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -193,90 +190,6 @@ namespace TenXCards.Core.Services
                 TotalArchived = archivedCards.Count()
             };
         }
-
-        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, Core.DTOs.GenerateFlashcardsRequest request, CancellationToken cancellationToken = default)
-        {
-            // Generate flashcards using AI
-            var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
-                request.SourceText,
-                request.NumberOfCards,
-                null, 
-                request.ApiModelKey,
-                cancellationToken
-            );
-
-            // If this is a new collection, update its metadata
-            var collection = await _collectionRepository.GetByIdAsync(collectionId);
-            if (collection != null)
-            {
-                collection.Tags.AddRange(generatedContent.Tags.Where(t => !collection.Tags.Contains(t)));
-                collection.Categories.AddRange(generatedContent.Categories.Where(c => !collection.Categories.Contains(c)));
-                await _collectionRepository.UpdateAsync(collection);
-            }
-
-            // Create all flashcards in the collection
-            var createdFlashcards = new List<CreateFlashcardDto>();
-            foreach (var flashcard in generatedContent.Flashcards)
-            {
-                var created = await CreateForCollectionAsync(collectionId, flashcard);
-                if (created != null)
-                {
-                    createdFlashcards.Add(flashcard);
-                }
-            }
-
-            return new Core.DTOs.GenerateFlashcardsResponse
-            {
-                Flashcards = createdFlashcards,
-                CollectionId = collectionId
-            };
-        }
-
-        public async Task<GenerationResponseDto> GenerateFlashcardsForUserAsync(GenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default)
-        {
-            // Find the collection to get the user ID
-            var collection = await _collectionRepository.GetByIdAsync(collectionId);
-            if (collection == null)
-            {
-                throw new ArgumentException($"Collection with ID {collectionId} not found");
-            }
-
-            var generatedContent = await _openRouterService.GenerateFlashcardsAsync(
-                request.SourceText,
-                request.NumberOfCards,
-                null,
-                request.ApiModelKey,
-                cancellationToken
-            );
-            
-            // Create the flashcards in the system
-            var createdFlashcards = new List<FlashcardResponseDto>();
-            
-            foreach (var flashcardDto in generatedContent.Flashcards)
-            {
-                var flashcard = new Flashcard
-                {
-                    Id = Guid.NewGuid(),
-                    Front = flashcardDto.Front,
-                    Back = flashcardDto.Back,
-                    CreationSource = FlashcardCreationSource.AI,
-                    ReviewStatus = flashcardDto.ReviewStatus,
-                    CollectionId = collectionId,
-                    UserId = collection.UserId,
-                    Sm2Efactor = 2.5 // Default value
-                };
-                
-                var created = await _repository.CreateAsync(flashcard);
-                createdFlashcards.Add(MapToResponseDto(created));
-            }
-            
-            return new GenerationResponseDto
-            {
-                CollectionId = collectionId,
-                GeneratedFlashcards = createdFlashcards
-            };
-        }
-
         private static FlashcardResponseDto MapToResponseDto(Flashcard flashcard)
         {
             return new FlashcardResponseDto

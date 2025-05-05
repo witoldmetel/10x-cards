@@ -19,16 +19,13 @@ namespace TenXCards.API.Controllers
     public class FlashcardsController : ControllerBase
     {
         private readonly IFlashcardService _flashcardService;
-        private readonly IOpenRouterService _openRouterService;
         private readonly ILogger<FlashcardsController> _logger;
 
         public FlashcardsController(
             IFlashcardService flashcardService, 
-            IOpenRouterService openRouterService,
             ILogger<FlashcardsController> logger)
         {
             _flashcardService = flashcardService;
-            _openRouterService = openRouterService;
             _logger = logger;
         }
 
@@ -63,58 +60,6 @@ namespace TenXCards.API.Controllers
                     Title = "Bad Request",
                     Detail = ex.Message,
                     Status = StatusCodes.Status400BadRequest
-                });
-            }
-        }
-
-        // POST: api/collections/{collectionId}/flashcards/generate
-        [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
-        [Authorize]
-        [Consumes("application/json")]
-        [ProducesResponseType(typeof(GenerateFlashcardsResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<GenerateFlashcardsResponse>> GenerateForCollection(
-            Guid collectionId,
-            [FromBody] Core.DTOs.GenerateFlashcardsRequest request,
-            CancellationToken cancellationToken)
-        {
-            try
-            {
-                if (request == null)
-                {
-                    return BadRequest(new ProblemDetails
-                    {
-                        Title = "Invalid Request",
-                        Detail = "Request body cannot be empty",
-                        Status = StatusCodes.Status400BadRequest
-                    });
-                }
-                
-                var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request, cancellationToken);
-                return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
-            }
-            catch (Exception ex)
-            {
-                // Get all nested exception messages
-                var allExceptions = new List<string>();
-                var currentEx = ex;
-                while (currentEx != null)
-                {
-                    allExceptions.Add($"{currentEx.GetType().Name}: {currentEx.Message}");
-                    currentEx = currentEx.InnerException;
-                }
-                
-                var errorMessage = string.Join(" -> ", allExceptions);
-                
-                // Log the detailed error
-                _logger.LogError(ex, "Error generating flashcards: {ErrorMessage}", errorMessage);
-                
-                return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
-                {
-                    Title = "Error generating flashcards",
-                    Detail = errorMessage,
-                    Status = StatusCodes.Status500InternalServerError
                 });
             }
         }

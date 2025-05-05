@@ -152,19 +152,6 @@ builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 
-// Configure OpenRouter
-builder.Services.Configure<TenXCards.Infrastructure.Services.OpenRouterOptions>(
-    builder.Configuration.GetSection("OpenRouter"));
-builder.Services.AddSingleton<IValidateOptions<TenXCards.Infrastructure.Services.OpenRouterOptions>, TenXCards.Infrastructure.Services.OpenRouterOptionsValidator>();
-
-// Register OpenRouter service
-builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>(client =>
-{
-    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 120);
-    client.Timeout = TimeSpan.FromSeconds(timeout);
-});
-builder.Services.AddScoped<IOpenRouterService, OpenRouterService>();
-
 // Register middleware
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 builder.Services.AddTransient<RequestValidationMiddleware>();
