@@ -143,6 +143,7 @@ namespace TenXCards.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error generating flashcards: {Error}", ex.Message);
                 return BadRequest(new ProblemDetails
                 {
                     Title = "Bad Request",

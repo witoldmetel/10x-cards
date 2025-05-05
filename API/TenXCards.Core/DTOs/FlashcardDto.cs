@@ -209,7 +209,7 @@ namespace TenXCards.Core.DTOs
         /// <summary>
         /// List of flashcard IDs to update
         /// </summary>
-        public required List<Guid> FlashcardIds { get; set; }
+        public required IEnumerable<Guid> FlashcardIds { get; set; }
 
         /// <summary>
         /// Update to apply to all selected flashcards
@@ -225,14 +225,13 @@ namespace TenXCards.Core.DTOs
         /// <summary>
         /// List of successfully updated flashcard IDs
         /// </summary>
-        public List<Guid> UpdatedIds { get; set; } = new();
+        public required IEnumerable<Guid> UpdatedIds { get; set; }
 
         /// <summary>
         /// Operation result message
         /// </summary>
         public required string Message { get; set; }
     }
-
 
     /// <summary>
     /// Statistics about archived flashcards
@@ -248,30 +247,25 @@ namespace TenXCards.Core.DTOs
     /// <summary>
     /// Request DTO for flashcard generation
     /// </summary>
-    public record FlashcardGenerationRequestDto
+    public class FlashcardGenerationRequestDto
     {
         /// <summary>
         /// The text from which flashcards should be generated
         /// </summary>
-        [Required(ErrorMessage = "Source text is required")]
-        [MinLength(10, ErrorMessage = "Source text must be at least 10 characters long")]
-        public string SourceText { get; init; } = string.Empty;
+        [Required]
+        [MinLength(10)]
+        [MaxLength(4000)]
+        public required string SourceText { get; set; }
 
         /// <summary>
         /// The number of flashcards to generate (3-20)
         /// </summary>
-        [Required(ErrorMessage = "Number of flashcards to generate is required")]
-        [Range(3, 20, ErrorMessage = "Number of flashcards must be between 3 and 20")]
-        public int Count { get; init; }
+        [Range(3, 20)]
+        public int Count { get; set; } = 3;
 
         /// <summary>
         /// Optional model to use for generation
         /// </summary>
-        public string? Model { get; init; }
-
-        /// <summary>
-        /// Optional instructions to guide the generation
-        /// </summary>
-        public string? Instructions { get; init; }
+        public string? Model { get; set; }
     }
 } 

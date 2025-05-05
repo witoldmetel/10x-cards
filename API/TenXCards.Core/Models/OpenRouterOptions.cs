@@ -9,10 +9,10 @@ namespace TenXCards.Core.Models
         public string BaseUrl { get; set; } = "https://openrouter.ai/api/v1";
         public string ApiEndpoint { get; set; } = "/chat/completions";
         public string ApiKey { get; set; } = string.Empty;
-        public string DefaultModel { get; set; } = "openai/gpt-4o-mini";
+        public string DefaultModel { get; set; } = "openai/gpt-3.5-turbo";
         public string SiteUrl { get; set; } = "https://github.com/10xCards/FlashCard";
         public string SiteName { get; set; } = "FlashCard";
-        public int TimeoutSeconds { get; set; } = 60;
+        public int TimeoutSeconds { get; set; } = 120;
     }
     
     public class OpenRouterOptionsValidator : IValidateOptions<OpenRouterOptions>
