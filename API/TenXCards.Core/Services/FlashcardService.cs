@@ -25,7 +25,6 @@ namespace TenXCards.Core.Services
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
-        private const string GenerationEndpoint = "/api/v1/chat/completions";
 
         public FlashcardService(
             ILogger<FlashcardService> logger,
@@ -248,7 +247,7 @@ namespace TenXCards.Core.Services
 
             try
             {
-                var response = await _httpClient.PostAsJsonAsync(GenerationEndpoint, request, cancellationToken);
+                var response = await _httpClient.PostAsJsonAsync(_options.ApiEndpoint, request, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 
                 var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);

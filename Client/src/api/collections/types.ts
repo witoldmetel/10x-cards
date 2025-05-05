@@ -18,14 +18,16 @@ export interface CreateCollectionDto {
   name: string;
   description?: string;
   color: string;
-  userId: string;
+  tags?: string[];
+  categories?: string[];
 }
 
 export interface UpdateCollectionDto {
   name: string;
   description?: string;
   color: string;
-  userId: string;
+  tags?: string[];
+  categories?: string[];
 }
 
 export interface CollectionsQueryParams {

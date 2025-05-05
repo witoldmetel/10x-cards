@@ -48,14 +48,18 @@ export interface UpdateFlashcardDTO {
 
 export interface GenerateFlashcardsRequest {
   sourceText: string;
-  numberOfCards: number;
-  modelName?: string;
-  apiModelKey?: string;
+  count: number;
+  model?: string;
+  instructions?: string;
 }
 
 export interface GenerateFlashcardsResponse {
-  flashcards: CreateFlashcardDTO[];
+  userId: string;
   collectionId: string;
+  model: string;
+  generatedCount: number;
+  createdAt: string;
+  flashcards: Flashcard[];
 }
 
 export interface PaginatedResponse<T> {
