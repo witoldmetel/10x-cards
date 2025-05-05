@@ -87,6 +87,128 @@ The service should anticipate the following error scenarios:
    - Deploy service to development environment, followed by tests in production environment.
    - Implementation of monitoring mechanisms and alerts for ongoing service status tracking.
 
+## 8. Testing Results and Problem Resolution
+
+### Initial Problems Encountered
+1. **400 Bad Request Errors:**
+   - *Problem:* Initial implementation received 400 Bad Request errors from OpenRouter API
+   - *Root Cause:* 
+     - Incorrect base URL (using `/api/v1` instead of just `/v1`)
+     - Response format specification not supported by OpenRouter
+     - JSON parsing issues with markdown-formatted responses
+   - *Solution:*
+     - Updated base URL to `https://openrouter.ai/api/v1`
+     - Removed `response_format` field from request
+     - Implemented `SanitizeJsonResponse` to handle markdown formatting
+
+2. **Authentication Issues:**
+   - *Problem:* API calls failing with 401 Unauthorized
+   - *Root Cause:* Missing or incorrect HTTP headers
+   - *Solution:* Added required headers:
+     ```csharp
+     Authorization: Bearer {api_key}
+     HTTP-Referer: {site_url}
+     X-Title: {site_name}
+     ```
+
+3. **Response Parsing Challenges:**
+   - *Problem:* Inconsistent response formats from different models
+   - *Root Cause:* AI models sometimes return markdown-wrapped JSON or different JSON structures
+   - *Solution:* 
+     - Implemented flexible JSON parsing that handles both direct arrays and wrapped objects
+     - Added JSON sanitization to remove markdown formatting
+     - Added support for number handling from string values
+
+### Testing Process
+1. **Direct API Testing:**
+   ```bash
+   curl -X POST https://openrouter.ai/api/v1/chat/completions \
+     -H "Authorization: Bearer {api_key}" \
+     -H "Content-Type: application/json" \
+     -H "HTTP-Referer: http://localhost:3000" \
+     -H "X-Title: 10X Cards - Development" \
+     -d '{
+       "model": "openai/gpt-3.5-turbo",
+       "messages": [
+         {
+           "role": "system",
+           "content": "Create 3 flashcards. Return ONLY a JSON array with front and back fields."
+         },
+         {
+           "role": "user",
+           "content": "Sample text for flashcard generation"
+         }
+       ],
+       "temperature": 0.7,
+       "max_tokens": 4000
+     }'
+   ```
+
+2. **Integration Testing:**
+   - Created test collection
+   - Generated flashcards with various text lengths
+   - Verified JSON parsing and database storage
+   - Tested error handling and retries
+
+3. **End-to-End Testing:**
+   - Registered test user
+   - Created collection
+   - Generated flashcards
+   - Verified flashcard creation in database
+
+### Best Practices Identified
+1. **Request Format:**
+   - Keep system prompt simple and explicit
+   - Request JSON array format directly
+   - Use higher max_tokens (4000) for multiple flashcards
+   - Set appropriate temperature (0.7) for consistent results
+
+2. **Response Handling:**
+   - Always sanitize JSON responses
+   - Handle both array and object formats
+   - Implement proper error handling with logging
+   - Add retry logic for transient failures
+
+3. **Configuration:**
+   - Store API key securely
+   - Use environment-specific site URLs
+   - Set appropriate timeouts (120 seconds)
+   - Use compatible models (gpt-3.5-turbo)
+
+### Monitoring and Maintenance
+1. **Logging:**
+   - Log all API requests and responses
+   - Track response times and success rates
+   - Monitor token usage and costs
+   - Alert on high error rates
+
+2. **Performance:**
+   - Cache frequently used prompts
+   - Implement rate limiting
+   - Monitor response times
+   - Track token usage
+
+3. **Error Handling:**
+   - Implement exponential backoff
+   - Add circuit breaker for API outages
+   - Provide clear error messages
+   - Log detailed error information
+
+This implementation has been tested and verified to work with the following configuration:
+```json
+{
+  "OpenRouter": {
+    "ApiKey": "sk-or-v1-...",
+    "BaseUrl": "https://openrouter.ai/api/v1",
+    "ApiEndpoint": "/chat/completions",
+    "DefaultModel": "openai/gpt-3.5-turbo",
+    "TimeoutSeconds": 120,
+    "SiteUrl": "http://localhost:3000",
+    "SiteName": "10X Cards - Development"
+  }
+}
+```
+
 ---
 
 The above guide provides a comprehensive plan for implementing the OpenRouter service, which should be easily adaptable to the specific technology stack used in the 10xCards project.

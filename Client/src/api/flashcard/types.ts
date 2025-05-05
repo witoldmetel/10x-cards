@@ -5,8 +5,6 @@ export interface Flashcard {
   reviewStatus: ReviewStatus;
   reviewedAt?: string | null;
   creationSource: FlashcardCreationSource;
-  tags: string[];
-  category: string[];
   sm2Repetitions: number;
   sm2Interval: number;
   sm2Efactor: number;
@@ -40,8 +38,6 @@ export interface CreateFlashcardDTO {
 export interface UpdateFlashcardDTO {
   front?: string;
   back?: string;
-  tags?: string[];
-  category?: string[];
   reviewStatus?: ReviewStatus;
   archivedAt?: string | null;
 }
@@ -50,16 +46,28 @@ export interface GenerateFlashcardsRequest {
   sourceText: string;
   count: number;
   model?: string;
-  instructions?: string;
 }
 
 export interface GenerateFlashcardsResponse {
-  userId: string;
-  collectionId: string;
+  flashcards: {
+    id: string;
+    userId: string;
+    collectionId: string;
+    front: string;
+    back: string;
+    reviewStatus: ReviewStatus;
+    creationSource: FlashcardCreationSource;
+    createdAt: string;
+    updatedAt: string | null;
+    archivedAt: string | null;
+    sm2Repetitions: number;
+    sm2Interval: number;
+    sm2Efactor: number;
+    sm2DueDate: string | null;
+  }[];
+  totalCount: number;
   model: string;
-  generatedCount: number;
-  createdAt: string;
-  flashcards: Flashcard[];
+  processingTimeMs: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -89,7 +97,5 @@ export interface FlashcardsQueryParams {
   limit?: number;
   reviewStatus?: ReviewStatus;
   searchPhrase?: string;
-  tag?: string;
-  category?: string;
   archived?: boolean;
 }
