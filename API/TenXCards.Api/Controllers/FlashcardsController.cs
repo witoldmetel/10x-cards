@@ -124,5 +124,32 @@ namespace TenXCards.API.Controllers
             }
             return NoContent();
         }
+
+        // POST: api/collections/{collectionId}/flashcards/generate
+        [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
+        [Authorize]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(FlashcardGenerationResponseDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<FlashcardGenerationResponseDto>> GenerateForCollection(
+            Guid collectionId, 
+            [FromBody] FlashcardGenerationRequestDto request,
+            CancellationToken cancellationToken)
+        {
+            try 
+            {
+                var result = await _flashcardService.GenerateFlashcardsAsync(request, collectionId, cancellationToken);
+                return CreatedAtAction(nameof(GetByCollection), new { collectionId }, result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Bad Request",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+        }
     }
 } 

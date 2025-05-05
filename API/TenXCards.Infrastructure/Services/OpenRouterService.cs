@@ -173,7 +173,7 @@ namespace TenXCards.Infrastructure.Services
                     }
                     
                     if (result.Choices == null || result.Choices.Count == 0 || 
-                        result.Choices[0].Message == null || string.IsNullOrWhiteSpace(result.Choices[0].Message.Content))
+                        result.Choices[0].Message?.Content == null || string.IsNullOrWhiteSpace(result.Choices[0].Message?.Content))
                     {
                         throw new OpenRouterValidationException("Response contains no valid content");
                     }
