@@ -110,7 +110,7 @@ export default function AIGenerate() {
       });
 
       if (response.flashcards.length > 0) {
-        navigate(`/collections/${response.collectionId}`);
+        navigate(`/collections/${response.flashcards[0].collectionId}`);
       }
     } catch (error) {
       console.error('Error generating flashcards:', error);

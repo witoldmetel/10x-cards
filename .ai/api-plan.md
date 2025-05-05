@@ -8,7 +8,7 @@ Key fields: id (UUID), name, email, password, api_model_key, created_at.
 
 ### Collection
 Maps to `collections` table  
-Key fields: id (UUID), name, description (optional), color, created_at, updated_at, total_cards, due_cards, tag (array of strings), category (array of strings), flashcards (array of Flashcard objects).
+Key fields: id (UUID), name, description (optional), color, created_at, updated_at, total_cards, due_cards, tags (array of strings), categories (array of strings), flashcards (array of Flashcard objects).
 
 ### Flashcard
 Maps to `flashcards` table  

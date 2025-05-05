@@ -29,7 +29,7 @@ Manual preparation of high-quality flashcards:
 ### 3.2 Flashcard Management
 
 - Ability to manually create flashcard sets
-- Metadata editing (category, tag)
+- Metadata editing (categories, tags)
 - Archiving without losing historical data
 
 ### 3.3 Repetition System
