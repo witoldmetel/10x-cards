@@ -69,6 +69,7 @@ namespace TenXCards.Infrastructure.Migrations
                     creation_source = table.Column<string>(type: "varchar(50)", nullable: false),
                     ReviewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     archived_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    source_text_hash = table.Column<string>(type: "varchar(64)", nullable: true),
                     sm2_repetitions = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     sm2_interval = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     sm2_efactor = table.Column<double>(type: "double precision", nullable: false, defaultValue: 2.5),

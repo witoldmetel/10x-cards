@@ -13,7 +13,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250505081135_InitialCreate")]
+    [Migration("20250505104244_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -159,6 +159,10 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("sm2_repetitions");
+
+                    b.Property<string>("SourceTextHash")
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("source_text_hash");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")

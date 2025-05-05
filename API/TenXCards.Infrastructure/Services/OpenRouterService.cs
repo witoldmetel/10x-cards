@@ -44,7 +44,7 @@ namespace TenXCards.Infrastructure.Services
 
             var apiPath = configuration["OpenRouter:ApiEndpoint"] ?? "/api/v1/chat/completions";
             ApiEndpoint = baseUrl.TrimEnd('/') + (apiPath.StartsWith("/") ? apiPath : "/" + apiPath);
-            
+
             var apiKey = configuration["OpenRouter:ApiKey"] 
                 ?? throw new ArgumentException("OpenRouter API key not found in configuration");
             
@@ -66,19 +66,20 @@ namespace TenXCards.Infrastructure.Services
                 { "top_p", 0.95 },
                 { "max_tokens", 750 }
             };
-
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             
             var siteUrl = configuration["OpenRouter:SiteUrl"] ?? "https://github.com/10xCards/FlashCard";
             var siteName = configuration["OpenRouter:SiteName"] ?? "FlashCard";
             
+            // Add required OpenRouter headers
             _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", siteUrl);
             _httpClient.DefaultRequestHeaders.Add("X-Title", siteName);
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("FlashCard/1.0");
             
-            _logger.LogInformation("OpenRouterService initialized successfully");
+            // Add custom User-Agent
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("10XCards/1.0");
         }
 
         private OpenRouterRequest BuildRequest(
@@ -144,7 +145,6 @@ namespace TenXCards.Infrastructure.Services
                 };
                 
                 var requestJson = JsonSerializer.Serialize(request, jsonOptions);
-                _logger.LogDebug("Sending request to OpenRouter. Payload: {Payload}", requestJson);
                 
                 using var content = JsonContent.Create(request, null, jsonOptions);
                 using var response = await _httpClient.PostAsync(ApiEndpoint, content, cancellationToken);

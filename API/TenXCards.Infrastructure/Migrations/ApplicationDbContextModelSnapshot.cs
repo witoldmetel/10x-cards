@@ -157,6 +157,10 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("sm2_repetitions");
 
+                    b.Property<string>("SourceTextHash")
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("source_text_hash");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");

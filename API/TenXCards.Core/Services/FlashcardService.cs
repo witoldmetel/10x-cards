@@ -14,6 +14,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Text.Json.Serialization;
+using System.Net.Http.Headers;
 
 namespace TenXCards.Core.Services
 {
@@ -41,9 +43,13 @@ namespace TenXCards.Core.Services
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
 
+            // Configure HttpClient
             _httpClient.BaseAddress = new Uri(_options.BaseUrl);
+            _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_options.ApiKey}");
-            _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
+            _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://github.com/witoldmetel");
+            _httpClient.DefaultRequestHeaders.Add("X-Title", "10x-cards");
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -239,31 +245,6 @@ namespace TenXCards.Core.Services
             return flashcards.Select(MapToResponseDto);
         }
 
-        private static GenerationResponseDto MapToGenerationResponseDto(Generation generation)
-        {
-            var dto = new GenerationResponseDto
-            {
-                Id = generation.Id,
-                UserId = generation.UserId,
-                CollectionId = generation.Flashcards.FirstOrDefault()?.CollectionId ?? Guid.Empty,
-                Model = generation.Model,
-                GeneratedCount = generation.GeneratedCount,
-                CreatedAt = generation.CreatedAt,
-                Flashcards = new List<GenerationFlashcardDto>()
-            };
-
-            foreach (var flashcard in generation.Flashcards)
-            {
-                dto.Flashcards.Add(new GenerationFlashcardDto
-                {
-                    Front = flashcard.Front,
-                    Back = flashcard.Back
-                });
-            }
-
-            return dto;
-        }
-
         public async Task<FlashcardResponseDto> GenerateFlashcardsAsync(
             FlashcardGenerationRequestDto request, 
             Guid collectionId, 
@@ -273,38 +254,52 @@ namespace TenXCards.Core.Services
             if (collection == null)
                 throw new Exception($"Collection with id {collectionId} not found");
 
+            var sourceTextHash = ComputeHash(request.SourceText);
+            var existingFlashcard = await _repository.GetFlashcardBySourceHash(sourceTextHash, collectionId);
+            
+            if (existingFlashcard != null)
+            {
+                _logger.LogInformation("Found existing flashcard for source text hash {Hash}", sourceTextHash);
+                return MapToResponseDto(existingFlashcard);
+            }
+
+            var openRouterRequest = new
+            {
+                model = _options.DefaultModel,
+                messages = new[]
+                {
+                    new { role = "system", content = "You are a helpful assistant that creates flashcards. Create a single flashcard based on the provided text. Return ONLY a JSON object with front and back fields." },
+                    new { role = "user", content = request.SourceText }
+                },
+                temperature = 0.7,
+                max_tokens = 1000
+            };
+
             try
             {
-                // Hash the source text for deduplication
-                var sourceTextHash = ComputeHash(request.SourceText);
+                var response = await _httpClient.PostAsJsonAsync("api/v1/chat/completions", openRouterRequest, cancellationToken);
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
-                // Check if we already have a flashcard with this source hash in the collection
-                var existingFlashcard = await _repository.GetFlashcardBySourceHash(sourceTextHash, collectionId);
-                if (existingFlashcard != null)
+                if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Found existing flashcard for source text hash {Hash}", sourceTextHash);
-                    return MapToResponseDto(existingFlashcard);
+                    _logger.LogError("OpenRouter API error: {StatusCode} - {Content}", response.StatusCode, responseContent);
+                    throw new Exception($"OpenRouter API error: {responseContent}");
                 }
 
-                var response = await _httpClient.PostAsJsonAsync(_options.ApiEndpoint, request, cancellationToken);
-                response.EnsureSuccessStatusCode();
-                
                 var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);
                 var content = openRouterResponse?.Choices?.FirstOrDefault()?.Message?.Content;
-                
+
                 if (string.IsNullOrEmpty(content))
                 {
                     throw new Exception("Empty response from OpenRouter API");
                 }
-                
-                content = SanitizeJsonResponse(content);
-                
+
                 var jsonOptions = new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true,
                     AllowTrailingCommas = true 
                 };
-                
+
                 var generatedFlashcard = JsonSerializer.Deserialize<CreateFlashcardDto>(content, jsonOptions);
                 if (generatedFlashcard == null)
                 {
@@ -320,7 +315,7 @@ namespace TenXCards.Core.Services
                     ReviewStatus = ReviewStatus.New,
                     CollectionId = collectionId,
                     UserId = collection.UserId,
-                    SourceTextHash = sourceTextHash, // Store the hash for future deduplication
+                    SourceTextHash = sourceTextHash,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -330,7 +325,7 @@ namespace TenXCards.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating flashcard for collection {CollectionId}", collectionId);
+                _logger.LogError(ex, "Error generating flashcard for collection {CollectionId}. Error: {Error}", collectionId, ex.Message);
                 throw;
             }
         }
