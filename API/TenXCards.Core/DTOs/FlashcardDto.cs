@@ -248,81 +248,65 @@ namespace TenXCards.Core.DTOs
     /// <summary>
     /// Request DTO for flashcard generation
     /// </summary>
-    public class FlashcardGenerationRequestDto
+    public record FlashcardGenerationRequestDto
     {
         /// <summary>
         /// The text from which flashcards should be generated
         /// </summary>
         [Required]
-        public string SourceText { get; set; } = string.Empty;
-        
+        public string SourceText { get; init; } = string.Empty;
+
         /// <summary>
-        /// The number of flashcards to generate (default: 5)
+        /// The number of flashcards to generate (1-50)
         /// </summary>
-        public int Count { get; set; } = 5;
-        
+        [Required]
+        [Range(3, 20)]
+        public int Count { get; init; }
+
         /// <summary>
         /// Optional model to use for generation
         /// </summary>
-        public string? Model { get; set; }
-        
+        public string? Model { get; init; }
+
         /// <summary>
         /// Optional instructions to guide the generation
         /// </summary>
-        public string? Instructions { get; set; }
+        public string? Instructions { get; init; }
     }
-    
+
     /// <summary>
     /// Response DTO for flashcard generation
     /// </summary>
-    public class FlashcardGenerationResponseDto
+    public record FlashcardGenerationResponseDto
     {
-        /// <summary>
-        /// Unique identifier for this generation
-        /// </summary>
-        public Guid Id { get; set; }
-        
         /// <summary>
         /// User ID associated with this generation
         /// </summary>
-        public Guid UserId { get; set; }
-        
+        public Guid UserId { get; init; }
+
+        /// <summary>
+        /// Collection ID where flashcards were generated
+        /// </summary>
+        public Guid CollectionId { get; init; }
+
         /// <summary>
         /// Model used for generation
         /// </summary>
-        public string Model { get; set; } = string.Empty;
-        
+        public string Model { get; init; } = string.Empty;
+
         /// <summary>
         /// Number of flashcards generated
         /// </summary>
-        public int GeneratedCount { get; set; }
-        
-        /// <summary>
-        /// Generated flashcards
-        /// </summary>
-        public List<GeneratedFlashcardDto> Flashcards { get; set; } = new();
-        
+        public int GeneratedCount { get; init; }
+
         /// <summary>
         /// When the generation was created
         /// </summary>
-        public DateTime CreatedAt { get; set; }
-    }
-    
-    /// <summary>
-    /// DTO for a generated flashcard
-    /// </summary>
-    public class GeneratedFlashcardDto
-    {
+        public DateTime CreatedAt { get; init; }
+
         /// <summary>
-        /// Front side of the flashcard (question)
+        /// Generated flashcards
         /// </summary>
-        [Required]
-        public string Front { get; set; } = string.Empty;
-        
-        /// <summary>
-        /// Back side of the flashcard (answer)
-        /// </summary>
-        [Required]
-        public string Back { get; set; } = string.Empty;
+        public IEnumerable<FlashcardResponseDto> Flashcards { get; init; } = new List<FlashcardResponseDto>();
     }
 } 

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Security.Cryptography;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
@@ -22,6 +25,8 @@ namespace TenXCards.Core.Services
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
+        private const string GenerationEndpoint = "/api/v1/chat/completions";
+
         public FlashcardService(
             ILogger<FlashcardService> logger,
             HttpClient httpClient,
@@ -207,6 +212,7 @@ namespace TenXCards.Core.Services
                 TotalArchived = archivedCards.Count()
             };
         }
+
         private static FlashcardResponseDto MapToResponseDto(Flashcard flashcard)
         {
             return new FlashcardResponseDto
@@ -233,161 +239,148 @@ namespace TenXCards.Core.Services
         {
             return flashcards.Select(MapToResponseDto);
         }
-    
-    public async Task<FlashcardGenerationResponseDto> GenerateFlashcardsAsync(FlashcardGenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default)
-    {
-                var collection = await _collectionRepository.GetByIdAsync(collectionId);
+
+        public async Task<FlashcardGenerationResponseDto> GenerateFlashcardsAsync(FlashcardGenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default)
+        {
+            var collection = await _collectionRepository.GetByIdAsync(collectionId);
             if (collection == null)
                 throw new Exception($"Collection with id {collectionId} not found");
 
-
-        try
-        {
-            var response = await _httpClient.PostAsJsonAsync(GenerationEndpoint, request, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            
-            var generation = new Generation
+            try
             {
-                Model = request.Model ?? "default",
-                SourceTextHash = ComputeHash(request.SourceText),   
-                GeneratedCount = request.Count,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                CollectionId = collectionId,
-                UserId = collection.UserId
-            };
-            
-            // await _dbContext.Generations.AddAsync(generation, cancellationToken);
-            // await _dbContext.SaveChangesAsync(cancellationToken);
-            
-            var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);
-            var content = openRouterResponse?.Choices?.FirstOrDefault()?.Message?.Content;
-            
-            if (string.IsNullOrEmpty(content))
-            {
-                throw new Exception("Empty response from OpenRouter API");
-            }
-            
-            // Sanitize the JSON response
-            content = SanitizeJsonResponse(content);
-            
-            var jsonOptions = new JsonSerializerOptions 
-            { 
-                PropertyNameCaseInsensitive = true,
-                AllowTrailingCommas = true 
-            };
-            
-            var flashcards = JsonSerializer.Deserialize<List<GenerationFlashcardDto>>(content, jsonOptions);
-            if (flashcards == null || !flashcards.Any())
-            {
-                throw new Exception("Failed to parse flashcards from API response");
-            }
-            
-            generation.GeneratedCount = flashcards.Count;
-            // await _dbContext.SaveChangesAsync(cancellationToken);
-            
-            return new GenerationResponseDto
-            {
-                Id = generation.Id,
-                UserId = collection.UserId,
-                Model = generation.Model,
-                GeneratedCount = generation.GeneratedCount,
-                Flashcards = flashcards,
-                CreatedAt = generation.CreatedAt
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error generating flashcards for user {UserId}", userId);
-            
-            await _dbContext.GenerationErrorLogs.AddAsync(new GenerationErrorLog
-            {
-                UserId = userId,
-                ErrorCode = ex.GetType().Name,
-                ErrorMessage = ex.Message,
-                CreatedAt = DateTime.UtcNow
-            }, cancellationToken);
-            
-            // await _dbContext.SaveChangesAsync(cancellationToken);
-            throw;
-        }
-    }
-    
-    private static string ComputeHash(string input)
-    {
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = sha256.ComputeHash(bytes);
-
-        return Convert.ToBase64String(hash);
-    }
-
-    private static string SanitizeJsonResponse(string content)
-    {
-        content = content.Trim();
-        
-        // Remove markdown headers
-        if (content.StartsWith("```json") || content.StartsWith("```"))
-        {
-            var startIndex = content.IndexOf('[');
-            var endIndex = content.LastIndexOf(']');
-            
-            if (startIndex >= 0 && endIndex > startIndex)
-            {
-            content = content.Substring(startIndex, endIndex - startIndex + 1);
-            }
-        }
-        
-        // Check if we already have a JSON array
-        if (!content.StartsWith("[") || !content.EndsWith("]"))
-        {
-            // Find the start of the array
-            var startIndex = content.IndexOf('[');
-            
-            if (startIndex >= 0)
-            {
-            // Cut text from array start
-            content = content.Substring(startIndex);
-            
-            // Check if array is properly terminated
-            var endIndex = content.LastIndexOf(']');
-            
-            if (endIndex > 0)
-            {
-                // We have start and end of array
-                content = content.Substring(0, endIndex + 1);
-            }
-            else
-            {
-                // No closing bracket - we need to add it
-                // But first check if it ends with comma
-                content = content.TrimEnd();
-                if (content.EndsWith(","))
+                var response = await _httpClient.PostAsJsonAsync(GenerationEndpoint, request, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                
+                var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);
+                var content = openRouterResponse?.Choices?.FirstOrDefault()?.Message?.Content;
+                
+                if (string.IsNullOrEmpty(content))
                 {
-                content = content.Substring(0, content.Length - 1);
+                    throw new Exception("Empty response from OpenRouter API");
                 }
-                // Add closing bracket
-                content += "]";
+                
+                content = SanitizeJsonResponse(content);
+                
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true 
+                };
+                
+                var generatedFlashcards = JsonSerializer.Deserialize<List<FlashcardResponseDto>>(content, jsonOptions);
+                if (generatedFlashcards == null || !generatedFlashcards.Any())
+                {
+                    throw new Exception("Failed to parse flashcards from API response");
+                }
+
+                var createdFlashcards = new List<FlashcardResponseDto>();
+                foreach (var flashcard in generatedFlashcards)
+                {
+                    var createDto = new CreateFlashcardDto
+                    {
+                        Front = flashcard.Front,
+                        Back = flashcard.Back,
+                        CreationSource = FlashcardCreationSource.AI,
+                        ReviewStatus = ReviewStatus.New
+                    };
+
+                    var created = await CreateForCollectionAsync(collectionId, createDto);
+                    createdFlashcards.Add(created);
+                }
+                
+                return new FlashcardGenerationResponseDto
+                {
+                    UserId = collection.UserId,
+                    CollectionId = collectionId,
+                    Model = request.Model ?? "default",
+                    GeneratedCount = createdFlashcards.Count,
+                    CreatedAt = DateTime.UtcNow,
+                    Flashcards = createdFlashcards
+                };
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating flashcards for collection {CollectionId}", collectionId);
+                throw;
             }
         }
-        
-        return content;
+
+        private static string ComputeHash(string input)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = sha256.ComputeHash(bytes);
+
+            return Convert.ToBase64String(hash);
+        }
+
+        private static string SanitizeJsonResponse(string content)
+        {
+            content = content.Trim();
+            
+            // Remove markdown headers
+            if (content.StartsWith("```json") || content.StartsWith("```"))
+            {
+                var startIndex = content.IndexOf('[');
+                var endIndex = content.LastIndexOf(']');
+                
+                if (startIndex >= 0 && endIndex > startIndex)
+                {
+                content = content.Substring(startIndex, endIndex - startIndex + 1);
+                }
+            }
+            
+            // Check if we already have a JSON array
+            if (!content.StartsWith("[") || !content.EndsWith("]"))
+            {
+                // Find the start of the array
+                var startIndex = content.IndexOf('[');
+                
+                if (startIndex >= 0)
+                {
+                // Cut text from array start
+                content = content.Substring(startIndex);
+                
+                // Check if array is properly terminated
+                var endIndex = content.LastIndexOf(']');
+                
+                if (endIndex > 0)
+                {
+                    // We have start and end of array
+                    content = content.Substring(0, endIndex + 1);
+                }
+                else
+                {
+                    // No closing bracket - we need to add it
+                    // But first check if it ends with comma
+                    content = content.TrimEnd();
+                    if (content.EndsWith(","))
+                    {
+                    content = content.Substring(0, content.Length - 1);
+                    }
+                    // Add closing bracket
+                    content += "]";
+                }
+                }
+            }
+            
+            return content;
+        }
     }
-}
 
-// Helper classes for deserializing OpenRouter responses
-file class OpenRouterResponse
-{
-    public List<OpenRouterChoice>? Choices { get; set; }
-}
+    // Helper classes for deserializing OpenRouter responses
+    file class OpenRouterResponse
+    {
+        public List<OpenRouterChoice>? Choices { get; set; }
+    }
 
-file class OpenRouterChoice
-{
-    public OpenRouterMessage? Message { get; set; }
-}
+    file class OpenRouterChoice
+    {
+        public OpenRouterMessage? Message { get; set; }
+    }
 
-file class OpenRouterMessage
-{
-    public string? Content { get; set; }
-} 
+    file class OpenRouterMessage
+    {
+        public string? Content { get; set; }
+    } 
+}
