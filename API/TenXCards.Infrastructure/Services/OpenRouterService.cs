@@ -130,10 +130,6 @@ namespace TenXCards.Infrastructure.Services
         {
             try
             {
-                // Hash the source text to help with caching and tracking
-                var sourceHash = ComputeHash(userMessage);
-                _logger.LogInformation("Processing request with hash: {Hash}", sourceHash);
-
                 var request = BuildRequest(userMessage, systemMessage, modelName, parameters);
                 
                 if (responseFormat != null)
@@ -186,16 +182,6 @@ namespace TenXCards.Infrastructure.Services
                     
                     var messageContent = result.Choices[0].Message?.Content ?? throw new OpenRouterValidationException("Message content is null");
                     messageContent = SanitizeJsonResponse(messageContent);
-                    
-                    if (result.Usage != null)
-                    {
-                        _logger.LogInformation(
-                            "API usage for request {Hash} - Prompt tokens: {PromptTokens}, Completion tokens: {CompletionTokens}, Total: {TotalTokens}",
-                            sourceHash,
-                            result.Usage.PromptTokens,
-                            result.Usage.CompletionTokens,
-                            result.Usage.TotalTokens);
-                    }
 
                     return messageContent;
                 }
@@ -219,15 +205,6 @@ namespace TenXCards.Infrastructure.Services
                 _logger.LogError(ex, "Unexpected error during API request");
                 throw new OpenRouterException("Unexpected error during API request", ex);
             }
-        }
-
-        private static string ComputeHash(string input)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(input);
-            var hash = sha256.ComputeHash(bytes);
-
-            return Convert.ToBase64String(hash);
         }
 
         private static string SanitizeJsonResponse(string content)

@@ -214,5 +214,14 @@ namespace TenXCards.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<Flashcard?> GetFlashcardBySourceHash(string sourceTextHash, Guid collectionId)
+        {
+            return await _context.Flashcards
+                .FirstOrDefaultAsync(f => 
+                    f.SourceTextHash == sourceTextHash && 
+                    f.CollectionId == collectionId &&
+                    f.ArchivedAt == null);
+        }
     }
 } 

@@ -253,14 +253,15 @@ namespace TenXCards.Core.DTOs
         /// <summary>
         /// The text from which flashcards should be generated
         /// </summary>
-        [Required]
+        [Required(ErrorMessage = "Source text is required")]
+        [MinLength(10, ErrorMessage = "Source text must be at least 10 characters long")]
         public string SourceText { get; init; } = string.Empty;
 
         /// <summary>
-        /// The number of flashcards to generate (1-50)
+        /// The number of flashcards to generate (3-20)
         /// </summary>
-        [Required]
-        [Range(3, 20)]
+        [Required(ErrorMessage = "Number of flashcards to generate is required")]
+        [Range(3, 20, ErrorMessage = "Number of flashcards must be between 3 and 20")]
         public int Count { get; init; }
 
         /// <summary>
@@ -272,41 +273,5 @@ namespace TenXCards.Core.DTOs
         /// Optional instructions to guide the generation
         /// </summary>
         public string? Instructions { get; init; }
-    }
-
-    /// <summary>
-    /// Response DTO for flashcard generation
-    /// </summary>
-    public record FlashcardGenerationResponseDto
-    {
-        /// <summary>
-        /// User ID associated with this generation
-        /// </summary>
-        public Guid UserId { get; init; }
-
-        /// <summary>
-        /// Collection ID where flashcards were generated
-        /// </summary>
-        public Guid CollectionId { get; init; }
-
-        /// <summary>
-        /// Model used for generation
-        /// </summary>
-        public string Model { get; init; } = string.Empty;
-
-        /// <summary>
-        /// Number of flashcards generated
-        /// </summary>
-        public int GeneratedCount { get; init; }
-
-        /// <summary>
-        /// When the generation was created
-        /// </summary>
-        public DateTime CreatedAt { get; init; }
-
-        /// <summary>
-        /// Generated flashcards
-        /// </summary>
-        public IEnumerable<FlashcardResponseDto> Flashcards { get; init; } = new List<FlashcardResponseDto>();
     }
 } 

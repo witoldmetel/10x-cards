@@ -31,6 +31,7 @@ namespace TenXCards.Core.Models
         public FlashcardCreationSource CreationSource { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public DateTime? ArchivedAt { get; set; }
+        public string? SourceTextHash { get; set; } // Hash of the source text for AI-generated cards
         
         // SM2 Algorithm fields
         public int Sm2Repetitions { get; set; }

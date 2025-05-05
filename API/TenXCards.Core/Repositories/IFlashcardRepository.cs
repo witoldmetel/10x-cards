@@ -15,5 +15,6 @@ namespace TenXCards.Core.Repositories
         Task<bool> DeleteAsync(Guid id);
         Task<IEnumerable<Flashcard>> UpdateManyAsync(IEnumerable<Guid> ids, Action<Flashcard> updateAction);
         Task<bool> UpdateSM2Parameters(Guid id, int repetitions, int interval, double eFactor, DateTime dueDate);
+        Task<Flashcard?> GetFlashcardBySourceHash(string sourceTextHash, Guid collectionId);
     }
 } 

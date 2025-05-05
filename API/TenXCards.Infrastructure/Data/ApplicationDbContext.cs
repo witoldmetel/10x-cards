@@ -151,6 +151,10 @@ namespace TenXCards.Infrastructure.Data
                     .HasColumnType("varchar(50)")
                     .IsRequired();
 
+                entity.Property(e => e.SourceTextHash)
+                    .HasColumnName("source_text_hash")
+                    .HasColumnType("varchar(64)");
+
                 entity.Property(e => e.Sm2Repetitions)
                     .HasColumnName("sm2_repetitions")
                     .HasDefaultValue(0);

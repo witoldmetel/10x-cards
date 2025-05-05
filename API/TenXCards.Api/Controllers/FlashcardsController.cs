@@ -129,9 +129,9 @@ namespace TenXCards.API.Controllers
         [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
         [Authorize]
         [Consumes("application/json")]
-        [ProducesResponseType(typeof(FlashcardGenerationResponseDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(FlashcardResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<FlashcardGenerationResponseDto>> GenerateForCollection(
+        public async Task<ActionResult<FlashcardResponseDto>> GenerateForCollection(
             Guid collectionId, 
             [FromBody] FlashcardGenerationRequestDto request,
             CancellationToken cancellationToken)

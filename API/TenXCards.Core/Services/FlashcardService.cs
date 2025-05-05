@@ -8,7 +8,6 @@ using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
-using TenXCards.Core.Exceptions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
@@ -21,23 +20,30 @@ namespace TenXCards.Core.Services
     public class FlashcardService : IFlashcardService
     {
         private readonly ILogger<FlashcardService> _logger;
-        private readonly IOpenRouterService _openRouterService;
+        private readonly HttpClient _httpClient;
+        private readonly OpenRouterOptions _options;
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
 
         public FlashcardService(
             ILogger<FlashcardService> logger,
-            IOpenRouterService openRouterService,
+            HttpClient httpClient,
+            IOptions<OpenRouterOptions> options,
             IFlashcardRepository repository, 
             ICollectionService collectionService,
             ICollectionRepository collectionRepository)
         {
             _logger = logger;
-            _openRouterService = openRouterService;
+            _httpClient = httpClient;
+            _options = options.Value;
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
+
+            _httpClient.BaseAddress = new Uri(_options.BaseUrl);
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_options.ApiKey}");
+            _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -233,7 +239,35 @@ namespace TenXCards.Core.Services
             return flashcards.Select(MapToResponseDto);
         }
 
-        public async Task<FlashcardGenerationResponseDto> GenerateFlashcardsAsync(FlashcardGenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default)
+        private static GenerationResponseDto MapToGenerationResponseDto(Generation generation)
+        {
+            var dto = new GenerationResponseDto
+            {
+                Id = generation.Id,
+                UserId = generation.UserId,
+                CollectionId = generation.Flashcards.FirstOrDefault()?.CollectionId ?? Guid.Empty,
+                Model = generation.Model,
+                GeneratedCount = generation.GeneratedCount,
+                CreatedAt = generation.CreatedAt,
+                Flashcards = new List<GenerationFlashcardDto>()
+            };
+
+            foreach (var flashcard in generation.Flashcards)
+            {
+                dto.Flashcards.Add(new GenerationFlashcardDto
+                {
+                    Front = flashcard.Front,
+                    Back = flashcard.Back
+                });
+            }
+
+            return dto;
+        }
+
+        public async Task<FlashcardResponseDto> GenerateFlashcardsAsync(
+            FlashcardGenerationRequestDto request, 
+            Guid collectionId, 
+            CancellationToken cancellationToken = default)
         {
             var collection = await _collectionRepository.GetByIdAsync(collectionId);
             if (collection == null)
@@ -241,78 +275,62 @@ namespace TenXCards.Core.Services
 
             try
             {
-                // Build the prompt for flashcard generation
-                var prompt = $"Generate {request.Count} flashcards from the following text. Each flashcard should have a front (question/term) and back (answer/definition). Return them in a JSON array format: {request.SourceText}";
-                if (!string.IsNullOrEmpty(request.Instructions))
+                // Hash the source text for deduplication
+                var sourceTextHash = ComputeHash(request.SourceText);
+
+                // Check if we already have a flashcard with this source hash in the collection
+                var existingFlashcard = await _repository.GetFlashcardBySourceHash(sourceTextHash, collectionId);
+                if (existingFlashcard != null)
                 {
-                    prompt += $"\nAdditional instructions: {request.Instructions}";
+                    _logger.LogInformation("Found existing flashcard for source text hash {Hash}", sourceTextHash);
+                    return MapToResponseDto(existingFlashcard);
                 }
 
-                // Use OpenRouterService to generate flashcards
-                var content = await _openRouterService.GetChatResponseAsync(
-                    userMessage: prompt,
-                    modelName: request.Model,
-                    responseFormat: new ResponseFormat { Type = "json_object" },
-                    cancellationToken: cancellationToken
-                );
-
-                // Parse the response
+                var response = await _httpClient.PostAsJsonAsync(_options.ApiEndpoint, request, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                
+                var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);
+                var content = openRouterResponse?.Choices?.FirstOrDefault()?.Message?.Content;
+                
+                if (string.IsNullOrEmpty(content))
+                {
+                    throw new Exception("Empty response from OpenRouter API");
+                }
+                
+                content = SanitizeJsonResponse(content);
+                
                 var jsonOptions = new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true,
                     AllowTrailingCommas = true 
                 };
                 
-                var generatedFlashcards = JsonSerializer.Deserialize<List<FlashcardResponseDto>>(content, jsonOptions);
-                if (generatedFlashcards == null || !generatedFlashcards.Any())
+                var generatedFlashcard = JsonSerializer.Deserialize<CreateFlashcardDto>(content, jsonOptions);
+                if (generatedFlashcard == null)
                 {
-                    throw new Exception("Failed to parse flashcards from API response");
+                    throw new Exception("Failed to parse flashcard from API response");
                 }
 
-                // Create flashcards in the collection
-                var createdFlashcards = new List<FlashcardResponseDto>();
-                foreach (var flashcard in generatedFlashcards)
+                var flashcard = new Flashcard
                 {
-                    var createDto = new CreateFlashcardDto
-                    {
-                        Front = flashcard.Front,
-                        Back = flashcard.Back,
-                        CreationSource = FlashcardCreationSource.AI,
-                        ReviewStatus = ReviewStatus.New
-                    };
-
-                    var created = await CreateForCollectionAsync(collectionId, createDto);
-                    createdFlashcards.Add(created);
-                }
-                
-                return new FlashcardGenerationResponseDto
-                {
-                    UserId = collection.UserId,
+                    Id = Guid.NewGuid(),
+                    Front = generatedFlashcard.Front,
+                    Back = generatedFlashcard.Back,
+                    CreationSource = FlashcardCreationSource.AI,
+                    ReviewStatus = ReviewStatus.New,
                     CollectionId = collectionId,
-                    Model = request.Model ?? "default",
-                    GeneratedCount = createdFlashcards.Count,
+                    UserId = collection.UserId,
+                    SourceTextHash = sourceTextHash, // Store the hash for future deduplication
                     CreatedAt = DateTime.UtcNow,
-                    Flashcards = createdFlashcards
+                    UpdatedAt = DateTime.UtcNow
                 };
-            }
-            catch (OpenRouterAuthenticationException ex)
-            {
-                _logger.LogError(ex, "Authentication failed with OpenRouter API");
-                throw;
-            }
-            catch (OpenRouterValidationException ex)
-            {
-                _logger.LogError(ex, "Invalid response from OpenRouter API");
-                throw;
-            }
-            catch (OpenRouterCommunicationException ex)
-            {
-                _logger.LogError(ex, "Communication error with OpenRouter API");
-                throw;
+
+                var created = await _repository.CreateAsync(flashcard);
+                return MapToResponseDto(created);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating flashcards for collection {CollectionId}", collectionId);
+                _logger.LogError(ex, "Error generating flashcard for collection {CollectionId}", collectionId);
                 throw;
             }
         }
@@ -322,7 +340,6 @@ namespace TenXCards.Core.Services
             using var sha256 = SHA256.Create();
             var bytes = Encoding.UTF8.GetBytes(input);
             var hash = sha256.ComputeHash(bytes);
-
             return Convert.ToBase64String(hash);
         }
 
@@ -330,7 +347,6 @@ namespace TenXCards.Core.Services
         {
             content = content.Trim();
             
-            // Remove markdown headers
             if (content.StartsWith("```json") || content.StartsWith("```"))
             {
                 var startIndex = content.IndexOf('[');
@@ -338,41 +354,32 @@ namespace TenXCards.Core.Services
                 
                 if (startIndex >= 0 && endIndex > startIndex)
                 {
-                content = content.Substring(startIndex, endIndex - startIndex + 1);
+                    content = content.Substring(startIndex, endIndex - startIndex + 1);
                 }
             }
             
-            // Check if we already have a JSON array
             if (!content.StartsWith("[") || !content.EndsWith("]"))
             {
-                // Find the start of the array
                 var startIndex = content.IndexOf('[');
                 
                 if (startIndex >= 0)
                 {
-                // Cut text from array start
-                content = content.Substring(startIndex);
-                
-                // Check if array is properly terminated
-                var endIndex = content.LastIndexOf(']');
-                
-                if (endIndex > 0)
-                {
-                    // We have start and end of array
-                    content = content.Substring(0, endIndex + 1);
-                }
-                else
-                {
-                    // No closing bracket - we need to add it
-                    // But first check if it ends with comma
-                    content = content.TrimEnd();
-                    if (content.EndsWith(","))
+                    content = content.Substring(startIndex);
+                    var endIndex = content.LastIndexOf(']');
+                    
+                    if (endIndex > 0)
                     {
-                    content = content.Substring(0, content.Length - 1);
+                        content = content.Substring(0, endIndex + 1);
                     }
-                    // Add closing bracket
-                    content += "]";
-                }
+                    else
+                    {
+                        content = content.TrimEnd();
+                        if (content.EndsWith(","))
+                        {
+                            content = content.Substring(0, content.Length - 1);
+                        }
+                        content += "]";
+                    }
                 }
             }
             
