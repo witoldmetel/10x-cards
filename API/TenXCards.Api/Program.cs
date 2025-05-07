@@ -15,6 +15,7 @@ using TenXCards.Infrastructure.Data;
 using TenXCards.Infrastructure.Repositories;
 using TenXCards.Infrastructure.Services;
 using System.Reflection;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -162,8 +163,15 @@ builder.Services.Configure<OpenRouterOptions>(
     builder.Configuration.GetSection(OpenRouterOptions.SectionName));
 builder.Services.AddSingleton<IValidateOptions<OpenRouterOptions>, OpenRouterOptionsValidator>();
 
-
-builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>();
+builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>()
+    .ConfigureHttpClient((sp, client) =>
+    {
+        var options = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
+        client.DefaultRequestHeaders.Add("HTTP-Referer", options.SiteUrl);
+        client.DefaultRequestHeaders.Add("X-Title", options.SiteName);
+        client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+    });
 
 // Register middleware
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();

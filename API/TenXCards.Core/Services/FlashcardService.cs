@@ -278,16 +278,25 @@ namespace TenXCards.Core.Services
 
             try
             {
-                _logger.LogInformation("Sending request to OpenRouter API: {Request}", JsonSerializer.Serialize(openRouterRequest));
+                var requestJson = JsonSerializer.Serialize(openRouterRequest, new JsonSerializerOptions { WriteIndented = true });
+                _logger.LogInformation("Sending request to OpenRouter API: {Request}", requestJson);
+                _logger.LogInformation("OpenRouter API Endpoint: {Endpoint}", _options.ApiEndpoint);
+                _logger.LogInformation("OpenRouter Request Headers: {Headers}", string.Join(", ", _httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
+                
+                _httpClient.DefaultRequestHeaders.Accept.Clear();
+                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 
                 var response = await _httpClient.PostAsJsonAsync(_options.ApiEndpoint, openRouterRequest, cancellationToken);
                 var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 _logger.LogInformation("Received response from OpenRouter API: {Response}", responseContent);
+                _logger.LogInformation("Response Headers: {Headers}", string.Join(", ", response.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
+                _logger.LogInformation("Response Status Code: {StatusCode}", response.StatusCode);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError("OpenRouter API error: {StatusCode} - {Content}", response.StatusCode, responseContent);
+                    _logger.LogError("Request that caused error: {Request}", requestJson);
                     throw new Exception($"OpenRouter API error: {response.StatusCode} - {responseContent}");
                 }
 

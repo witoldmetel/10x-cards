@@ -47,15 +47,23 @@ export const useDeleteFlashcard = () => {
   });
 };
 
-export const useGenerateFlashcardsAI = (): UseMutationResult<
-  GenerateFlashcardsResponse,
-  unknown,
-  { collectionId: string; payload: GenerateFlashcardsRequest }
-> =>
-  useMutation({
+export const useGenerateFlashcardsAI = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: ({ collectionId, payload }: { collectionId: string; payload: GenerateFlashcardsRequest }) =>
       generateFlashcards(collectionId, payload),
+    onSuccess: (response: GenerateFlashcardsResponse, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['collections', variables.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', variables.collectionId] });
+    },
+    onError: (error: any) => {
+      console.error('Error generating flashcards:', error);
+      throw error;
+    },
   });
+};
 
 export const useArchiveFlashcard = () => {
   const queryClient = useQueryClient();
