@@ -35,8 +35,10 @@ namespace TenXCards.Core.Models
         public int MaxTokens { get; init; } = 750;
 
         [JsonPropertyName("response_format")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ResponseFormat? ResponseFormat { get; init; }
+
+        [JsonPropertyName("stream")]
+        public bool Stream { get; init; } = false;
     }
 
     public record OpenRouterResponse

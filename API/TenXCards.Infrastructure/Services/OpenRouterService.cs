@@ -42,8 +42,8 @@ namespace TenXCards.Infrastructure.Services
             var baseUrl = configuration["OpenRouter:BaseUrl"] 
                 ?? throw new ArgumentException("OpenRouter base URL not found in configuration");
 
-            var apiPath = configuration["OpenRouter:ApiEndpoint"] ?? "/api/v1/chat/completions";
-            ApiEndpoint = baseUrl.TrimEnd('/') + (apiPath.StartsWith("/") ? apiPath : "/" + apiPath);
+            var apiPath = configuration["OpenRouter:ApiEndpoint"] ?? "/chat/completions";
+            ApiEndpoint = baseUrl.TrimEnd('/') + apiPath;
 
             var apiKey = configuration["OpenRouter:ApiKey"] 
                 ?? throw new ArgumentException("OpenRouter API key not found in configuration");
@@ -68,8 +68,6 @@ namespace TenXCards.Infrastructure.Services
             };
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             
             var siteUrl = configuration["OpenRouter:SiteUrl"] ?? "https://github.com/10xCards/FlashCard";
             var siteName = configuration["OpenRouter:SiteName"] ?? "FlashCard";
@@ -77,8 +75,6 @@ namespace TenXCards.Infrastructure.Services
             // Add required OpenRouter headers
             _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", siteUrl);
             _httpClient.DefaultRequestHeaders.Add("X-Title", siteName);
-            
-            // Add custom User-Agent
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("10XCards/1.0");
         }
 
@@ -111,14 +107,17 @@ namespace TenXCards.Infrastructure.Services
                 }
             }
 
-            return new OpenRouterRequest
+            var request = new OpenRouterRequest
             {
                 Messages = messages,
                 Model = modelName ?? DefaultModelName,
                 Temperature = Convert.ToDouble(mergedParameters["temperature"]),
                 TopP = Convert.ToDouble(mergedParameters["top_p"]),
-                MaxTokens = Convert.ToInt32(mergedParameters["max_tokens"])
+                MaxTokens = Convert.ToInt32(mergedParameters["max_tokens"]),
+                ResponseFormat = new ResponseFormat { Type = "json_object" }
             };
+
+            return request;
         }
 
         public async Task<string> GetChatResponseAsync(
@@ -145,7 +144,6 @@ namespace TenXCards.Infrastructure.Services
                 };
                 
                 var requestJson = JsonSerializer.Serialize(request, jsonOptions);
-                
                 using var content = JsonContent.Create(request, null, jsonOptions);
                 using var response = await _httpClient.PostAsync(ApiEndpoint, content, cancellationToken);
                 

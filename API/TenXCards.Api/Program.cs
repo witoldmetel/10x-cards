@@ -167,9 +167,12 @@ builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>()
     .ConfigureHttpClient((sp, client) =>
     {
         var options = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
+        client.DefaultRequestHeaders.Clear();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
         client.DefaultRequestHeaders.Add("HTTP-Referer", options.SiteUrl);
         client.DefaultRequestHeaders.Add("X-Title", options.SiteName);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("10XCards/1.0");
         client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
     });
 

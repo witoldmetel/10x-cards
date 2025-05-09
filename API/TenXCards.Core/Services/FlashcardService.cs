@@ -16,13 +16,14 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Text.Json.Serialization;
 using System.Net.Http.Headers;
+using TenXCards.Core.Exceptions;
 
 namespace TenXCards.Core.Services
 {
     public class FlashcardService : IFlashcardService
     {
         private readonly ILogger<FlashcardService> _logger;
-        private readonly HttpClient _httpClient;
+        private readonly IOpenRouterService _openRouterService;
         private readonly OpenRouterOptions _options;
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
@@ -30,27 +31,18 @@ namespace TenXCards.Core.Services
 
         public FlashcardService(
             ILogger<FlashcardService> logger,
-            HttpClient httpClient,
+            IOpenRouterService openRouterService,
             IOptions<OpenRouterOptions> options,
             IFlashcardRepository repository, 
             ICollectionService collectionService,
             ICollectionRepository collectionRepository)
         {
             _logger = logger;
-            _httpClient = httpClient;
+            _openRouterService = openRouterService;
             _options = options.Value;
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
-
-            // Configure HttpClient
-            _httpClient.BaseAddress = new Uri(_options.BaseUrl);
-            _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
-            _httpClient.DefaultRequestHeaders.Add("HTTP-Referer", _options.SiteUrl);
-            _httpClient.DefaultRequestHeaders.Add("X-Title", _options.SiteName);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -264,49 +256,28 @@ namespace TenXCards.Core.Services
                 return MapToResponseDto(existingFlashcard);
             }
 
-            var openRouterRequest = new
-            {
-                model = request.Model ?? _options.DefaultModel,
-                messages = new[]
-                {
-                    new { role = "system", content = $"You are a helpful assistant that creates flashcards. Create {request.Count} flashcards based on the provided text. Return ONLY a JSON array of objects with 'front' and 'back' fields. Each front should be a question or concept, and each back should be the answer or explanation." },
-                    new { role = "user", content = request.SourceText }
-                },
-                temperature = 0.7,
-                max_tokens = 4000
-            };
-
             try
             {
-                var requestJson = JsonSerializer.Serialize(openRouterRequest, new JsonSerializerOptions { WriteIndented = true });
-                _logger.LogInformation("Sending request to OpenRouter API: {Request}", requestJson);
-                _logger.LogInformation("OpenRouter API Endpoint: {Endpoint}", _options.ApiEndpoint);
-                _logger.LogInformation("OpenRouter Request Headers: {Headers}", string.Join(", ", _httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
+                var systemMessage = $"Create {request.Count} flashcards based on the provided text. Return ONLY a JSON array with front and back fields.";
                 
-                _httpClient.DefaultRequestHeaders.Accept.Clear();
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                
-                var response = await _httpClient.PostAsJsonAsync(_options.ApiEndpoint, openRouterRequest, cancellationToken);
-                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-
-                _logger.LogInformation("Received response from OpenRouter API: {Response}", responseContent);
-                _logger.LogInformation("Response Headers: {Headers}", string.Join(", ", response.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
-                _logger.LogInformation("Response Status Code: {StatusCode}", response.StatusCode);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogError("OpenRouter API error: {StatusCode} - {Content}", response.StatusCode, responseContent);
-                    _logger.LogError("Request that caused error: {Request}", requestJson);
-                    throw new Exception($"OpenRouter API error: {response.StatusCode} - {responseContent}");
-                }
-
-                var openRouterResponse = await response.Content.ReadFromJsonAsync<OpenRouterResponse>(cancellationToken: cancellationToken);
-                var content = openRouterResponse?.Choices?.FirstOrDefault()?.Message?.Content;
+                var content = await _openRouterService.GetChatResponseAsync(
+                    request.SourceText,
+                    systemMessage,
+                    request.Model ?? _options.DefaultModel,
+                    new Dictionary<string, object>
+                    {
+                        { "temperature", 0.7 },
+                        { "max_tokens", 4000 }
+                    },
+                    null,
+                    cancellationToken);
 
                 if (string.IsNullOrEmpty(content))
                 {
                     throw new Exception("Empty response from OpenRouter API");
                 }
+
+                _logger.LogInformation("Received content from OpenRouter: {Content}", content);
 
                 var jsonOptions = new JsonSerializerOptions 
                 { 
@@ -317,19 +288,13 @@ namespace TenXCards.Core.Services
 
                 try 
                 {
-                    // First try to parse as a direct array
-                    var sanitizedContent = SanitizeJsonResponse(content);
-                    var flashcardsArray = JsonSerializer.Deserialize<List<CreateFlashcardDto>>(sanitizedContent, jsonOptions);
+                    content = SanitizeJsonResponse(content);
+
+                    var flashcardsArray = JsonSerializer.Deserialize<List<CreateFlashcardDto>>(content, jsonOptions);
                     
                     if (flashcardsArray == null || !flashcardsArray.Any())
                     {
-                        // If direct array parsing fails, try parsing as a wrapper object
-                        var flashcardsResponse = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
-                        if (flashcardsResponse?.Flashcards == null || !flashcardsResponse.Flashcards.Any())
-                        {
-                            throw new Exception("Failed to parse flashcards from API response");
-                        }
-                        flashcardsArray = flashcardsResponse.Flashcards;
+                        throw new Exception("Failed to parse flashcards from API response");
                     }
 
                     var firstFlashcard = flashcardsArray.First();
@@ -356,10 +321,10 @@ namespace TenXCards.Core.Services
                     throw new Exception("Failed to parse OpenRouter API response", ex);
                 }
             }
-            catch (HttpRequestException ex)
+            catch (OpenRouterException ex)
             {
-                _logger.LogError(ex, "HTTP error during OpenRouter API request for collection {CollectionId}", collectionId);
-                throw new Exception("Failed to communicate with OpenRouter API", ex);
+                _logger.LogError(ex, "OpenRouter API error for collection {CollectionId}. Error: {Error}", collectionId, ex.Message);
+                throw new Exception($"OpenRouter API error: {ex.Message}", ex);
             }
             catch (Exception ex)
             {
@@ -380,6 +345,7 @@ namespace TenXCards.Core.Services
         {
             content = content.Trim();
             
+            // Remove markdown headers
             if (content.StartsWith("```json") || content.StartsWith("```"))
             {
                 var startIndex = content.IndexOf('[');
@@ -391,26 +357,35 @@ namespace TenXCards.Core.Services
                 }
             }
             
+            // Check if we already have a JSON array
             if (!content.StartsWith("[") || !content.EndsWith("]"))
             {
+                // Find the start of the array
                 var startIndex = content.IndexOf('[');
                 
                 if (startIndex >= 0)
                 {
+                    // Cut text from array start
                     content = content.Substring(startIndex);
+                    
+                    // Check if array is properly terminated
                     var endIndex = content.LastIndexOf(']');
                     
                     if (endIndex > 0)
                     {
+                        // We have start and end of array
                         content = content.Substring(0, endIndex + 1);
                     }
                     else
                     {
+                        // No closing bracket - we need to add it
+                        // But first check if it ends with comma
                         content = content.TrimEnd();
                         if (content.EndsWith(","))
                         {
                             content = content.Substring(0, content.Length - 1);
                         }
+                        // Add closing bracket
                         content += "]";
                     }
                 }
