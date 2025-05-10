@@ -1,4 +1,4 @@
-import { Flashcard } from "../flashcard/types";
+import { Flashcard } from '../flashcard/types';
 
 export interface CollectionResponseDto {
   id: string;

@@ -50,7 +50,6 @@ export default function AIGenerate() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // React Hook Form
   const {
     register,
     handleSubmit,
@@ -89,12 +88,12 @@ export default function AIGenerate() {
 
     try {
       let collectionId = data.selectedCollectionId;
-      
+
       // Create new collection if needed
       if (collectionId === 'new' && data.collectionName) {
         const newCollection = await createCollectionMutation.mutateAsync({
           name: data.collectionName,
-          color: '#' + Math.floor(Math.random()*16777215).toString(16), // Random color
+          color: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
         });
         collectionId = newCollection.id;
       }
@@ -109,9 +108,8 @@ export default function AIGenerate() {
         payload,
       });
 
-      if (response.flashcards.length > 0) {
-        navigate(`/collections/${response.flashcards[0].collectionId}`);
-      }
+      setGeneratedCards(response.flashcards);
+      setTargetCollectionId(collectionId);
     } catch (error) {
       console.error('Error generating flashcards:', error);
       setError('Failed to generate flashcards. Please try again.');
@@ -128,18 +126,20 @@ export default function AIGenerate() {
     setIsSaving(true);
     setError(null);
     try {
-      for (const card of generatedCards) {
-        const createPayload: { collectionId: string; flashcard: CreateFlashcardDTO } = {
+      const savePromises = generatedCards.map(card => {
+        const createPayload = {
           collectionId: targetCollectionId,
           flashcard: {
             front: card.front,
             back: card.back,
             creationSource: FlashcardCreationSource.AI,
-            reviewStatus: ReviewStatus.New
+            reviewStatus: ReviewStatus.New,
           },
         };
-        await createFlashcardMutation.mutateAsync(createPayload);
-      }
+        return createFlashcardMutation.mutateAsync(createPayload);
+      });
+
+      await Promise.all(savePromises);
       navigate(`/collections/${targetCollectionId}`);
     } catch (err) {
       setError('Failed to save flashcards');
@@ -226,9 +226,7 @@ export default function AIGenerate() {
                       />
                       <span className='font-medium text-lg w-8 text-center'>{numberOfCards}</span>
                     </div>
-                    {errors.count && (
-                      <span className='text-error-600 text-sm'>{errors.count.message}</span>
-                    )}
+                    {errors.count && <span className='text-error-600 text-sm'>{errors.count.message}</span>}
                   </div>
                   <Button
                     type='submit'

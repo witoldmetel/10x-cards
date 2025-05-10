@@ -179,7 +179,10 @@ namespace TenXCards.Infrastructure.Services
                     }
                     
                     var messageContent = result.Choices[0].Message?.Content ?? throw new OpenRouterValidationException("Message content is null");
+                    
+                    _logger.LogInformation("Raw message content before sanitization: {Content}", messageContent);
                     messageContent = SanitizeJsonResponse(messageContent);
+                    _logger.LogInformation("Sanitized message content: {Content}", messageContent);
 
                     return messageContent;
                 }
@@ -209,53 +212,50 @@ namespace TenXCards.Infrastructure.Services
         {
             content = content.Trim();
             
-            // Remove markdown headers
-            if (content.StartsWith("```json") || content.StartsWith("```"))
+            // Remove markdown code block markers if present
+            if (content.StartsWith("```json"))
             {
-                var startIndex = content.IndexOf('[');
-                var endIndex = content.LastIndexOf(']');
-                
-                if (startIndex >= 0 && endIndex > startIndex)
-                {
-                    content = content.Substring(startIndex, endIndex - startIndex + 1);
-                }
+                content = content.Substring("```json".Length);
+            }
+            else if (content.StartsWith("```"))
+            {
+                content = content.Substring("```".Length);
+            }
+            if (content.EndsWith("```"))
+            {
+                content = content.Substring(0, content.Length - "```".Length);
             }
             
-            // Check if we already have a JSON array
-            if (!content.StartsWith("[") || !content.EndsWith("]"))
-            {
-                // Find the start of the array
-                var startIndex = content.IndexOf('[');
-                
-                if (startIndex >= 0)
-                {
-                    // Cut text from array start
-                    content = content.Substring(startIndex);
-                    
-                    // Check if array is properly terminated
-                    var endIndex = content.LastIndexOf(']');
-                    
-                    if (endIndex > 0)
-                    {
-                        // We have start and end of array
-                        content = content.Substring(0, endIndex + 1);
-                    }
-                    else
-                    {
-                        // No closing bracket - we need to add it
-                        // But first check if it ends with comma
-                        content = content.TrimEnd();
-                        if (content.EndsWith(","))
-                        {
-                            content = content.Substring(0, content.Length - 1);
-                        }
-                        // Add closing bracket
-                        content += "]";
-                    }
-                }
-            }
+            content = content.Trim();
             
-            return content;
+            try
+            {
+                // Try to parse as direct array first
+                if (content.StartsWith("[") && content.EndsWith("]"))
+                {
+                    return $"{{\"flashcards\": {content}}}";
+                }
+                
+                // If it's already an object with flashcards field, return as is
+                if (content.Contains("\"flashcards\""))
+                {
+                    return content;
+                }
+                
+                // If it's an object but missing flashcards wrapper, wrap it
+                if (content.StartsWith("{") && content.EndsWith("}"))
+                {
+                    return $"{{\"flashcards\": [{content}]}}";
+                }
+                
+                // If we can't determine format, wrap in both object and array
+                return $"{{\"flashcards\": [{content}]}}";
+            }
+            catch (Exception)
+            {
+                // If any parsing fails, try to wrap the content
+                return $"{{\"flashcards\": [{content}]}}";
+            }
         }
     }
 } 

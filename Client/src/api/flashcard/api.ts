@@ -18,7 +18,7 @@ export async function getFlashcards(
   params?: FlashcardsQueryParams,
 ): Promise<PaginatedResponse<Flashcard>> {
   const { data } = await instance.get<PaginatedResponse<Flashcard>>(`/collections/${collectionId}/flashcards`, {
-    params
+    params,
   });
   return data;
 }
@@ -31,10 +31,7 @@ export async function getArchivedFlashcards(params?: FlashcardsQueryParams): Pro
 }
 
 export async function createFlashcard(collectionId: string, flashcard: CreateFlashcardDTO): Promise<Flashcard> {
-  const { data } = await instance.post<Flashcard>(
-    `/collections/${collectionId}/flashcards`,
-    flashcard
-  );
+  const { data } = await instance.post<Flashcard>(`/collections/${collectionId}/flashcards`, flashcard);
   return data;
 }
 

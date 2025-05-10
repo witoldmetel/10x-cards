@@ -238,7 +238,7 @@ namespace TenXCards.Core.Services
             return flashcards.Select(MapToResponseDto);
         }
 
-        public async Task<FlashcardResponseDto> GenerateFlashcardsAsync(
+        public async Task<List<FlashcardResponseDto>> GenerateFlashcardsAsync(
             FlashcardGenerationRequestDto request, 
             Guid collectionId, 
             CancellationToken cancellationToken = default)
@@ -253,12 +253,12 @@ namespace TenXCards.Core.Services
             if (existingFlashcard != null)
             {
                 _logger.LogInformation("Found existing flashcard for source text hash {Hash}", sourceTextHash);
-                return MapToResponseDto(existingFlashcard);
+                return new List<FlashcardResponseDto> { MapToResponseDto(existingFlashcard) };
             }
 
             try
             {
-                var systemMessage = $"Create {request.Count} flashcards based on the provided text. Return ONLY a JSON array with front and back fields.";
+                var systemMessage = $"Create {request.Count} flashcards based on the provided text. Return a JSON object with a 'flashcards' field containing an array of objects, where each object has 'front' and 'back' fields. Example format: {{'flashcards': [{{'front': 'Question 1', 'back': 'Answer 1'}}, {{'front': 'Question 2', 'back': 'Answer 2'}}]}}";
                 
                 var content = await _openRouterService.GetChatResponseAsync(
                     request.SourceText,
@@ -269,7 +269,7 @@ namespace TenXCards.Core.Services
                         { "temperature", 0.7 },
                         { "max_tokens", 4000 }
                     },
-                    null,
+                    new ResponseFormat { Type = "json_object" },
                     cancellationToken);
 
                 if (string.IsNullOrEmpty(content))
@@ -286,40 +286,36 @@ namespace TenXCards.Core.Services
                     NumberHandling = JsonNumberHandling.AllowReadingFromString
                 };
 
-                try 
+                var response = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
+                
+                if (response?.Flashcards == null || !response.Flashcards.Any())
                 {
-                    content = SanitizeJsonResponse(content);
+                    throw new Exception("Failed to parse flashcards from API response");
+                }
 
-                    var flashcardsArray = JsonSerializer.Deserialize<List<CreateFlashcardDto>>(content, jsonOptions);
-                    
-                    if (flashcardsArray == null || !flashcardsArray.Any())
-                    {
-                        throw new Exception("Failed to parse flashcards from API response");
-                    }
-
-                    var firstFlashcard = flashcardsArray.First();
+                var createdFlashcards = new List<Flashcard>();
+                foreach (var flashcardDto in response.Flashcards)
+                {
                     var flashcard = new Flashcard
                     {
                         Id = Guid.NewGuid(),
-                        Front = firstFlashcard.Front,
-                        Back = firstFlashcard.Back,
+                        Front = flashcardDto.Front,
+                        Back = flashcardDto.Back,
                         CreationSource = FlashcardCreationSource.AI,
                         ReviewStatus = ReviewStatus.New,
                         CollectionId = collectionId,
                         UserId = collection.UserId,
                         SourceTextHash = sourceTextHash,
                         CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
+                        UpdatedAt = DateTime.UtcNow,
+                        Sm2Efactor = 2.5
                     };
 
                     var created = await _repository.CreateAsync(flashcard);
-                    return MapToResponseDto(created);
+                    createdFlashcards.Add(created);
                 }
-                catch (JsonException ex)
-                {
-                    _logger.LogError(ex, "JSON parsing error for collection {CollectionId}. Error: {Error}", collectionId, ex.Message);
-                    throw new Exception("Failed to parse OpenRouter API response", ex);
-                }
+
+                return createdFlashcards.Select(MapToResponseDto).ToList();
             }
             catch (OpenRouterException ex)
             {
@@ -339,59 +335,6 @@ namespace TenXCards.Core.Services
             var bytes = Encoding.UTF8.GetBytes(input);
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
-        }
-
-        private static string SanitizeJsonResponse(string content)
-        {
-            content = content.Trim();
-            
-            // Remove markdown headers
-            if (content.StartsWith("```json") || content.StartsWith("```"))
-            {
-                var startIndex = content.IndexOf('[');
-                var endIndex = content.LastIndexOf(']');
-                
-                if (startIndex >= 0 && endIndex > startIndex)
-                {
-                    content = content.Substring(startIndex, endIndex - startIndex + 1);
-                }
-            }
-            
-            // Check if we already have a JSON array
-            if (!content.StartsWith("[") || !content.EndsWith("]"))
-            {
-                // Find the start of the array
-                var startIndex = content.IndexOf('[');
-                
-                if (startIndex >= 0)
-                {
-                    // Cut text from array start
-                    content = content.Substring(startIndex);
-                    
-                    // Check if array is properly terminated
-                    var endIndex = content.LastIndexOf(']');
-                    
-                    if (endIndex > 0)
-                    {
-                        // We have start and end of array
-                        content = content.Substring(0, endIndex + 1);
-                    }
-                    else
-                    {
-                        // No closing bracket - we need to add it
-                        // But first check if it ends with comma
-                        content = content.TrimEnd();
-                        if (content.EndsWith(","))
-                        {
-                            content = content.Substring(0, content.Length - 1);
-                        }
-                        // Add closing bracket
-                        content += "]";
-                    }
-                }
-            }
-            
-            return content;
         }
     }
 

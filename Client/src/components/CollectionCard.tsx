@@ -19,9 +19,6 @@ export default function CollectionCard({ collection, onStudy, onView, className 
 
   const { name, description, totalCards, dueCards, color, archivedAt } = collection;
 
-
-
-
   const isArchived = archivedAt !== null && collection?.archivedFlashcards?.length > 0;
 
   const handleUnarchive = async (collectionId: string) => {
