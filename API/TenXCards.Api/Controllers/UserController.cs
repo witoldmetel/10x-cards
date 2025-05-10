@@ -14,10 +14,12 @@ namespace TenXCards.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IUserContextService _userContextService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IUserContextService userContextService)
         {
             _userService = userService;
+            _userContextService = userContextService;
         }
 
         /// <summary>
@@ -95,7 +97,7 @@ namespace TenXCards.API.Controllers
         /// <summary>
         /// Get user data by ID
         /// </summary>
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         [Authorize]
         [ProducesResponseType(typeof(UserDataResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -120,7 +122,7 @@ namespace TenXCards.API.Controllers
         /// <summary>
         /// Update user data
         /// </summary>
-        [HttpPut("{id}")]
+        [HttpPut("{id:guid}")]
         [Authorize]
         [ProducesResponseType(typeof(UserDataResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -129,8 +131,23 @@ namespace TenXCards.API.Controllers
         {
             try
             {
+                var currentUserId = _userContextService.GetUserId();
+                if (currentUserId != id)
+                {
+                    return Forbid();
+                }
+
                 var response = await _userService.UpdateUserAsync(id, request);
                 return Ok(response);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Detail = "User is not authenticated",
+                    Status = StatusCodes.Status401Unauthorized
+                });
             }
             catch (Exception ex) when (ex.Message == "User not found")
             {
@@ -155,7 +172,7 @@ namespace TenXCards.API.Controllers
         /// <summary>
         /// Delete user account
         /// </summary>
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:guid}")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -163,8 +180,23 @@ namespace TenXCards.API.Controllers
         {
             try
             {
+                var currentUserId = _userContextService.GetUserId();
+                if (currentUserId != id)
+                {
+                    return Forbid();
+                }
+
                 await _userService.DeleteUserAsync(id);
                 return NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Detail = "User is not authenticated",
+                    Status = StatusCodes.Status401Unauthorized
+                });
             }
             catch (Exception ex)
             {

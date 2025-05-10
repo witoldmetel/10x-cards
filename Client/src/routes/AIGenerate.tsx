@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Brain, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -9,22 +9,23 @@ import { Input } from '@/components/ui/input';
 import { useCollections } from '@/api/collections/queries';
 import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
-import type { GenerateFlashcardsRequest, GenerateFlashcardsResponse, CreateFlashcardDTO } from '@/api/flashcard/types';
+import type { GenerateFlashcardsRequest } from '@/api/flashcard/types';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useCreateCollection } from '@/api/collections/mutations';
+import type { Flashcard } from '@/api/flashcard/types';
 
 // Zod schema for AI generation form
 const aiGenerateSchema = z
   .object({
     sourceText: z.string().min(1, 'Please enter some text to generate flashcards from'),
     collectionName: z.string().optional(),
-    selectedCollectionId: z.string(), // always a string, never null
-    numberOfCards: z.number().min(3).max(20),
+    selectedCollectionId: z.string(),
+    count: z.number().min(3).max(20),
   })
   .superRefine((data, ctx) => {
-    // Require collectionName if selectedCollectionId is 'new'
     if (data.selectedCollectionId === 'new') {
       if (!data.collectionName || !data.collectionName.trim()) {
         ctx.addIssue({
@@ -40,17 +41,16 @@ type AIGenerateFormValues = z.infer<typeof aiGenerateSchema>;
 export default function AIGenerate() {
   const navigate = useNavigate();
   const { data } = useCollections();
-
   const generateAI = useGenerateFlashcardsAI();
-  const createFlashcard = useCreateFlashcard();
+  const createCollectionMutation = useCreateCollection();
+  const createFlashcardMutation = useCreateFlashcard();
 
   const [error, setError] = useState<string | null>(null);
-  const [generatedCards, setGeneratedCards] = useState<GenerateFlashcardsResponse['flashcards']>([]);
+  const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
   const [targetCollectionId, setTargetCollectionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // React Hook Form
   const {
     register,
     handleSubmit,
@@ -62,17 +62,16 @@ export default function AIGenerate() {
       sourceText: '',
       collectionName: '',
       selectedCollectionId: 'new',
-      numberOfCards: 5,
+      count: 5,
     },
   });
 
   const selectedCollectionId = watch('selectedCollectionId');
-  const numberOfCards = watch('numberOfCards');
+  const numberOfCards = watch('count');
 
   const handleBack = () => {
     navigate(-1);
   };
-
 
   const onSubmit = async (data: AIGenerateFormValues) => {
     if (!data.sourceText.trim()) {
@@ -88,17 +87,33 @@ export default function AIGenerate() {
     setGeneratedCards([]);
     setTargetCollectionId(null);
 
-    const collectionId = data.selectedCollectionId;
-    const payload: GenerateFlashcardsRequest = {
-      source_text: data.sourceText,
-      number_of_cards: data.numberOfCards,
-    };
     try {
-      const res = await generateAI.mutateAsync({ collectionId, payload });
-      setGeneratedCards(res.flashcards);
-      setTargetCollectionId(res.collection_id);
-    } catch (err) {
-      setError('An error occurred while generating flashcards. Please try again.');
+      let collectionId = data.selectedCollectionId;
+
+      // Create new collection if needed
+      if (collectionId === 'new' && data.collectionName) {
+        const newCollection = await createCollectionMutation.mutateAsync({
+          name: data.collectionName,
+          color: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
+        });
+        collectionId = newCollection.id;
+      }
+
+      const payload: GenerateFlashcardsRequest = {
+        sourceText: data.sourceText,
+        count: data.count,
+      };
+
+      const response = await generateAI.mutateAsync({
+        collectionId,
+        payload,
+      });
+
+      setGeneratedCards(response);
+      setTargetCollectionId(collectionId);
+    } catch (error) {
+      console.error('Error generating flashcards:', error);
+      setError('Failed to generate flashcards. Please try again.');
     } finally {
       setIsGenerating(false);
     }
@@ -112,20 +127,20 @@ export default function AIGenerate() {
     setIsSaving(true);
     setError(null);
     try {
-      for (const card of generatedCards) {
-        const createPayload: { collectionId: string; flashcard: CreateFlashcardDTO } = {
+      const savePromises = generatedCards.map((card) => {
+        const createPayload = {
           collectionId: targetCollectionId,
           flashcard: {
             front: card.front,
             back: card.back,
-            tags: card.tags,
-            category: card.category,
             creationSource: FlashcardCreationSource.AI,
             reviewStatus: ReviewStatus.New,
           },
         };
-        await createFlashcard.mutateAsync(createPayload);
-      }
+        return createFlashcardMutation.mutateAsync(createPayload);
+      });
+
+      await Promise.all(savePromises);
       navigate(`/collections/${targetCollectionId}`);
     } catch (err) {
       setError('Failed to save flashcards');
@@ -206,15 +221,13 @@ export default function AIGenerate() {
                         id='card-count'
                         min='3'
                         max='20'
-                        {...register('numberOfCards', { valueAsNumber: true })}
+                        {...register('count', { valueAsNumber: true })}
                         value={numberOfCards}
                         className='flex-1'
                       />
                       <span className='font-medium text-lg w-8 text-center'>{numberOfCards}</span>
                     </div>
-                    {errors.numberOfCards && (
-                      <span className='text-error-600 text-sm'>{errors.numberOfCards.message}</span>
-                    )}
+                    {errors.count && <span className='text-error-600 text-sm'>{errors.count.message}</span>}
                   </div>
                   <Button
                     type='submit'
@@ -242,7 +255,7 @@ export default function AIGenerate() {
                 </CardContent>
               </Card>
               <div className='space-y-4'>
-                {generatedCards.map((card, index) => (
+                {generatedCards.map((card, index: number) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}

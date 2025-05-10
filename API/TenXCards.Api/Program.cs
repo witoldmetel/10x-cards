@@ -3,36 +3,56 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TenXCards.API.Middleware;
-using TenXCards.Core.Configuration;
 using TenXCards.Core.DTOs;
+using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
 using TenXCards.Infrastructure.Data;
 using TenXCards.Infrastructure.Repositories;
 using TenXCards.Infrastructure.Services;
 using System.Reflection;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.AllowTrailingCommas = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo 
     { 
         Title = "TenXCards API", 
         Version = "v1",
-        Description = "API for managing flashcards with spaced repetition"
+        Description = "API for managing flashcards with spaced repetition",
+        Contact = new OpenApiContact
+        {
+            Name = "TenXCards Team",
+            Email = "support@tenxcards.com"
+        }
     });
 
-    // Set the comments path for the Swagger JSON and UI
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    // Include XML comments from all relevant assemblies
+    var xmlApiFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlApiPath = Path.Combine(AppContext.BaseDirectory, xmlApiFile);
+    c.IncludeXmlComments(xmlApiPath);
+
+    var xmlCoreFile = "TenXCards.Core.xml";
+    var xmlCorePath = Path.Combine(AppContext.BaseDirectory, xmlCoreFile);
+    if (File.Exists(xmlCorePath))
+    {
+        c.IncludeXmlComments(xmlCorePath);
+    }
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -57,6 +77,12 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+
+    // Enable annotations
+    c.EnableAnnotations();
+
+    // Use full type names to avoid conflicts
+    c.CustomSchemaIds(type => type.FullName);
 });
 
 // Configure rate limiting
@@ -117,6 +143,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // Configure database
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -125,20 +152,29 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IFlashcardService, FlashcardService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 
 // Configure OpenRouter
-builder.Services.Configure<OpenRouterOptions>(
-    builder.Configuration.GetSection(OpenRouterOptions.SectionName));
+builder.Services.Configure<TenXCards.Core.Models.OpenRouterOptions>(
+    builder.Configuration.GetSection(TenXCards.Core.Models.OpenRouterOptions.SectionName));
+builder.Services.AddSingleton<IValidateOptions<TenXCards.Core.Models.OpenRouterOptions>, TenXCards.Core.Models.OpenRouterOptionsValidator>();
 
-builder.Services.AddHttpClient<IAIService, AIService>(client =>
-{
-    var timeout = builder.Configuration.GetValue<int>("OpenRouter:TimeoutSeconds", 120);
-    client.Timeout = TimeSpan.FromSeconds(timeout);
-});
+builder.Services.AddHttpClient<TenXCards.Core.Services.IOpenRouterService, TenXCards.Infrastructure.Services.OpenRouterService>()
+    .ConfigureHttpClient((sp, client) =>
+    {
+        var options = sp.GetRequiredService<IOptions<TenXCards.Core.Models.OpenRouterOptions>>().Value;
+        client.DefaultRequestHeaders.Clear();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
+        client.DefaultRequestHeaders.Add("HTTP-Referer", options.SiteUrl);
+        client.DefaultRequestHeaders.Add("X-Title", options.SiteName);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("10XCards/1.0");
+        client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+    });
 
 // Register middleware
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
@@ -168,7 +204,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map controllers
+// Configure routing
 app.MapControllers();
 
 // Check database connection on startup

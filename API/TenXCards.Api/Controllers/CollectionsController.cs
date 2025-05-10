@@ -15,10 +15,12 @@ namespace TenXCards.API.Controllers
     public class CollectionsController : ControllerBase
     {
         private readonly ICollectionService _collectionService;
+        private readonly IUserContextService _userContextService;
 
-        public CollectionsController(ICollectionService collectionService)
+        public CollectionsController(ICollectionService collectionService, IUserContextService userContextService)
         {
             _collectionService = collectionService;
+            _userContextService = userContextService;
         }
 
         /// <summary>
@@ -79,7 +81,8 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                var collection = await _collectionService.CreateAsync(request);
+                var userId = _userContextService.GetUserId();
+                var collection = await _collectionService.CreateAsync(request, userId);
                 return CreatedAtAction(nameof(GetById), new { id = collection.Id }, collection);
             }
             catch (Exception ex)

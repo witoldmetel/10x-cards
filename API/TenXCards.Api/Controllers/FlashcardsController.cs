@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Services;
-using System.Text.Json.Serialization;
 using TenXCards.Core.Models;
+using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace TenXCards.API.Controllers
 {
@@ -18,10 +19,14 @@ namespace TenXCards.API.Controllers
     public class FlashcardsController : ControllerBase
     {
         private readonly IFlashcardService _flashcardService;
+        private readonly ILogger<FlashcardsController> _logger;
 
-        public FlashcardsController(IFlashcardService flashcardService)
+        public FlashcardsController(
+            IFlashcardService flashcardService, 
+            ILogger<FlashcardsController> logger)
         {
             _flashcardService = flashcardService;
+            _logger = logger;
         }
 
         // GET: api/collections/{collectionId}/flashcards
@@ -38,25 +43,25 @@ namespace TenXCards.API.Controllers
         // POST: api/collections/{collectionId}/flashcards
         [HttpPost("/api/collections/{collectionId}/flashcards")]
         [Authorize]
+        [Consumes("application/json")]
         [ProducesResponseType(typeof(FlashcardResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<FlashcardResponseDto>> CreateForCollection(Guid collectionId, [FromBody] CreateFlashcardDto createDto)
         {
-            var flashcard = await _flashcardService.CreateForCollectionAsync(collectionId, createDto);
-            return CreatedAtAction(nameof(GetByCollection), new { collectionId = collectionId }, flashcard);
-        }
-
-        // POST: api/collections/{collectionId}/flashcards/generate
-        [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
-        [Authorize]
-        [ProducesResponseType(typeof(GenerateFlashcardsResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<GenerateFlashcardsResponse>> GenerateForCollection(
-            Guid collectionId, 
-            [FromBody] GenerateFlashcardsRequest request)
-        {
-            var response = await _flashcardService.GenerateFlashcardsAsync(collectionId, request);
-            return CreatedAtAction(nameof(GetByCollection), new { collectionId }, response);
+            try 
+            {
+                var flashcard = await _flashcardService.CreateForCollectionAsync(collectionId, createDto);
+                return CreatedAtAction(nameof(GetByCollection), new { collectionId }, flashcard);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Bad Request",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
         }
 
         // PUT: api/flashcards/{id}
@@ -118,6 +123,34 @@ namespace TenXCards.API.Controllers
                 return NotFound();
             }
             return NoContent();
+        }
+
+        // POST: api/collections/{collectionId}/flashcards/generate
+        [HttpPost("/api/collections/{collectionId}/flashcards/generate")]
+        [Authorize]
+        [Consumes("application/json")]
+        [ProducesResponseType(typeof(List<FlashcardResponseDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<List<FlashcardResponseDto>>> GenerateForCollection(
+            Guid collectionId, 
+            [FromBody] FlashcardGenerationRequestDto request,
+            CancellationToken cancellationToken)
+        {
+            try 
+            {
+                var result = await _flashcardService.GenerateFlashcardsAsync(request, collectionId, cancellationToken);
+                return CreatedAtAction(nameof(GetByCollection), new { collectionId }, result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating flashcards: {Error}", ex.Message);
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Bad Request",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
         }
     }
 } 

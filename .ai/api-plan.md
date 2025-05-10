@@ -8,11 +8,11 @@ Key fields: id (UUID), name, email, password, api_model_key, created_at.
 
 ### Collection
 Maps to `collections` table  
-Key fields: id (UUID), name, description (optional), color, created_at, updated_at, total_cards, due_cards, flashcards (array of Flashcard objects).
+Key fields: id (UUID), name, description (optional), color, created_at, updated_at, total_cards, due_cards, tags (array of strings), categories (array of strings), flashcards (array of Flashcard objects).
 
 ### Flashcard
 Maps to `flashcards` table  
-Key fields: id (UUID), user_id, collection_id, front, back, review_status, reviewed_at, archived_at, creation_source, tags, category, sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date, created_at, updated_at.
+Key fields: id (UUID), user_id, collection_id, front, back, review_status, reviewed_at, archived_at, creation_source, sm2_repetitions, sm2_interval, sm2_efactor, sm2_due_date, created_at, updated_at.
 
 ### StudySession
 Maps to `study_sessions` table  
@@ -125,6 +125,8 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
         "total_cards": 50,
         "due_cards": 10,
         "color": "#FF5733",
+        "tags": ["technology"],
+        "categories": ["programming"],
         "flashcards": [
           {
             "id": "uuid",
@@ -132,8 +134,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
             "back": "An application programming interface...",
             "review_status": "Approved",
             "reviewed_at": "2024-03-20T12:34:56Z",
-            "tags": ["technology"],
-            "category": ["programming"],
             "created_at": "2024-03-20T12:34:56Z",
             "updated_at": null,
             "archived_at": null,
@@ -177,7 +177,9 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "name": "Programming Basics",
     "color": "#FF5733",
-    "description": "Fundamental programming concepts"
+    "description": "Fundamental programming concepts",
+    "tags": ["technology"],
+    "categories": ["programming"]
   }
   ```
 - **Response:** Created collection object
@@ -193,7 +195,9 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "name": "Updated Name",
     "description": "Updated description",
-    "color": "#FF5733"
+    "color": "#FF5733",
+    "tags": ["updated-tag"],
+    "categories": ["updated-category"]
   }
   ```
 - **Response:** Updated collection object
@@ -232,8 +236,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "front": "What is REST API?",
     "back": "An application programming interface...",
-    "tags": ["technology"],
-    "category": ["programming"],
     "creation_source": "Manual"
   }
   ```
@@ -250,8 +252,6 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   {
     "front": "Updated front",
     "back": "Updated back",
-    "tags": ["updated-tag"],
-    "category": ["updated-category"],
     "review_status": "Approved"
   }
   ```
@@ -290,31 +290,29 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   ```json
   {
     "source_text": "Long source text...",
-    "number_of_cards": 10,
-    "model_name": "openai/gpt-4",  // Optional, defaults to configuration
-    "api_model_key": "optional_api_key"  // Optional, falls back to configuration
+    "count": 3,  // Range: 3-20, default: 3
+    "model": "openai/gpt-3.5-turbo"  // Optional, defaults to configuration
   }
   ```
 - **Response Payload JSON:**
   ```json
   {
-    "flashcards": [
-      {
-        "front": "Generated question",
-        "back": "Generated answer",
-        "tags": ["ai-generated", "topic-specific-tag"],
-        "category": ["auto-detected-category"],
-        "creation_source": "AI",
-        "review_status": "New"
-      }
-    ],
-    "collection_id": "uuid"
+    "id": "uuid",
+    "userId": "uuid",
+    "collectionId": "uuid",
+    "front": "Generated question",
+    "back": "Generated answer",
+    "reviewStatus": "New",
+    "creationSource": "AI",
+    "createdAt": "2024-03-20T12:34:56Z",
+    "updatedAt": "2024-03-20T12:34:56Z"
   }
   ```
 - **Success Codes:** 201 Created
 - **Error Codes:** 
-  - 400 Bad Request (invalid input)
+  - 400 Bad Request (invalid input, JSON parsing error)
   - 401 Unauthorized (invalid API key)
+  - 404 Not Found (collection not found)
   - 408 Request Timeout (AI service timeout)
   - 429 Too Many Requests (rate limit exceeded)
 
@@ -324,42 +322,93 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
   "OpenRouter": {
     "ApiKey": "your-openrouter-api-key",
     "BaseUrl": "https://openrouter.ai/api/v1",
-    "DefaultModel": "openai/gpt-4",
+    "ApiEndpoint": "/chat/completions",
+    "DefaultModel": "openai/gpt-3.5-turbo",
     "TimeoutSeconds": 120,
-    "SiteUrl": "https://10xcards.com",
-    "SiteName": "10X Cards"
+    "SiteUrl": "http://localhost:3000",
+    "SiteName": "10X Cards - Development"
   }
 }
 ```
 
 #### 3. Generation Process
-1. Request is authenticated and validated
-2. Source text is sent to OpenRouter API with specific prompt format
-3. AI generates flashcards in JSON format with:
-   - Front (question/term)
-   - Back (answer/definition)
-   - Automatically detected tags
-   - Automatically categorized content
-4. Generated flashcards are:
-   - Marked as `CreationSource.AI`
-   - Set to `ReviewStatus.New`
-   - Added to specified collection
-   - Included in collection statistics
+1. Request validation:
+   - Authenticate user
+   - Validate collection ownership
+   - Check source text length (10-4000 characters)
+   - Validate count range (3-20)
+2. OpenRouter API request:
+   - Set required headers (Authorization, HTTP-Referer, X-Title)
+   - Format system prompt for JSON array response
+   - Set appropriate model parameters (temperature: 0.7, max_tokens: 4000)
+3. Response processing:
+   - Sanitize JSON response (remove markdown formatting)
+   - Parse as array or wrapped object
+   - Handle number formats and trailing commas
+4. Flashcard creation:
+   - Create flashcard with AI source
+   - Set review status to "New"
+   - Update collection statistics
+   - Return created flashcard
 
 #### 4. Error Handling
-- Invalid API key returns 401
-- Malformed AI response triggers retry
-- Timeout after configured seconds
-- Rate limiting applied per user
-- JSON parsing errors return 400 with details
+- **API Errors:**
+  - Invalid API key: Return 401 with clear message
+  - Rate limiting: Implement exponential backoff
+  - Timeout: Set appropriate timeout (120s) and handle gracefully
+  - Malformed response: Retry with fallback parsing
+- **Validation Errors:**
+  - Source text too short/long: Return 400 with length requirements
+  - Invalid count range: Return 400 with valid range
+  - Collection not found: Return 404 with clear message
+  - Unauthorized access: Return 403 with ownership requirement
+- **Processing Errors:**
+  - JSON parsing: Log error details and return 400
+  - Database errors: Log and return 500 with retry suggestion
+  - Rate limits: Return 429 with retry-after header
 
 #### 5. Security Measures
-- API key stored in configuration
-- Rate limiting per user/IP
-- Maximum source text length enforced
-- Maximum number of cards per request (50)
-- Request timeout protection
-- Sanitized AI response parsing
+- **API Security:**
+  - Store API key in secure configuration
+  - Use environment-specific site URLs
+  - Implement rate limiting per user
+  - Log all API access attempts
+- **Input Validation:**
+  - Sanitize all input text
+  - Validate JSON structure
+  - Check character limits
+  - Verify collection ownership
+- **Response Handling:**
+  - Sanitize AI responses
+  - Validate JSON structure
+  - Remove any unsafe content
+  - Log suspicious responses
+
+#### 6. Testing Scenarios
+1. **Authentication:**
+   - Valid JWT token
+   - Invalid/expired token
+   - Missing token
+2. **Input Validation:**
+   - Valid source text
+   - Text too short/long
+   - Invalid count range
+   - Invalid model name
+3. **API Integration:**
+   - Successful response
+   - Various error responses
+   - Timeout handling
+   - Rate limit handling
+4. **Response Processing:**
+   - Clean JSON response
+   - Markdown-wrapped response
+   - Malformed response
+   - Empty response
+5. **Error Handling:**
+   - API errors
+   - Validation errors
+   - Processing errors
+   - Database errors
 
 ### E. Study Session Management
 
@@ -441,7 +490,7 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 - Study session completion updates relevant flashcard reviewed_at dates
 - reviewed_at is updated whenever review_status changes
 - Search is case-insensitive
-- Tags and categories are case-insensitive for comparison
+- Tag and category are case-insensitive for comparison
 - Collections include their flashcards in the response
 - Collections can be filtered by archived status
 

@@ -1,4 +1,4 @@
-import { Flashcard } from "../flashcard/types";
+import { Flashcard } from '../flashcard/types';
 
 export interface CollectionResponseDto {
   id: string;
@@ -18,14 +18,16 @@ export interface CreateCollectionDto {
   name: string;
   description?: string;
   color: string;
-  userId: string;
+  tags?: string[];
+  categories?: string[];
 }
 
 export interface UpdateCollectionDto {
   name: string;
   description?: string;
   color: string;
-  userId: string;
+  tags?: string[];
+  categories?: string[];
 }
 
 export interface CollectionsQueryParams {

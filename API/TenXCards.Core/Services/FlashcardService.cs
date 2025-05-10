@@ -1,30 +1,49 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
+using System.Text.Json;
+using System.Security.Cryptography;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
-using TenXCards.Core.Services; 
+using TenXCards.Core.Services;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Text.Json.Serialization;
+using System.Net.Http.Headers;
+using TenXCards.Core.Exceptions;
+using System.Text.Json.Nodes;
 
 namespace TenXCards.Core.Services
 {
     public class FlashcardService : IFlashcardService
     {
+        private readonly ILogger<FlashcardService> _logger;
+        private readonly IOpenRouterService _openRouterService;
+        private readonly OpenRouterOptions _options;
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
-        private readonly IAIService _aiService;
+
         public FlashcardService(
+            ILogger<FlashcardService> logger,
+            IOpenRouterService openRouterService,
+            IOptions<OpenRouterOptions> options,
             IFlashcardRepository repository, 
             ICollectionService collectionService,
-            ICollectionRepository collectionRepository,
-            IAIService aiService)
+            ICollectionRepository collectionRepository)
         {
+            _logger = logger;
+            _openRouterService = openRouterService;
+            _options = options.Value;
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
-            _aiService = aiService;
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -68,8 +87,6 @@ namespace TenXCards.Core.Services
                 Front = createDto.Front,
                 Back = createDto.Back,
                 CreationSource = createDto.CreationSource,
-                Tags = createDto.Tags,
-                Category = createDto.Category,
                 ReviewStatus = createDto.ReviewStatus,
                 Sm2Efactor = 2.5 // Default value for new cards
             };
@@ -90,12 +107,10 @@ namespace TenXCards.Core.Services
                 Front = createDto.Front,
                 Back = createDto.Back,
                 CreationSource = createDto.CreationSource,
-                Tags = createDto.Tags ?? new List<string>(),
-                Category = createDto.Category ?? new List<string>(),
                 ReviewStatus = createDto.ReviewStatus,
                 Sm2Efactor = 2.5, // Default value for new cards
                 CollectionId = collectionId,
-                UserId = collection.UserId // Now this will work as we're using the entity
+                UserId = collection.UserId
             };
             var created = await _repository.CreateAsync(flashcard);
             return MapToResponseDto(created);
@@ -109,8 +124,6 @@ namespace TenXCards.Core.Services
 
             if (updateDto.Front != null) existingFlashcard.Front = updateDto.Front;
             if (updateDto.Back != null) existingFlashcard.Back = updateDto.Back;
-            if (updateDto.Tags != null) existingFlashcard.Tags = updateDto.Tags;
-            if (updateDto.Category != null) existingFlashcard.Category = updateDto.Category;
             if (updateDto.ReviewStatus.HasValue) existingFlashcard.ReviewStatus = updateDto.ReviewStatus.Value;
             if (updateDto.ArchivedAt.HasValue)
             {
@@ -128,8 +141,6 @@ namespace TenXCards.Core.Services
             {
                 if (request.Update.Front != null) flashcard.Front = request.Update.Front;
                 if (request.Update.Back != null) flashcard.Back = request.Update.Back;
-                if (request.Update.Tags != null) flashcard.Tags = request.Update.Tags;
-                if (request.Update.Category != null) flashcard.Category = request.Update.Category;
                 if (request.Update.ReviewStatus.HasValue) flashcard.ReviewStatus = request.Update.ReviewStatus.Value;
                 if (request.Update.ArchivedAt.HasValue)
                 {
@@ -193,40 +204,11 @@ namespace TenXCards.Core.Services
 
         public async Task<ArchivedStatisticsDto> GetArchivedStatisticsAsync()
         {
-            var categoryStats = await _repository.GetArchivedCountByCategory();
             var (archivedCards, _) = await _repository.GetAllAsync(new FlashcardsQueryParams { Archived = true, Offset = 0, Limit = 1 });
 
             return new ArchivedStatisticsDto
             {
-                TotalArchived = archivedCards.Count(),
-                ArchivedByCategory = categoryStats
-            };
-        }
-
-        public async Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request)
-        {
-            // Generate flashcards using AI
-            var generatedFlashcards = await _aiService.GenerateFlashcardsAsync(
-                request.SourceText,
-                request.NumberOfCards,
-                request.ApiModelKey
-            );
-
-            // Create all flashcards in the collection
-            var createdFlashcards = new List<CreateFlashcardDto>();
-            foreach (var flashcard in generatedFlashcards)
-            {
-                var created = await CreateForCollectionAsync(collectionId, flashcard);
-                if (created != null)
-                {
-                    createdFlashcards.Add(flashcard);
-                }
-            }
-
-            return new GenerateFlashcardsResponse
-            {
-                Flashcards = createdFlashcards,
-                CollectionId = collectionId
+                TotalArchived = archivedCards.Count()
             };
         }
 
@@ -245,8 +227,6 @@ namespace TenXCards.Core.Services
                 CreationSource = flashcard.CreationSource,
                 ReviewStatus = flashcard.ReviewStatus,
                 ReviewedAt = flashcard.ReviewedAt,
-                Tags = flashcard.Tags,
-                Category = flashcard.Category,
                 Sm2Repetitions = flashcard.Sm2Repetitions,
                 Sm2Interval = flashcard.Sm2Interval,
                 Sm2Efactor = flashcard.Sm2Efactor,
@@ -258,5 +238,140 @@ namespace TenXCards.Core.Services
         {
             return flashcards.Select(MapToResponseDto);
         }
+
+        public async Task<List<FlashcardResponseDto>> GenerateFlashcardsAsync(
+            FlashcardGenerationRequestDto request, 
+            Guid collectionId, 
+            CancellationToken cancellationToken = default)
+        {
+            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            if (collection == null)
+                throw new Exception($"Collection with id {collectionId} not found");
+
+            var sourceTextHash = ComputeHash(request.SourceText);
+            var existingFlashcard = await _repository.GetFlashcardBySourceHash(sourceTextHash, collectionId);
+            
+            if (existingFlashcard != null)
+            {
+                _logger.LogInformation("Found existing flashcard for source text hash {Hash}", sourceTextHash);
+                return new List<FlashcardResponseDto> { MapToResponseDto(existingFlashcard) };
+            }
+
+            try
+            {
+                var systemMessage = $"You are an expert flashcard creator and educator. Your task is to create {request.Count} effective flashcards that follow spaced repetition principles. Based on the provided text, generate concise, clear flashcards that test key concepts. Each flashcard should have a focused question on the front and a precise answer on the back. Return a JSON object with a 'flashcards' field containing an array of {request.Count} objects, where each object has 'front' and 'back' fields. Example format: {{\"flashcards\": [{{\"front\": \"Question\", \"back\": \"Answer\"}}]}}";
+                
+                var content = await _openRouterService.GetChatResponseAsync(
+                    request.SourceText,
+                    systemMessage,
+                    request.Model ?? _options.DefaultModel,
+                    new Dictionary<string, object>
+                    {
+                        { "temperature", 0.7 },
+                        { "max_tokens", 4000 }
+                    },
+                    new ResponseFormat { Type = "json_object" },
+                    cancellationToken);
+
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true
+                };
+
+                var parsedResponse = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
+
+                if (string.IsNullOrEmpty(content))
+                {
+                    throw new Exception("Empty response from OpenRouter API");
+                }
+
+                try 
+                {
+                    if (parsedResponse?.Flashcards == null || !parsedResponse.Flashcards.Any())
+                    {
+                        throw new Exception("Failed to parse flashcards from API response");
+                    }
+
+                    var createdFlashcards = new List<Flashcard>();
+                    foreach (var flashcardDto in parsedResponse.Flashcards)
+                    {
+                        var flashcard = new Flashcard
+                        {
+                            Id = Guid.NewGuid(),
+                            Front = flashcardDto.Front,
+                            Back = flashcardDto.Back,
+                            CreationSource = FlashcardCreationSource.AI,
+                            ReviewStatus = ReviewStatus.New,
+                            CollectionId = collectionId,
+                            UserId = collection.UserId,
+                            SourceTextHash = sourceTextHash,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            Sm2Efactor = 2.5
+                        };
+
+                        var created = await _repository.CreateAsync(flashcard);
+                        createdFlashcards.Add(created);
+                    }
+
+                    return createdFlashcards.Select(MapToResponseDto).ToList();
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to parse flashcards from response. Content: {Content}", content);
+                    throw new Exception("Failed to parse flashcards from API response", ex);
+                }
+            }
+            catch (OpenRouterException ex)
+            {
+                _logger.LogError(ex, "OpenRouter API error for collection {CollectionId}. Error: {Error}", collectionId, ex.Message);
+                throw new Exception($"OpenRouter API error: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating flashcard for collection {CollectionId}. Error: {Error}", collectionId, ex.Message);
+                throw;
+            }
+        }
+
+        private static string ComputeHash(string input)
+        {
+            using var sha256 = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(input);
+            var hash = sha256.ComputeHash(bytes);
+            return Convert.ToBase64String(hash);
+        }
+    }
+
+    // Helper classes for deserializing OpenRouter responses
+    file class OpenRouterResponse
+    {
+        public List<OpenRouterChoice>? Choices { get; set; }
+    }
+
+    file class OpenRouterChoice
+    {
+        public OpenRouterMessage? Message { get; set; }
+    }
+
+    file class OpenRouterMessage
+    {
+        public string? Content { get; set; }
+    }
+
+    internal class FlashcardsResponse
+    {
+        [JsonPropertyName("flashcards")]
+        public List<AIGeneratedFlashcard> Flashcards { get; set; } = new();
+    }
+
+    internal class AIGeneratedFlashcard
+    {
+        [JsonPropertyName("front")]
+        public string Front { get; set; } = string.Empty;
+
+        [JsonPropertyName("back")]
+        public string Back { get; set; } = string.Empty;
     }
 }

@@ -5,102 +5,267 @@ using TenXCards.Core.Models;
 
 namespace TenXCards.Core.DTOs
 {
+    /// <summary>
+    /// DTO for creating a new flashcard
+    /// </summary>
     public class CreateFlashcardDto
     {
+        /// <summary>
+        /// Front side content of the flashcard
+        /// </summary>
         public required string Front { get; set; }
+
+        /// <summary>
+        /// Back side content of the flashcard
+        /// </summary>
         public required string Back { get; set; }
+
+        /// <summary>
+        /// Source of flashcard creation (Manual or AI-generated)
+        /// </summary>
         public FlashcardCreationSource CreationSource { get; set; } = FlashcardCreationSource.Manual;
-        public List<string> Tags { get; set; } = new();
-        public List<string> Category { get; set; } = new();
+
+        /// <summary>
+        /// Initial review status of the flashcard
+        /// </summary>
         public ReviewStatus ReviewStatus { get; set; } = ReviewStatus.Approved;
     }
 
+    /// <summary>
+    /// DTO for updating an existing flashcard
+    /// </summary>
     public class UpdateFlashcardDto
     {
+        /// <summary>
+        /// Updated front side content
+        /// </summary>
         public string? Front { get; set; }
+
+        /// <summary>
+        /// Updated back side content
+        /// </summary>
         public string? Back { get; set; }
-        public List<string>? Tags { get; set; }
-        public List<string>? Category { get; set; }
+
+        /// <summary>
+        /// Updated review status
+        /// </summary>
         public ReviewStatus? ReviewStatus { get; set; }
+
+        /// <summary>
+        /// Archive timestamp
+        /// </summary>
         public DateTime? ArchivedAt { get; set; }
     }
 
+    /// <summary>
+    /// Response DTO for a flashcard
+    /// </summary>
     public class FlashcardResponseDto
     {
+        /// <summary>
+        /// Unique identifier of the flashcard
+        /// </summary>
         public Guid Id { get; set; }
+
+        /// <summary>
+        /// ID of the user who owns the flashcard
+        /// </summary>
         public Guid UserId { get; set; }
+
+        /// <summary>
+        /// ID of the collection this flashcard belongs to
+        /// </summary>
         public Guid CollectionId { get; set; }
+
+        /// <summary>
+        /// Front side content of the flashcard
+        /// </summary>
         public required string Front { get; set; }
+
+        /// <summary>
+        /// Back side content of the flashcard
+        /// </summary>
         public required string Back { get; set; }
+
+        /// <summary>
+        /// Current review status of the flashcard
+        /// </summary>
         public ReviewStatus ReviewStatus { get; set; }
+
+        /// <summary>
+        /// Last review timestamp
+        /// </summary>
         public DateTime? ReviewedAt { get; set; }
+
+        /// <summary>
+        /// Source of flashcard creation
+        /// </summary>
         public FlashcardCreationSource CreationSource { get; set; }
-        public List<string> Tags { get; set; } = new();
-        public List<string> Category { get; set; } = new();
+
+        /// <summary>
+        /// SuperMemo2 algorithm: number of repetitions
+        /// </summary>
         public int Sm2Repetitions { get; set; }
+
+        /// <summary>
+        /// SuperMemo2 algorithm: interval in days
+        /// </summary>
         public int Sm2Interval { get; set; }
+
+        /// <summary>
+        /// SuperMemo2 algorithm: easiness factor
+        /// </summary>
         public double Sm2Efactor { get; set; }
+
+        /// <summary>
+        /// Next review date based on SuperMemo2 algorithm
+        /// </summary>
         public DateTime? Sm2DueDate { get; set; }
+
+        /// <summary>
+        /// Creation timestamp
+        /// </summary>
         public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// Last update timestamp
+        /// </summary>
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Archive timestamp
+        /// </summary>
         public DateTime? ArchivedAt { get; set; }
     }
 
+    /// <summary>
+    /// Query parameters for flashcard listing
+    /// </summary>
     public class FlashcardsQueryParams
     {
+        /// <summary>
+        /// Number of items to skip
+        /// </summary>
         public int Offset { get; set; } = 0;
 
+        /// <summary>
+        /// Maximum number of items to return (1-100)
+        /// </summary>
         [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
         public int Limit { get; set; } = 20;
 
+        /// <summary>
+        /// Filter by review status
+        /// </summary>
         public ReviewStatus? ReviewStatus { get; set; }
+
+        /// <summary>
+        /// Search phrase to filter flashcards
+        /// </summary>
         public string? SearchPhrase { get; set; }
-        public string? Tag { get; set; }
-        public string? Category { get; set; }
+
+        /// <summary>
+        /// Filter by archived status
+        /// </summary>
         public bool? Archived { get; set; }
+
+        /// <summary>
+        /// Filter by collection ID
+        /// </summary>
         public Guid? CollectionId { get; set; }
     }
 
+    /// <summary>
+    /// Generic paginated response
+    /// </summary>
     public class PaginatedResponse<T>
     {
+        /// <summary>
+        /// List of items
+        /// </summary>
         public required IEnumerable<T> Items { get; set; }
+
+        /// <summary>
+        /// Maximum number of items returned
+        /// </summary>
         public int Limit { get; set; }
+
+        /// <summary>
+        /// Number of items skipped
+        /// </summary>
         public int Offset { get; set; }
+
+        /// <summary>
+        /// Total number of items available
+        /// </summary>
         public int TotalCount { get; set; }
     }
 
+    /// <summary>
+    /// Request for batch updating flashcards
+    /// </summary>
     public class BatchUpdateRequest
     {
-        public required List<Guid> FlashcardIds { get; set; }
+        /// <summary>
+        /// List of flashcard IDs to update
+        /// </summary>
+        public required IEnumerable<Guid> FlashcardIds { get; set; }
+
+        /// <summary>
+        /// Update to apply to all selected flashcards
+        /// </summary>
         public required UpdateFlashcardDto Update { get; set; }
     }
 
+    /// <summary>
+    /// Response for batch update operation
+    /// </summary>
     public class BatchUpdateResponse
     {
-        public List<Guid> UpdatedIds { get; set; } = new();
+        /// <summary>
+        /// List of successfully updated flashcard IDs
+        /// </summary>
+        public required IEnumerable<Guid> UpdatedIds { get; set; }
+
+        /// <summary>
+        /// Operation result message
+        /// </summary>
         public required string Message { get; set; }
     }
 
-    public class GenerateFlashcardsRequest
-    {
-        [Required]
-        public string SourceText { get; set; } = string.Empty;
-
-        [Range(1, 50)]
-        public int NumberOfCards { get; set; } = 10;
-
-        public string? ApiModelKey { get; set; }
-    }
-
-    public class GenerateFlashcardsResponse
-    {
-        public List<CreateFlashcardDto> Flashcards { get; set; } = new();
-        public Guid CollectionId { get; set; }
-    }
-
+    /// <summary>
+    /// Statistics about archived flashcards
+    /// </summary>
     public class ArchivedStatisticsDto
     {
+        /// <summary>
+        /// Total number of archived flashcards
+        /// </summary>
         public int TotalArchived { get; set; }
-        public Dictionary<string, int> ArchivedByCategory { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Request DTO for flashcard generation
+    /// </summary>
+    public class FlashcardGenerationRequestDto
+    {
+        /// <summary>
+        /// The text from which flashcards should be generated
+        /// </summary>
+        [Required]
+        [MinLength(10)]
+        [MaxLength(4000)]
+        public required string SourceText { get; set; }
+
+        /// <summary>
+        /// The number of flashcards to generate (3-20)
+        /// </summary>
+        [Range(3, 20)]
+        public int Count { get; set; } = 3;
+
+        /// <summary>
+        /// Optional model to use for generation
+        /// </summary>
+        public string? Model { get; set; }
     }
 } 

@@ -35,7 +35,6 @@ export default function CollectionDetails() {
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ front: '', back: '' });
 
-
   const handleBack = () => navigate('/dashboard');
   const handleStudy = () => collectionId && navigate(`/study/${collectionId}`);
   const handleArchiveCollection = async () => {
@@ -95,7 +94,6 @@ export default function CollectionDetails() {
     setEditForm({ front: '', back: '' });
   };
 
-
   if (isCollectionLoading) {
     return <LoadingState />;
   }
@@ -131,7 +129,10 @@ export default function CollectionDetails() {
               <Button variant='outline' onClick={handleArchiveCollection} leftIcon={<Archive className='h-4 w-4' />}>
                 Archive Collection
               </Button>
-              <Button variant='primary' leftIcon={<Plus className='h-4 w-4' />} onClick={() => navigate('/generate/manual')}>
+              <Button
+                variant='primary'
+                leftIcon={<Plus className='h-4 w-4' />}
+                onClick={() => navigate('/generate/manual')}>
                 Add Flashcard
               </Button>
             </div>

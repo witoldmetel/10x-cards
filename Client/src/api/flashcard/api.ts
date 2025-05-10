@@ -18,7 +18,7 @@ export async function getFlashcards(
   params?: FlashcardsQueryParams,
 ): Promise<PaginatedResponse<Flashcard>> {
   const { data } = await instance.get<PaginatedResponse<Flashcard>>(`/collections/${collectionId}/flashcards`, {
-    params
+    params,
   });
   return data;
 }
@@ -64,7 +64,7 @@ export async function generateFlashcards(
   request: GenerateFlashcardsRequest,
 ): Promise<GenerateFlashcardsResponse> {
   const { data } = await instance.post<GenerateFlashcardsResponse>(
-    `/collections/${collectionId}/flashcards/generate`,
+    `collections/${collectionId}/flashcards/generate`,
     request,
   );
   return data;

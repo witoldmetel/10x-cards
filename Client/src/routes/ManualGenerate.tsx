@@ -130,8 +130,6 @@ export default function ManualGenerate() {
           flashcard: {
             front: card.front,
             back: card.back,
-            tags: [],
-            category: [],
             creationSource: FlashcardCreationSource.Manual,
             reviewStatus: ReviewStatus.Approved,
           },

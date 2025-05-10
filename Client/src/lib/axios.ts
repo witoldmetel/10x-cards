@@ -3,7 +3,6 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 export const instance: AxiosInstance = axios.create({
   baseURL: '/api',
   headers: {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
   },
   withCredentials: true,

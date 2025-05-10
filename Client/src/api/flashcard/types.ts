@@ -5,8 +5,6 @@ export interface Flashcard {
   reviewStatus: ReviewStatus;
   reviewedAt?: string | null;
   creationSource: FlashcardCreationSource;
-  tags: string[];
-  category: string[];
   sm2Repetitions: number;
   sm2Interval: number;
   sm2Efactor: number;
@@ -33,8 +31,6 @@ export enum ReviewStatus {
 export interface CreateFlashcardDTO {
   front: string;
   back: string;
-  tags: string[];
-  category: string[];
   creationSource: FlashcardCreationSource;
   reviewStatus?: ReviewStatus;
 }
@@ -42,23 +38,33 @@ export interface CreateFlashcardDTO {
 export interface UpdateFlashcardDTO {
   front?: string;
   back?: string;
-  tags?: string[];
-  category?: string[];
   reviewStatus?: ReviewStatus;
   archivedAt?: string | null;
 }
 
 export interface GenerateFlashcardsRequest {
-  source_text: string;
-  number_of_cards: number;
-  model_name?: string;
-  api_model_key?: string;
+  sourceText: string;
+  count: number;
+  model?: string;
 }
 
-export interface GenerateFlashcardsResponse {
-  flashcards: CreateFlashcardDTO[];
-  collection_id: string;
-}
+export type GenerateFlashcardsResponse = Array<{
+  id: string;
+  userId: string;
+  collectionId: string;
+  front: string;
+  back: string;
+  reviewStatus: ReviewStatus;
+  reviewedAt?: string | null;
+  creationSource: FlashcardCreationSource;
+  sm2Repetitions: number;
+  sm2Interval: number;
+  sm2Efactor: number;
+  sm2DueDate?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  archivedAt?: string | null;
+}>;
 
 export interface PaginatedResponse<T> {
   items: T[];
@@ -87,7 +93,5 @@ export interface FlashcardsQueryParams {
   limit?: number;
   reviewStatus?: ReviewStatus;
   searchPhrase?: string;
-  tag?: string;
-  category?: string;
   archived?: boolean;
 }

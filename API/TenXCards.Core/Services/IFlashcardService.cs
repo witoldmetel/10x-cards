@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TenXCards.Core.DTOs;
+using System.Threading;
 
 namespace TenXCards.Core.Services
 {
@@ -16,8 +17,8 @@ namespace TenXCards.Core.Services
         Task<bool> DeleteAsync(Guid id);
         Task<BatchUpdateResponse> BatchUpdateAsync(BatchUpdateRequest request);
         Task<ArchivedStatisticsDto> GetArchivedStatisticsAsync();
-        Task<GenerateFlashcardsResponse> GenerateFlashcardsAsync(Guid collectionId, GenerateFlashcardsRequest request);
         Task<FlashcardResponseDto?> ArchiveAsync(Guid id);
         Task<FlashcardResponseDto?> UnarchiveAsync(Guid id);
+        Task<List<FlashcardResponseDto>> GenerateFlashcardsAsync(FlashcardGenerationRequestDto request, Guid collectionId, CancellationToken cancellationToken = default);
     }
 } 
