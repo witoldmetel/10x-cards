@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Brain, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { useCollections } from '@/api/collections/queries';
 import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
-import type { GenerateFlashcardsRequest, GenerateFlashcardsResponse, CreateFlashcardDTO } from '@/api/flashcard/types';
+import type { GenerateFlashcardsRequest } from '@/api/flashcard/types';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateCollection } from '@/api/collections/mutations';
+import type { Flashcard } from '@/api/flashcard/types';
 
 // Zod schema for AI generation form
 const aiGenerateSchema = z
@@ -45,7 +46,7 @@ export default function AIGenerate() {
   const createFlashcardMutation = useCreateFlashcard();
 
   const [error, setError] = useState<string | null>(null);
-  const [generatedCards, setGeneratedCards] = useState<GenerateFlashcardsResponse['flashcards']>([]);
+  const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
   const [targetCollectionId, setTargetCollectionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -108,7 +109,7 @@ export default function AIGenerate() {
         payload,
       });
 
-      setGeneratedCards(response.flashcards);
+      setGeneratedCards(response);
       setTargetCollectionId(collectionId);
     } catch (error) {
       console.error('Error generating flashcards:', error);
@@ -126,7 +127,7 @@ export default function AIGenerate() {
     setIsSaving(true);
     setError(null);
     try {
-      const savePromises = generatedCards.map(card => {
+      const savePromises = generatedCards.map((card) => {
         const createPayload = {
           collectionId: targetCollectionId,
           flashcard: {
@@ -254,7 +255,7 @@ export default function AIGenerate() {
                 </CardContent>
               </Card>
               <div className='space-y-4'>
-                {generatedCards.map((card, index) => (
+                {generatedCards.map((card, index: number) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}

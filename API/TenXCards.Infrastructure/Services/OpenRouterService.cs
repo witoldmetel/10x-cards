@@ -24,6 +24,7 @@ namespace TenXCards.Infrastructure.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<OpenRouterService> _logger;
         private readonly Dictionary<string, object> _defaultParameters;
+        private readonly IOptions<OpenRouterOptions> _options;
 
         public string ApiEndpoint { get; }
         public string DefaultModelName { get; }
@@ -32,12 +33,11 @@ namespace TenXCards.Infrastructure.Services
         /// <summary>
         /// Initializes a new instance of the OpenRouterService
         /// </summary>
-        public OpenRouterService(HttpClient httpClient, IConfiguration configuration, ILogger<OpenRouterService> logger)
+        public OpenRouterService(HttpClient httpClient, IConfiguration configuration, ILogger<OpenRouterService> logger, IOptions<OpenRouterOptions> options)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            
-            _logger.LogInformation("Initializing OpenRouterService...");
+            _options = options ?? throw new ArgumentNullException(nameof(options));
 
             var baseUrl = configuration["OpenRouter:BaseUrl"] 
                 ?? throw new ArgumentException("OpenRouter base URL not found in configuration");
@@ -84,38 +84,33 @@ namespace TenXCards.Infrastructure.Services
             string? modelName,
             Dictionary<string, object>? parameters)
         {
-            if (string.IsNullOrWhiteSpace(userMessage))
-            {
-                throw new OpenRouterValidationException("User message cannot be empty");
-            }
-
             var messages = new List<Message>();
             
-            if (!string.IsNullOrWhiteSpace(systemMessage))
+            if (!string.IsNullOrEmpty(systemMessage))
             {
                 messages.Add(new Message { Role = "system", Content = systemMessage });
             }
-
+            
             messages.Add(new Message { Role = "user", Content = userMessage });
-
-            var mergedParameters = new Dictionary<string, object>(_defaultParameters);
-            if (parameters != null)
-            {
-                foreach (var param in parameters)
-                {
-                    mergedParameters[param.Key] = param.Value;
-                }
-            }
 
             var request = new OpenRouterRequest
             {
-                Messages = messages,
-                Model = modelName ?? DefaultModelName,
-                Temperature = Convert.ToDouble(mergedParameters["temperature"]),
-                TopP = Convert.ToDouble(mergedParameters["top_p"]),
-                MaxTokens = Convert.ToInt32(mergedParameters["max_tokens"]),
-                ResponseFormat = new ResponseFormat { Type = "json_object" }
+                Model = modelName ?? _options.Value.DefaultModel,
+                Messages = messages
             };
+
+            if (parameters != null)
+            {
+                if (parameters.TryGetValue("temperature", out var temp) && temp is double temperature)
+                {
+                    request = request with { Temperature = temperature };
+                }
+                
+                if (parameters.TryGetValue("max_tokens", out var tokens) && tokens is int maxTokens)
+                {
+                    request = request with { MaxTokens = maxTokens };
+                }
+            }
 
             return request;
         }
@@ -144,6 +139,7 @@ namespace TenXCards.Infrastructure.Services
                 };
                 
                 var requestJson = JsonSerializer.Serialize(request, jsonOptions);
+                _logger.LogInformation("Sending request to OpenRouter: {Request}", requestJson);
                 using var content = JsonContent.Create(request, null, jsonOptions);
                 using var response = await _httpClient.PostAsync(ApiEndpoint, content, cancellationToken);
                 
@@ -165,26 +161,25 @@ namespace TenXCards.Infrastructure.Services
 
                 try 
                 {
+                    _logger.LogInformation("Raw response from OpenRouter: {RawContent}", rawContent);
                     var result = JsonSerializer.Deserialize<OpenRouterResponse>(rawContent, jsonOptions);
+                    _logger.LogInformation("Deserialized OpenRouter response: {Response}", JsonSerializer.Serialize(result, jsonOptions));
 
-                    if (result == null)
+                    if (result?.Choices == null || result.Choices.Count == 0 || 
+                        result.Choices[0].Message?.Content == null)
                     {
-                        throw new OpenRouterValidationException("Received null response from API");
-                    }
-                    
-                    if (result.Choices == null || result.Choices.Count == 0 || 
-                        result.Choices[0].Message?.Content == null || string.IsNullOrWhiteSpace(result.Choices[0].Message?.Content))
-                    {
+                        _logger.LogError("Invalid response structure: Choices={Choices}, Count={Count}, Message={Message}, Content={Content}", 
+                            result?.Choices != null, 
+                            result?.Choices?.Count ?? 0,
+                            result?.Choices?[0].Message != null,
+                            result?.Choices?[0].Message?.Content);
                         throw new OpenRouterValidationException("Response contains no valid content");
                     }
-                    
-                    var messageContent = result.Choices[0].Message?.Content ?? throw new OpenRouterValidationException("Message content is null");
-                    
-                    _logger.LogInformation("Raw message content before sanitization: {Content}", messageContent);
-                    messageContent = SanitizeJsonResponse(messageContent);
-                    _logger.LogInformation("Sanitized message content: {Content}", messageContent);
 
-                    return messageContent;
+                    var messageContent = result.Choices[0].Message.Content;
+                    var sanitized = SanitizeJsonResponse(messageContent);
+
+                    return sanitized;
                 }
                 catch (JsonException ex)
                 {
@@ -228,34 +223,61 @@ namespace TenXCards.Infrastructure.Services
             
             content = content.Trim();
             
-            try
-            {
-                // Try to parse as direct array first
-                if (content.StartsWith("[") && content.EndsWith("]"))
-                {
-                    return $"{{\"flashcards\": {content}}}";
-                }
-                
-                // If it's already an object with flashcards field, return as is
-                if (content.Contains("\"flashcards\""))
-                {
-                    return content;
-                }
-                
-                // If it's an object but missing flashcards wrapper, wrap it
-                if (content.StartsWith("{") && content.EndsWith("}"))
-                {
-                    return $"{{\"flashcards\": [{content}]}}";
-                }
-                
-                // If we can't determine format, wrap in both object and array
-                return $"{{\"flashcards\": [{content}]}}";
-            }
-            catch (Exception)
-            {
-                // If any parsing fails, try to wrap the content
-                return $"{{\"flashcards\": [{content}]}}";
-            }
+            return content;
         }
     }
-} 
+
+    public record OpenRouterRequest
+    {
+        [JsonPropertyName("model")]
+        public required string Model { get; init; }
+
+        [JsonPropertyName("messages")]
+        public required List<Message> Messages { get; init; }
+
+        [JsonPropertyName("temperature")]
+        public double Temperature { get; init; } = 0.7;
+
+        [JsonPropertyName("top_p")]
+        public double TopP { get; init; } = 0.95;
+
+        [JsonPropertyName("max_tokens")]
+        public int MaxTokens { get; init; } = 750;
+
+        [JsonPropertyName("response_format")]
+        public ResponseFormat? ResponseFormat { get; init; }
+    }
+
+    file class OpenRouterResponse
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        [JsonPropertyName("model")]
+        public string? Model { get; set; }
+
+        [JsonPropertyName("created")]
+        public long Created { get; set; }
+
+        [JsonPropertyName("choices")]
+        public List<OpenRouterChoice>? Choices { get; set; }
+    }
+
+    file class OpenRouterChoice
+    {
+        [JsonPropertyName("message")]
+        public OpenRouterMessage? Message { get; set; }
+
+        [JsonPropertyName("finish_reason")]
+        public string? FinishReason { get; set; }
+    }
+
+    file class OpenRouterMessage
+    {
+        [JsonPropertyName("role")]
+        public string? Role { get; set; }
+
+        [JsonPropertyName("content")]
+        public string? Content { get; set; }
+    }
+}

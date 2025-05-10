@@ -13,7 +13,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250505104244_InitialCreate")]
+    [Migration("20250510043256_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

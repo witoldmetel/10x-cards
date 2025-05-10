@@ -17,6 +17,7 @@ using System.Threading;
 using System.Text.Json.Serialization;
 using System.Net.Http.Headers;
 using TenXCards.Core.Exceptions;
+using System.Text.Json.Nodes;
 
 namespace TenXCards.Core.Services
 {
@@ -258,7 +259,7 @@ namespace TenXCards.Core.Services
 
             try
             {
-                var systemMessage = $"Create {request.Count} flashcards based on the provided text. Return a JSON object with a 'flashcards' field containing an array of objects, where each object has 'front' and 'back' fields. Example format: {{'flashcards': [{{'front': 'Question 1', 'back': 'Answer 1'}}, {{'front': 'Question 2', 'back': 'Answer 2'}}]}}";
+                var systemMessage = "Create 3 flashcards based on the provided text. Return a JSON object with a 'flashcards' field containing an array of objects, where each object has 'front' and 'back' fields. Example format: {'flashcards': [{'front': 'Question 1', 'back': 'Answer 1'}, {'front': 'Question 2', 'back': 'Answer 2'}]}";
                 
                 var content = await _openRouterService.GetChatResponseAsync(
                     request.SourceText,
@@ -272,50 +273,55 @@ namespace TenXCards.Core.Services
                     new ResponseFormat { Type = "json_object" },
                     cancellationToken);
 
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true
+                };
+
+                var parsedResponse = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
+
                 if (string.IsNullOrEmpty(content))
                 {
                     throw new Exception("Empty response from OpenRouter API");
                 }
 
-                _logger.LogInformation("Received content from OpenRouter: {Content}", content);
-
-                var jsonOptions = new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true,
-                    AllowTrailingCommas = true,
-                    NumberHandling = JsonNumberHandling.AllowReadingFromString
-                };
-
-                var response = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
-                
-                if (response?.Flashcards == null || !response.Flashcards.Any())
+                try 
                 {
-                    throw new Exception("Failed to parse flashcards from API response");
-                }
-
-                var createdFlashcards = new List<Flashcard>();
-                foreach (var flashcardDto in response.Flashcards)
-                {
-                    var flashcard = new Flashcard
+                    if (parsedResponse?.Flashcards == null || !parsedResponse.Flashcards.Any())
                     {
-                        Id = Guid.NewGuid(),
-                        Front = flashcardDto.Front,
-                        Back = flashcardDto.Back,
-                        CreationSource = FlashcardCreationSource.AI,
-                        ReviewStatus = ReviewStatus.New,
-                        CollectionId = collectionId,
-                        UserId = collection.UserId,
-                        SourceTextHash = sourceTextHash,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Sm2Efactor = 2.5
-                    };
+                        throw new Exception("Failed to parse flashcards from API response");
+                    }
 
-                    var created = await _repository.CreateAsync(flashcard);
-                    createdFlashcards.Add(created);
+                    var createdFlashcards = new List<Flashcard>();
+                    foreach (var flashcardDto in parsedResponse.Flashcards)
+                    {
+                        var flashcard = new Flashcard
+                        {
+                            Id = Guid.NewGuid(),
+                            Front = flashcardDto.Front,
+                            Back = flashcardDto.Back,
+                            CreationSource = FlashcardCreationSource.AI,
+                            ReviewStatus = ReviewStatus.New,
+                            CollectionId = collectionId,
+                            UserId = collection.UserId,
+                            SourceTextHash = sourceTextHash,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow,
+                            Sm2Efactor = 2.5
+                        };
+
+                        var created = await _repository.CreateAsync(flashcard);
+                        createdFlashcards.Add(created);
+                    }
+
+                    return createdFlashcards.Select(MapToResponseDto).ToList();
                 }
-
-                return createdFlashcards.Select(MapToResponseDto).ToList();
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to parse flashcards from response. Content: {Content}", content);
+                    throw new Exception("Failed to parse flashcards from API response", ex);
+                }
             }
             catch (OpenRouterException ex)
             {
@@ -356,6 +362,16 @@ namespace TenXCards.Core.Services
 
     internal class FlashcardsResponse
     {
-        public List<CreateFlashcardDto> Flashcards { get; set; } = new();
-    } 
+        [JsonPropertyName("flashcards")]
+        public List<AIGeneratedFlashcard> Flashcards { get; set; } = new();
+    }
+
+    internal class AIGeneratedFlashcard
+    {
+        [JsonPropertyName("front")]
+        public string Front { get; set; } = string.Empty;
+
+        [JsonPropertyName("back")]
+        public string Back { get; set; } = string.Empty;
+    }
 }

@@ -64,7 +64,7 @@ export async function generateFlashcards(
   request: GenerateFlashcardsRequest,
 ): Promise<GenerateFlashcardsResponse> {
   const { data } = await instance.post<GenerateFlashcardsResponse>(
-    `/collections/${collectionId}/flashcards/generate`,
+    `collections/${collectionId}/flashcards/generate`,
     request,
   );
   return data;

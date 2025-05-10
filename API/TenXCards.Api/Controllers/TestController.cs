@@ -7,6 +7,7 @@ using TenXCards.Core.DTOs;
 using System.Threading;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace TenXCards.API.Controllers
 {
@@ -85,7 +86,7 @@ namespace TenXCards.API.Controllers
                 };
 
                 // Use a test collection ID - you'll need to replace this with a valid collection ID from your database
-                var collectionId = Guid.Parse("e70062e6-b3aa-47e1-904b-30835c549723");
+                var collectionId = Guid.Parse("3b98c592-275f-45e9-a924-94a7062f268c");
 
                 var result = await _flashcardService.GenerateFlashcardsAsync(request, collectionId, cancellationToken);
 
@@ -101,12 +102,16 @@ namespace TenXCards.API.Controllers
 
     public class FlashcardsResponse
     {
-        public List<Flashcard> Flashcards { get; set; } = new();
+        [JsonPropertyName("flashcards")]
+        public List<AIGeneratedFlashcard> Flashcards { get; set; } = new();
     }
 
-    public class Flashcard
+    public class AIGeneratedFlashcard
     {
+        [JsonPropertyName("front")]
         public string Front { get; set; } = string.Empty;
+
+        [JsonPropertyName("back")]
         public string Back { get; set; } = string.Empty;
     }
 } 

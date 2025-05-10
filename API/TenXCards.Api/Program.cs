@@ -159,14 +159,14 @@ builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
 
 // Configure OpenRouter
-builder.Services.Configure<OpenRouterOptions>(
-    builder.Configuration.GetSection(OpenRouterOptions.SectionName));
-builder.Services.AddSingleton<IValidateOptions<OpenRouterOptions>, OpenRouterOptionsValidator>();
+builder.Services.Configure<TenXCards.Core.Models.OpenRouterOptions>(
+    builder.Configuration.GetSection(TenXCards.Core.Models.OpenRouterOptions.SectionName));
+builder.Services.AddSingleton<IValidateOptions<TenXCards.Core.Models.OpenRouterOptions>, TenXCards.Core.Models.OpenRouterOptionsValidator>();
 
-builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>()
+builder.Services.AddHttpClient<TenXCards.Core.Services.IOpenRouterService, TenXCards.Infrastructure.Services.OpenRouterService>()
     .ConfigureHttpClient((sp, client) =>
     {
-        var options = sp.GetRequiredService<IOptions<OpenRouterOptions>>().Value;
+        var options = sp.GetRequiredService<IOptions<TenXCards.Core.Models.OpenRouterOptions>>().Value;
         client.DefaultRequestHeaders.Clear();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
         client.DefaultRequestHeaders.Add("HTTP-Referer", options.SiteUrl);

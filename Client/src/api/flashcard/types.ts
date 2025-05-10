@@ -48,27 +48,23 @@ export interface GenerateFlashcardsRequest {
   model?: string;
 }
 
-export interface GenerateFlashcardsResponse {
-  flashcards: {
-    id: string;
-    userId: string;
-    collectionId: string;
-    front: string;
-    back: string;
-    reviewStatus: ReviewStatus;
-    creationSource: FlashcardCreationSource;
-    createdAt: string;
-    updatedAt: string | null;
-    archivedAt: string | null;
-    sm2Repetitions: number;
-    sm2Interval: number;
-    sm2Efactor: number;
-    sm2DueDate: string | null;
-  }[];
-  totalCount: number;
-  model: string;
-  processingTimeMs: number;
-}
+export type GenerateFlashcardsResponse = Array<{
+  id: string;
+  userId: string;
+  collectionId: string;
+  front: string;
+  back: string;
+  reviewStatus: ReviewStatus;
+  reviewedAt?: string | null;
+  creationSource: FlashcardCreationSource;
+  sm2Repetitions: number;
+  sm2Interval: number;
+  sm2Efactor: number;
+  sm2DueDate?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  archivedAt?: string | null;
+}>;
 
 export interface PaginatedResponse<T> {
   items: T[];
