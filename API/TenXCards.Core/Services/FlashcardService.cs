@@ -259,7 +259,7 @@ namespace TenXCards.Core.Services
 
             try
             {
-                var systemMessage = "Create 3 flashcards based on the provided text. Return a JSON object with a 'flashcards' field containing an array of objects, where each object has 'front' and 'back' fields. Example format: {'flashcards': [{'front': 'Question 1', 'back': 'Answer 1'}, {'front': 'Question 2', 'back': 'Answer 2'}]}";
+                var systemMessage = $"You are an expert flashcard creator and educator. Your task is to create {request.Count} effective flashcards that follow spaced repetition principles. Based on the provided text, generate concise, clear flashcards that test key concepts. Each flashcard should have a focused question on the front and a precise answer on the back. Return a JSON object with a 'flashcards' field containing an array of {request.Count} objects, where each object has 'front' and 'back' fields. Example format: {{\"flashcards\": [{{\"front\": \"Question\", \"back\": \"Answer\"}}]}}";
                 
                 var content = await _openRouterService.GetChatResponseAsync(
                     request.SourceText,

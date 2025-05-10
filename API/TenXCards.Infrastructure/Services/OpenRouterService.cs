@@ -139,7 +139,7 @@ namespace TenXCards.Infrastructure.Services
                 };
                 
                 var requestJson = JsonSerializer.Serialize(request, jsonOptions);
-                _logger.LogInformation("Sending request to OpenRouter: {Request}", requestJson);
+                
                 using var content = JsonContent.Create(request, null, jsonOptions);
                 using var response = await _httpClient.PostAsync(ApiEndpoint, content, cancellationToken);
                 
