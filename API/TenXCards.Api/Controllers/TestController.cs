@@ -86,9 +86,12 @@ namespace TenXCards.API.Controllers
                 };
 
                 // Use a test collection ID - you'll need to replace this with a valid collection ID from your database
-                var collectionId = Guid.Parse("3b98c592-275f-45e9-a924-94a7062f268c");
+                var collectionId = Guid.Parse("150b0790-173f-4aa9-b649-e0450fe83e1a");
 
                 var result = await _flashcardService.GenerateFlashcardsAsync(request, collectionId, cancellationToken);
+
+                _logger.LogInformation("Flashcard generation result: {Result}", result);
+                _logger.LogInformation("Flashcard generation result: {Result}", JsonSerializer.Serialize(result));
 
                 return Ok(result);
             }

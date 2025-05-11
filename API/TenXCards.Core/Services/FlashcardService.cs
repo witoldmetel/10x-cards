@@ -273,29 +273,31 @@ namespace TenXCards.Core.Services
                     new ResponseFormat { Type = "json_object" },
                     cancellationToken);
 
+                if (string.IsNullOrEmpty(content))
+                {
+                    throw new Exception("Empty response from OpenRouter API");
+                }
+
                 var jsonOptions = new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true,
                     AllowTrailingCommas = true
                 };
 
-                var parsedResponse = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
-
-                if (string.IsNullOrEmpty(content))
-                {
-                    throw new Exception("Empty response from OpenRouter API");
-                }
-
                 try 
                 {
+                    var parsedResponse = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
+                    _logger.LogInformation("Parsed response: {ParsedResponse}", JsonSerializer.Serialize(parsedResponse, jsonOptions));
+
                     if (parsedResponse?.Flashcards == null || !parsedResponse.Flashcards.Any())
                     {
+                        _logger.LogError("Parsed response has no flashcards. Response: {Response}", content);
                         throw new Exception("Failed to parse flashcards from API response");
                     }
 
                     var createdFlashcards = new List<Flashcard>();
                     foreach (var flashcardDto in parsedResponse.Flashcards)
-                    {
+                    {                        
                         var flashcard = new Flashcard
                         {
                             Id = Guid.NewGuid(),
@@ -326,7 +328,7 @@ namespace TenXCards.Core.Services
             catch (OpenRouterException ex)
             {
                 _logger.LogError(ex, "OpenRouter API error for collection {CollectionId}. Error: {Error}", collectionId, ex.Message);
-                throw new Exception($"OpenRouter API error: {ex.Message}", ex);
+                throw;
             }
             catch (Exception ex)
             {
