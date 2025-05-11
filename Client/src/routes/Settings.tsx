@@ -1,308 +1,349 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, User, Mail, Shield, BellRing, RefreshCw, LogOut } from 'lucide-react';
+import { ArrowLeft, Key } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/api/user/queries';
+import { z } from 'zod';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+
+const profileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters.'),
+  email: z.string().email('Please enter a valid email address.'),
+});
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(8, 'Password must be at least 8 characters.'),
+    newPassword: z
+      .string()
+      .min(12, 'Password must be at least 12 characters.')
+      .regex(/[0-9]/, 'Password must contain at least one number.')
+      .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character.'),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ['confirmPassword'],
+  });
+
+const apiSchema = z.object({
+  openRouterApiKey: z.string().optional(),
+});
+
+type ProfileFormValues = z.infer<typeof profileSchema>;
+type PasswordFormValues = z.infer<typeof passwordSchema>;
+type ApiFormValues = z.infer<typeof apiSchema>;
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { onLogout, userId } = useAuth();
-  const { data: user, isLoading, isError } = useUser(userId || '');
+  const { userId } = useAuth();
+  const { data: user } = useUser(userId || '');
 
-  const [profileForm, setProfileForm] = useState({
-    name: '',
-    email: '',
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isUpdatingApiKeys, setIsUpdatingApiKeys] = useState(false);
+
+  const profileForm = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: user?.name || '',
+      email: user?.email || '',
+    },
   });
 
-  useEffect(() => {
-    if (user) {
-      setProfileForm({
-        name: user.name || '',
-        email: user.email || '',
-      });
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+  });
+
+  const apiForm = useForm<ApiFormValues>({
+    resolver: zodResolver(apiSchema),
+    defaultValues: {
+      openRouterApiKey: '',
+    },
+  });
+
+  const onProfileSubmit = async (data: ProfileFormValues) => {
+    try {
+      setIsUpdatingProfile(true);
+      // In a real app, this would update user profile via API
+      console.log('Updating profile:', data);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Failed to update profile', error);
+      toast.error('Failed to update profile. Please try again.');
+    } finally {
+      setIsUpdatingProfile(false);
     }
-  }, [user]);
-
-  const [notifications, setNotifications] = useState({
-    emailReminders: true,
-    studyReminders: true,
-    newFeatures: true,
-  });
-
-  const [activeTab, setActiveTab] = useState<'account' | 'notifications' | 'advanced'>('account');
-  const [changesSaved, setChangesSaved] = useState(false);
-
-  const handleBack = () => {
-    navigate(-1);
   };
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfileForm(prev => ({ ...prev, [name]: value }));
+  const onPasswordSubmit = async (data: PasswordFormValues) => {
+    try {
+      setIsUpdatingPassword(true);
+      // In a real app, this would update password via API
+      console.log('Updating password');
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success('Password updated successfully!');
+      passwordForm.reset();
+    } catch (error) {
+      console.error('Failed to update password', error);
+      toast.error('Failed to update password. Please try again.');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
-  const handleToggleNotification = (setting: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [setting]: !prev[setting] }));
+  const onApiSubmit = async (data: ApiFormValues) => {
+    try {
+      setIsUpdatingApiKeys(true);
+      // In a real app, this would update API keys via API
+      console.log('Updating API keys');
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success('API key saved successfully!');
+    } catch (error) {
+      console.error('Failed to update API keys', error);
+      toast.error('Failed to update API keys. Please try again.');
+    } finally {
+      setIsUpdatingApiKeys(false);
+    }
   };
-
-  const handleSaveProfile = () => {
-    // In a real app, this would update the user profile
-    setChangesSaved(true);
-    setTimeout(() => setChangesSaved(false), 3000);
-  };
-
-  if (!userId) {
-    return <div className='text-center mt-10 text-red-500'>No user ID found. Please log in again.</div>;
-  }
-
-  if (isLoading) {
-    return <div className='text-center mt-10'>Loading...</div>;
-  }
-
-  if (isError) {
-    return <div className='text-center mt-10 text-red-500'>Failed to load user data.</div>;
-  }
 
   return (
     <div>
-      <div className='flex items-center gap-3 mb-6'>
-        <Button variant='ghost' onClick={handleBack} className='h-9 w-9 p-0'>
-          <ArrowLeft className='h-5 w-5' />
-        </Button>
-        <h1 className='text-3xl font-bold'>Settings</h1>
+      <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate('/dashboard')}>
+        <ArrowLeft size={16} className='mr-2' /> Back to Dashboard
+      </Button>
+
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6'>
+        <h1 className='text-3xl font-bold'>User Settings</h1>
       </div>
 
-      {changesSaved && (
-        <div className='mb-6 p-4 bg-success-50 border border-success-200 rounded-lg text-success-700'>
-          Your changes have been saved successfully.
-        </div>
-      )}
+      <Tabs defaultValue='profile' className='space-y-8'>
+        <TabsList>
+          <TabsTrigger value='profile'>Profile</TabsTrigger>
+          <TabsTrigger value='security'>Security</TabsTrigger>
+          <TabsTrigger value='api'>API Keys</TabsTrigger>
+        </TabsList>
 
-      <div className='grid md:grid-cols-4 gap-8'>
-        <div className='md:col-span-1'>
-          <Card className='mb-6'>
-            <CardContent className='py-6'>
-              <nav className='space-y-1'>
-                <SettingsNavItem
-                  icon={<User className='h-5 w-5' />}
-                  label='Account'
-                  active={activeTab === 'account'}
-                  onClick={() => setActiveTab('account')}
-                />
-                <SettingsNavItem
-                  icon={<BellRing className='h-5 w-5' />}
-                  label='Notifications'
-                  active={activeTab === 'notifications'}
-                  onClick={() => setActiveTab('notifications')}
-                />
-                <SettingsNavItem
-                  icon={<RefreshCw className='h-5 w-5' />}
-                  label='Advanced'
-                  active={activeTab === 'advanced'}
-                  onClick={() => setActiveTab('advanced')}
-                />
-              </nav>
+        <TabsContent value='profile'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+              <CardDescription>Update your account profile information and email address.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className='space-y-6'>
+                  <FormField
+                    control={profileForm.control}
+                    name='name'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={profileForm.control}
+                    name='email'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type='email' {...field} />
+                        </FormControl>
+                        <FormDescription>Changing your email will require verification.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type='submit' disabled={isUpdatingProfile}>
+                    {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
 
-          <Button
-            variant='outline'
-            className='w-full text-error-600 border-error-200 hover:bg-error-50'
-            leftIcon={<LogOut className='h-5 w-5' />}
-            onClick={onLogout}>
-            Logout
-          </Button>
-        </div>
+          <Card className='mt-6'>
+            <CardHeader>
+              <CardTitle>Delete Account</CardTitle>
+              <CardDescription>Permanently delete your account and all your data.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='text-muted-foreground mb-4'>
+                This action cannot be undone. Once you delete your account, all your data will be permanently removed
+                from our systems.
+              </div>
+              <Button variant='destructive'>Delete Account</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <div className='md:col-span-3'>
-          {activeTab === 'account' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-6'>
+        <TabsContent value='security'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+              <CardDescription>Update your password to enhance your account security.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...passwordForm}>
+                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className='space-y-6'>
+                  <FormField
+                    control={passwordForm.control}
+                    name='currentPassword'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                        <FormControl>
+                          <Input type='password' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name='newPassword'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                          <Input type='password' {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Password must be at least 12 characters and include a number and special character.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={passwordForm.control}
+                    name='confirmPassword'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm New Password</FormLabel>
+                        <FormControl>
+                          <Input type='password' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type='submit' disabled={isUpdatingPassword}>
+                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          <Card className='mt-6'>
+            <CardHeader>
+              <CardTitle>Login Sessions</CardTitle>
+              <CardDescription>Manage your active login sessions.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between py-2'>
                   <div>
-                    <h3 className='text-lg font-medium mb-4'>Profile Information</h3>
-                    <div className='space-y-4'>
-                      <Input
-                        label='Name'
-                        name='name'
-                        value={profileForm.name}
-                        onChange={handleProfileChange}
-                        leftElement={<User className='h-4 w-4' />}
-                      />
-                      <Input
-                        label='Email'
-                        name='email'
-                        type='email'
-                        value={profileForm.email}
-                        onChange={handleProfileChange}
-                        leftElement={<Mail className='h-4 w-4' />}
-                      />
-                    </div>
+                    <p className='font-medium'>Current Session</p>
+                    <p className='text-sm text-muted-foreground'>Last active: Just now</p>
                   </div>
-
-                  <div className='pt-4 border-t border-neutral-200'>
-                    <h3 className='text-lg font-medium mb-4'>Account Security</h3>
-                    <Button variant='outline' leftIcon={<Shield className='h-4 w-4' />}>
-                      Change Password
-                    </Button>
-                  </div>
+                  <div className='text-sm text-primary'>Current</div>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant='primary' onClick={handleSaveProfile}>
-                  Save Changes
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-
-          {activeTab === 'notifications' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notification Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-6'>
+                <Separator />
+                <div className='flex items-center justify-between py-2'>
                   <div>
-                    <h3 className='text-lg font-medium mb-4'>Email Notifications</h3>
-                    <div className='space-y-4'>
-                      <ToggleSetting
-                        label='Study Reminders'
-                        description='Receive emails when you have cards due for review'
-                        checked={notifications.studyReminders}
-                        onChange={() => handleToggleNotification('studyReminders')}
-                      />
-                      <ToggleSetting
-                        label='Email Notifications'
-                        description='Receive email notifications about account activity'
-                        checked={notifications.emailReminders}
-                        onChange={() => handleToggleNotification('emailReminders')}
-                      />
-                      <ToggleSetting
-                        label='New Features'
-                        description='Get notified when we launch new features'
-                        checked={notifications.newFeatures}
-                        onChange={() => handleToggleNotification('newFeatures')}
-                      />
-                    </div>
+                    <p className='font-medium'>Chrome on Windows</p>
+                    <p className='text-sm text-muted-foreground'>Last active: 2 days ago</p>
                   </div>
+                  <Button variant='outline' size='sm'>
+                    Log out
+                  </Button>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant='primary' onClick={handleSaveProfile}>
-                  Save Changes
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-
-          {activeTab === 'advanced' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-6'>
+                <Separator />
+                <div className='flex items-center justify-between py-2'>
                   <div>
-                    <h3 className='text-lg font-medium mb-4'>Study Settings</h3>
-                    <div className='space-y-4'>
-                      <div>
-                        <label className='block text-sm font-medium text-neutral-700 mb-1'>
-                          Cards per Study Session
-                        </label>
-                        <select className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'>
-                          <option value='all'>All due cards</option>
-                          <option value='10'>Maximum 10 cards</option>
-                          <option value='20'>Maximum 20 cards</option>
-                          <option value='30'>Maximum 30 cards</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className='block text-sm font-medium text-neutral-700 mb-1'>Default Sorting</label>
-                        <select className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'>
-                          <option value='due'>By due date</option>
-                          <option value='created'>By creation date</option>
-                          <option value='difficulty'>By difficulty</option>
-                        </select>
-                      </div>
-                    </div>
+                    <p className='font-medium'>Safari on iPhone</p>
+                    <p className='text-sm text-muted-foreground'>Last active: 1 week ago</p>
                   </div>
-
-                  <div className='pt-4 border-t border-neutral-200'>
-                    <h3 className='text-lg font-medium mb-4'>Data Management</h3>
-                    <div className='space-y-3'>
-                      <Button variant='outline'>Export All Data</Button>
-                      <Button variant='outline' className='text-error-600 border-error-200 hover:bg-error-50'>
-                        Reset All Progress
-                      </Button>
-                    </div>
-                  </div>
+                  <Button variant='outline' size='sm'>
+                    Log out
+                  </Button>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant='primary' onClick={handleSaveProfile}>
-                  Save Changes
-                </Button>
-              </CardFooter>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+              </div>
+              <Button variant='ghost' className='mt-4 w-full'>
+                Log out from all other sessions
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-interface SettingsNavItemProps {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}
-
-function SettingsNavItem({ icon, label, active, onClick }: SettingsNavItemProps) {
-  return (
-    <button
-      className={`flex items-center space-x-3 w-full p-3 rounded-lg text-left ${
-        active ? 'bg-primary-50 text-primary-700' : 'text-neutral-700 hover:bg-neutral-100'
-      }`}
-      onClick={onClick}>
-      <span className={active ? 'text-primary-600' : 'text-neutral-500'}>{icon}</span>
-      <span>{label}</span>
-    </button>
-  );
-}
-
-interface ToggleSettingProps {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: () => void;
-}
-
-function ToggleSetting({ label, description, checked, onChange }: ToggleSettingProps) {
-  return (
-    <div className='flex items-start justify-between'>
-      <div>
-        <h4 className='font-medium'>{label}</h4>
-        <p className='text-sm text-neutral-600'>{description}</p>
-      </div>
-      <div className='flex items-center h-6'>
-        <label className='flex items-center cursor-pointer'>
-          <div className='relative'>
-            <input type='checkbox' className='sr-only' checked={checked} onChange={onChange} />
-            <div className={`block w-10 h-6 rounded-full ${checked ? 'bg-primary-500' : 'bg-neutral-300'}`}></div>
-            <div
-              className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${checked ? 'transform translate-x-4' : ''}`}></div>
-          </div>
-        </label>
-      </div>
+        <TabsContent value='api'>
+          <Card>
+            <CardHeader>
+              <CardTitle>API Keys</CardTitle>
+              <CardDescription>Manage your API keys for third-party services.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...apiForm}>
+                <form onSubmit={apiForm.handleSubmit(onApiSubmit)} className='space-y-6'>
+                  <FormField
+                    control={apiForm.control}
+                    name='openRouterApiKey'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='flex items-center gap-2'>
+                          <Key size={16} /> OpenRouter API Key
+                        </FormLabel>
+                        <FormControl>
+                          <Input type='password' placeholder='Enter your OpenRouter API key' {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Your API key is securely encrypted. This allows higher limits and better models when
+                          generating flashcards.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type='submit' disabled={isUpdatingApiKeys}>
+                    {isUpdatingApiKeys ? 'Saving...' : 'Save API Key'}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

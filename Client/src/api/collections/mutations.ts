@@ -1,18 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createCollection, updateCollection, deleteCollection, archiveCollection, unarchiveCollection } from './api';
-import type {
-  CollectionResponseDto,
-  CreateCollectionDto,
-  PaginatedCollectionsResponse,
-  UpdateCollectionDto,
-} from './types';
+import type { CollectionResponse, CreateCollection, PaginatedCollectionsResponse, UpdateCollection } from './types';
 
 export function useCreateCollection() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (collection: CreateCollectionDto) => createCollection(collection),
-    onSuccess: (newCollection: CollectionResponseDto) => {
+    mutationFn: (collection: CreateCollection) => createCollection(collection),
+    onSuccess: (newCollection: CollectionResponse) => {
       queryClient.setQueryData<PaginatedCollectionsResponse>(['collections'], oldData => {
         if (!oldData) return { collections: [newCollection], totalCount: 1, limit: 10, offset: 0 };
         return {
@@ -29,9 +24,8 @@ export function useUpdateCollection() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, collection }: { id: string; collection: UpdateCollectionDto }) =>
-      updateCollection(id, collection),
-    onSuccess: (updatedCollection: CollectionResponseDto) => {
+    mutationFn: ({ id, collection }: { id: string; collection: UpdateCollection }) => updateCollection(id, collection),
+    onSuccess: (updatedCollection: CollectionResponse) => {
       queryClient.invalidateQueries({ queryKey: ['collections', updatedCollection.id] });
       queryClient.setQueryData(['collections', updatedCollection.id], updatedCollection);
 
@@ -39,7 +33,7 @@ export function useUpdateCollection() {
         if (!oldData) return { collections: [updatedCollection], totalCount: 1, limit: 10, offset: 0 };
         return {
           ...oldData,
-          collections: oldData.collections.map((collection: CollectionResponseDto) =>
+          collections: oldData.collections.map((collection: CollectionResponse) =>
             collection.id === updatedCollection.id ? updatedCollection : collection,
           ),
         };

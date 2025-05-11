@@ -1,20 +1,22 @@
 import { Flashcard } from '../flashcard/types';
 
-export interface CollectionResponseDto {
+export interface CollectionResponse {
+  archivedAt: string | null;
+  archivedFlashcards: Flashcard[];
+  categories: string[];
+  color: string;
+  createdAt: string;
+  description: string | null;
+  dueCards: number;
+  flashcards: Flashcard[];
   id: string;
   name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt?: string;
-  archivedAt?: string;
-  archivedFlashcards: Flashcard[];
+  tags: string[];
   totalCards: number;
-  dueCards: number;
-  color: string;
-  flashcards: Flashcard[];
+  updatedAt?: string;
 }
 
-export interface CreateCollectionDto {
+export interface CreateCollection {
   name: string;
   description?: string;
   color: string;
@@ -22,7 +24,7 @@ export interface CreateCollectionDto {
   categories?: string[];
 }
 
-export interface UpdateCollectionDto {
+export interface UpdateCollection {
   name: string;
   description?: string;
   color: string;
@@ -38,7 +40,7 @@ export interface CollectionsQueryParams {
 }
 
 export interface PaginatedCollectionsResponse {
-  collections: CollectionResponseDto[];
+  collections: CollectionResponse[];
   limit: number;
   offset: number;
   totalCount: number;

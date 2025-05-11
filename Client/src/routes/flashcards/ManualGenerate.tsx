@@ -3,11 +3,11 @@ import { ArrowLeft, Plus, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/text-area';
+import { Textarea } from '@/components/ui/textarea';
 import { useCollections } from '@/api/collections/queries';
 import { useCreateCollection } from '@/api/collections/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
-import type { CreateCollectionDto } from '@/api/collections/types';
+import type { CreateCollection } from '@/api/collections/types';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -97,7 +97,7 @@ export default function ManualGenerate() {
 
     if (isNewCollectionForm(data) && userId) {
       // Create new collection
-      const payload: CreateCollectionDto = {
+      const payload: CreateCollection = {
         name: data.collection.name,
         description: data.collection.description,
         color: data.collection.color,

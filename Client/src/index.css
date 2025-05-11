@@ -3,125 +3,100 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    font-family: 'Inter', sans-serif;
-    color: theme('colors.neutral.900');
-    background-color: theme('colors.neutral.50');
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 216 34% 87%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 212.7 26.8% 83.9%;
   }
 
-  body {
-    @apply min-h-screen antialiased;
-  }
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold leading-tight text-neutral-900;
-  }
+    --card: 217.2 32.6% 17.5%;
+    --card-foreground: 210 40% 98%;
 
-  h1 {
-    @apply text-4xl md:text-5xl;
-  }
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-  h2 {
-    @apply text-3xl md:text-4xl;
-  }
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
 
-  h3 {
-    @apply text-2xl md:text-3xl;
-  }
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-  h4 {
-    @apply text-xl md:text-2xl;
-  }
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-  h5 {
-    @apply text-lg md:text-xl;
-  }
+    --accent: 217 91% 24%;
+    --accent-foreground: 210 40% 98%;
 
-  h6 {
-    @apply text-base md:text-lg;
-  }
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
-  p {
-    @apply leading-relaxed;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200;
-  }
-  
-  .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-300 focus:outline-none;
-  }
-  
-  .btn-secondary {
-    @apply bg-neutral-200 text-neutral-800 hover:bg-neutral-300 focus:ring-2 focus:ring-neutral-200 focus:outline-none;
-  }
-  
-  .btn-accent {
-    @apply bg-accent-500 text-white hover:bg-accent-600 focus:ring-2 focus:ring-accent-300 focus:outline-none;
+@layer base {
+  * {
+    @apply border-border;
   }
 
-  .btn-outline {
-    @apply border border-neutral-300 bg-transparent text-neutral-800 hover:bg-neutral-100 focus:ring-2 focus:ring-neutral-200 focus:outline-none;
-  }
-
-  .card {
-    @apply bg-white rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-shadow duration-300;
-  }
-
-  .input {
-    @apply w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200;
-  }
-
-  .textarea {
-    @apply w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200 min-h-[100px] resize-y;
-  }
-
-  .container {
-    @apply px-4 mx-auto max-w-7xl sm:px-6 lg:px-8;
-  }
-  
-  .flashcard {
-    @apply relative w-full h-56 md:h-64 bg-white rounded-2xl shadow-card cursor-pointer transform transition-all duration-300 perspective-1000;
-  }
-
-  .flashcard-front, .flashcard-back {
-    @apply absolute inset-0 backface-hidden rounded-2xl p-6 transition-all duration-300 flex flex-col justify-center;
-  }
-
-  .flashcard-back {
-    @apply bg-primary-50 transform rotateY-180;
-  }
-
-  .flashcard.flipped .flashcard-front {
-    @apply rotateY-180;
-  }
-
-  .flashcard.flipped .flashcard-back {
-    @apply rotateY-0;
-  }
-
-  .app-shell {
-    @apply min-h-screen grid grid-rows-[auto_1fr_auto];
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
+  .flashcard-transform {
+    transform-style: preserve-3d;
+    transition: transform 0.6s;
   }
   
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
-  
-  .rotateY-180 {
+  .flashcard-transform.flipped {
     transform: rotateY(180deg);
   }
   
-  .rotateY-0 {
-    transform: rotateY(0);
+  .flashcard-back {
+    transform: rotateY(180deg);
   }
 }

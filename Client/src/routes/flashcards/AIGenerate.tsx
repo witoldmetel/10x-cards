@@ -4,7 +4,7 @@ import { ArrowLeft, Brain, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/text-area';
+import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useCollections } from '@/api/collections/queries';
 import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
@@ -127,7 +127,7 @@ export default function AIGenerate() {
     setIsSaving(true);
     setError(null);
     try {
-      const savePromises = generatedCards.map((card) => {
+      const savePromises = generatedCards.map(card => {
         const createPayload = {
           collectionId: targetCollectionId,
           flashcard: {
