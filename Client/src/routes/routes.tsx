@@ -15,6 +15,7 @@ import AIGenerate from './flashcards/AIGenerate';
 import CollectionDetails from './collections/CollectionDetails';
 import NotFound from './NotFound';
 import CreateFlashcardsOptions from './flashcards/CreateFlashcardsOptions';
+import PendingReview from './flashcards/PendingReview';
 
 export const routes = (
   <Routes>
@@ -35,6 +36,7 @@ export const routes = (
       <Route path='/flashcards/options' element={<CreateFlashcardsOptions />} />
       <Route path='/flashcards/create' element={<ManualGenerate />} />
       <Route path='/flashcards/generate' element={<AIGenerate />} />
+      <Route path='/flashcards/pending-review' element={<PendingReview />} />
       <Route path='/collections/:collectionId' element={<CollectionDetails />} />
       <Route path='/collections/archive' element={<Archive />} />
       <Route path='/settings' element={<Settings />} />

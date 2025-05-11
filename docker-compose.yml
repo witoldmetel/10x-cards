@@ -12,6 +12,13 @@ services:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://+:5001
       - ConnectionStrings__DefaultConnection=${DOCKER_DB_CONNECTION_STRING}
+      - OpenRouter__ApiKey=${OPENROUTER_API_KEY}
+      - OpenRouter__BaseUrl=https://openrouter.ai/api/v1
+      - OpenRouter__ApiEndpoint=/chat/completions
+      - OpenRouter__DefaultModel=openai/gpt-3.5-turbo
+      - OpenRouter__TimeoutSeconds=120
+      - OpenRouter__SiteUrl=http://localhost:3000
+      - OpenRouter__SiteName=10X Cards - Development
     volumes:
       - ~/.aspnet/https:/root/.aspnet/https:ro
       - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro

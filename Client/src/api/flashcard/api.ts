@@ -62,10 +62,19 @@ export async function deleteFlashcard(id: string): Promise<void> {
 export async function generateFlashcards(
   collectionId: string,
   request: GenerateFlashcardsRequest,
+  onProgress?: (progress: number) => void,
 ): Promise<GenerateFlashcardsResponse> {
   const { data } = await instance.post<GenerateFlashcardsResponse>(
     `collections/${collectionId}/flashcards/generate`,
     request,
+    {
+      onUploadProgress: progressEvent => {
+        if (progressEvent.total && onProgress) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      },
+    },
   );
   return data;
 }
