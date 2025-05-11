@@ -51,9 +51,16 @@ export const useGenerateFlashcardsAI = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ collectionId, payload }: { collectionId: string; payload: GenerateFlashcardsRequest }) =>
-      generateFlashcards(collectionId, payload),
-    onSuccess: (response: GenerateFlashcardsResponse, variables) => {
+    mutationFn: ({
+      collectionId,
+      payload,
+      onProgress,
+    }: {
+      collectionId: string;
+      payload: GenerateFlashcardsRequest;
+      onProgress?: (progress: number) => void;
+    }) => generateFlashcards(collectionId, payload, onProgress),
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collections', variables.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', variables.collectionId] });

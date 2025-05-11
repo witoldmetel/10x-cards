@@ -1,9 +1,9 @@
 import { instance } from '@/lib/axios';
 import { COLLECTIONS_API_BASE } from './constants';
 import type {
-  CollectionResponseDto,
-  CreateCollectionDto,
-  UpdateCollectionDto,
+  CollectionResponse,
+  CreateCollection,
+  UpdateCollection,
   PaginatedCollectionsResponse,
   CollectionsQueryParams,
 } from './types';
@@ -14,20 +14,20 @@ export async function getCollections(params?: CollectionsQueryParams): Promise<P
   return data;
 }
 
-export async function getCollection(id: string): Promise<CollectionResponseDto> {
-  const { data } = await instance.get<CollectionResponseDto>(`${COLLECTIONS_API_BASE}/${id}`);
+export async function getCollection(id: string): Promise<CollectionResponse> {
+  const { data } = await instance.get<CollectionResponse>(`${COLLECTIONS_API_BASE}/${id}`);
 
   return data;
 }
 
-export async function createCollection(collection: CreateCollectionDto): Promise<CollectionResponseDto> {
-  const { data } = await instance.post<CollectionResponseDto>(COLLECTIONS_API_BASE, collection);
+export async function createCollection(collection: CreateCollection): Promise<CollectionResponse> {
+  const { data } = await instance.post<CollectionResponse>(COLLECTIONS_API_BASE, collection);
 
   return data;
 }
 
-export async function updateCollection(id: string, collection: UpdateCollectionDto): Promise<CollectionResponseDto> {
-  const { data } = await instance.put<CollectionResponseDto>(`${COLLECTIONS_API_BASE}/${id}`, collection);
+export async function updateCollection(id: string, collection: UpdateCollection): Promise<CollectionResponse> {
+  const { data } = await instance.put<CollectionResponse>(`${COLLECTIONS_API_BASE}/${id}`, collection);
 
   return data;
 }

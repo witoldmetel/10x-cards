@@ -6,35 +6,44 @@ import Register from './auth/Register';
 import ForgotPassword from './auth/ForgotPassword';
 import ResetPassword from './auth/ResetPassword';
 import Dashboard from './Dashboard';
-import Archive from './Archive';
+import Archive from './collections/Archive';
 import Settings from './Settings';
 import AuthLayout from '@/layouts/AuthLayout';
-import ProtectedLayout from '@/layouts/ProtectedLayout';
-import ManualGenerate from './ManualGenerate';
-import AIGenerate from './AIGenerate';
-import CollectionDetails from './CollectionDetails';
+import DashboardLayout from '@/layouts/DashboardLayout';
+import ManualGenerate from './flashcards/ManualGenerate';
+import AIGenerate from './flashcards/AIGenerate';
+import CollectionDetails from './collections/CollectionDetails';
+import NotFound from './NotFound';
+import CreateFlashcardsOptions from './flashcards/CreateFlashcardsOptions';
+import PendingReview from './flashcards/PendingReview';
 
 export const routes = (
   <Routes>
-    <Route index element={<LandingPage />} />
+    {/* Public Routes */}
+    <Route path='/' element={<LandingPage />} />
 
+    {/* Auth Routes */}
     <Route element={<AuthLayout />}>
-      <Route path='login' element={<Login />} />
-      <Route path='register' element={<Register />} />
-      <Route path='forgot-password' element={<ForgotPassword />} />
-      <Route path='reset-password' element={<ResetPassword />} />
+      <Route path='/login' element={<Login />} />
+      <Route path='/register' element={<Register />} />
+      <Route path='/forgot-password' element={<ForgotPassword />} />
+      <Route path='/reset-password' element={<ResetPassword />} />
     </Route>
 
-    <Route element={<ProtectedLayout />}>
-      <Route path='dashboard' element={<Dashboard />} />
-      <Route path='archive' element={<Archive />} />
-      <Route path='generate/ai' element={<AIGenerate />} />
-      <Route path='generate/manual' element={<ManualGenerate />} />
-      <Route path='collections/:collectionId' element={<CollectionDetails />} />
-      <Route path='settings' element={<Settings />} />
+    {/* Protected Dashboard Routes */}
+    <Route element={<DashboardLayout />}>
+      <Route path='/dashboard' element={<Dashboard />} />
+      <Route path='/flashcards/options' element={<CreateFlashcardsOptions />} />
+      <Route path='/flashcards/create' element={<ManualGenerate />} />
+      <Route path='/flashcards/generate' element={<AIGenerate />} />
+      <Route path='/flashcards/pending-review' element={<PendingReview />} />
+      <Route path='/collections/:collectionId' element={<CollectionDetails />} />
+      <Route path='/collections/archive' element={<Archive />} />
+      <Route path='/settings' element={<Settings />} />
     </Route>
 
-    <Route path='*' element={<div>404</div>} />
+    {/* 404 Route */}
+    <Route path='*' element={<NotFound />} />
   </Routes>
 );
 

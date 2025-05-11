@@ -2,12 +2,12 @@ import { BookOpen, Clock, RotateCcw } from 'lucide-react';
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Card } from './ui/card';
 import { cn } from '@/lib/tailwind';
 import { Button } from './ui/button';
-import type { CollectionResponseDto } from '@/api/collections/types';
+import type { CollectionResponse } from '@/api/collections/types';
 import { useUnarchiveCollection } from '@/api/collections/mutations';
 import { useNavigate } from 'react-router';
 
 interface CollectionCardProps {
-  collection: CollectionResponseDto;
+  collection: CollectionResponse;
   onStudy: () => void;
   onView: () => void;
   className?: string;
