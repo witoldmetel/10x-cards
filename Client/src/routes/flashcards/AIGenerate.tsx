@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, Brain, Sparkles, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, AlertCircle, Edit, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,8 +15,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateCollection } from '@/api/collections/mutations';
 import type { Flashcard } from '@/api/flashcard/types';
+import { Tabs } from '@radix-ui/react-tabs';
+import { TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 
-// Zod schema for AI generation form
 const aiGenerateSchema = z
   .object({
     sourceText: z.string().min(1, 'Please enter some text to generate flashcards from'),
@@ -36,6 +39,7 @@ const aiGenerateSchema = z
       }
     }
   });
+
 type AIGenerateFormValues = z.infer<typeof aiGenerateSchema>;
 
 export default function AIGenerate() {
@@ -49,14 +53,13 @@ export default function AIGenerate() {
   const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
   const [targetCollectionId, setTargetCollectionId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [progressPercentage, setProgressPercentage] = useState(0);
+  const [generationStep, setGenerationStep] = useState<'idle' | 'uploading' | 'processing' | 'reviewing'>('idle');
+  const [editingCard, setEditingCard] = useState<string | null>(null);
+  const [editedQuestion, setEditedQuestion] = useState('');
+  const [editedAnswer, setEditedAnswer] = useState('');
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<AIGenerateFormValues>({
+  const form = useForm<AIGenerateFormValues>({
     resolver: zodResolver(aiGenerateSchema),
     defaultValues: {
       sourceText: '',
@@ -66,22 +69,19 @@ export default function AIGenerate() {
     },
   });
 
-  const selectedCollectionId = watch('selectedCollectionId');
-  const numberOfCards = watch('count');
+  const selectedCollectionId = form.watch('selectedCollectionId');
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
-  const onSubmit = async (data: AIGenerateFormValues) => {
+  const startGeneration = async (data: AIGenerateFormValues) => {
     if (!data.sourceText.trim()) {
       setError('Please enter some text to generate flashcards from');
       return;
     }
+
     if (data.selectedCollectionId === 'new' && !data.collectionName?.trim()) {
       setError('Please select an existing collection or enter a name for a new one');
       return;
     }
+
     setError(null);
     setIsGenerating(true);
     setGeneratedCards([]);
@@ -109,24 +109,40 @@ export default function AIGenerate() {
         payload,
       });
 
+      setIsGenerating(true);
+      setGenerationStep('uploading');
+      setProgressPercentage(0);
+
       setGeneratedCards(response);
+      setGenerationStep('reviewing');
+      toast.success('Flashcards generated successfully!');
       setTargetCollectionId(collectionId);
     } catch (error) {
-      console.error('Error generating flashcards:', error);
-      setError('Failed to generate flashcards. Please try again.');
+      console.error('Generation error:', error);
+      toast.error('Failed to generate flashcards. Please try again.');
+      setGenerationStep('idle');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  const handleSaveCards = async () => {
-    if (!targetCollectionId || generatedCards.length === 0) {
-      setError('No flashcards to save');
-      return;
-    }
-    setIsSaving(true);
-    setError(null);
+  const saveCollection = async () => {
     try {
+      setIsGenerating(true);
+
+      // Filter only accepted flashcards
+      const acceptedFlashcards = generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved);
+
+      if (acceptedFlashcards.length === 0) {
+        toast.error('Please accept at least one flashcard');
+        return;
+      }
+
+      if (!targetCollectionId) {
+        toast.error('Please select a collection');
+        return;
+      }
+
       const savePromises = generatedCards.map(card => {
         const createPayload = {
           collectionId: targetCollectionId,
@@ -134,28 +150,116 @@ export default function AIGenerate() {
             front: card.front,
             back: card.back,
             creationSource: FlashcardCreationSource.AI,
-            reviewStatus: ReviewStatus.New,
+            reviewStatus: ReviewStatus.Approved,
           },
         };
+
         return createFlashcardMutation.mutateAsync(createPayload);
       });
 
       await Promise.all(savePromises);
-      navigate(`/collections/${targetCollectionId}`);
-    } catch (err) {
-      setError('Failed to save flashcards');
+
+      toast.success('Collection saved successfully! Review your cards before studying.');
+      navigate('/flashcards/pending-review');
+    } catch (error) {
+      console.error('Failed to save collection', error);
+      toast.error('Failed to save collection. Please try again.');
     } finally {
-      setIsSaving(false);
+      setIsGenerating(false);
     }
+  };
+
+  const toggleCardAcceptance = (id: string) => {
+    setGeneratedCards(prev =>
+      prev.map(card =>
+        card.id === id
+          ? {
+              ...card,
+              reviewStatus: card.reviewStatus === ReviewStatus.Approved ? ReviewStatus.Rejected : ReviewStatus.Approved,
+            }
+          : card,
+      ),
+    );
+  };
+
+  const startEditing = (card: Flashcard) => {
+    setEditingCard(card.id);
+    setEditedQuestion(card.front);
+    setEditedAnswer(card.back);
+  };
+
+  const saveEditing = () => {
+    if (!editingCard) return;
+
+    setGeneratedCards(prev =>
+      prev.map(card =>
+        card.id === editingCard ? { ...card, question: editedQuestion, answer: editedAnswer, accepted: true } : card,
+      ),
+    );
+
+    setEditingCard(null);
+    setEditedQuestion('');
+    setEditedAnswer('');
+  };
+
+  const cancelEditing = () => {
+    setEditingCard(null);
+    setEditedQuestion('');
+    setEditedAnswer('');
   };
 
   return (
     <div>
-      <div className='flex items-center gap-3 mb-6'>
-        <Button variant='ghost' onClick={handleBack} className='h-9 w-9 p-0'>
-          <ArrowLeft className='h-5 w-5' />
-        </Button>
-        <h1 className='text-3xl font-bold'>Generate with AI</h1>
+      <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate('/dashboard')}>
+        <ArrowLeft size={16} className='mr-2' /> Back to Dashboard
+      </Button>
+
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6'>
+        <h1 className='text-3xl font-bold'>AI Flashcard Generation</h1>
+      </div>
+
+      <div className='mb-6'>
+        <div className='sticky top-20'>
+          <Card>
+            <CardHeader>
+              <CardTitle>How It Works</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol className='space-y-4 list-decimal list-inside text-neutral-700'>
+                <li>
+                  <span className='font-medium text-neutral-900'>Input your text</span>
+                  <p className='mt-1 pl-5 text-sm'>
+                    Paste any content you want to learn - lecture notes, articles, book chapters, or study materials.
+                  </p>
+                </li>
+                <li>
+                  <span className='font-medium text-neutral-900'>AI generates flashcards</span>
+                  <p className='mt-1 pl-5 text-sm'>
+                    Our AI analyzes your text and creates question-answer pairs focused on key concepts.
+                  </p>
+                </li>
+                <li>
+                  <span className='font-medium text-neutral-900'>Review and edit</span>
+                  <p className='mt-1 pl-5 text-sm'>
+                    Tweak the generated flashcards to better suit your learning style.
+                  </p>
+                </li>
+                <li>
+                  <span className='font-medium text-neutral-900'>Save and study</span>
+                  <p className='mt-1 pl-5 text-sm'>
+                    Add the flashcards to your collection and start studying with our spaced repetition system.
+                  </p>
+                </li>
+              </ol>
+              <div className='mt-6 p-3 bg-background border border-primary-200 rounded-lg'>
+                <p className='text-sm text-primary-800'>
+                  <span className='font-medium'>Pro tip:</span> For best results, use clear, structured text with
+                  well-defined concepts.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {error && (
@@ -165,35 +269,38 @@ export default function AIGenerate() {
         </div>
       )}
 
-      <div className='grid md:grid-cols-3 gap-8'>
-        <div className='md:col-span-2'>
-          {!generatedCards.length ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center'>
-                  <Brain className='h-5 w-5 mr-2 text-primary-600' />
-                  Text to Flashcards
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
-                  <Textarea
-                    label='Enter your text'
-                    placeholder='Paste paragraphs, notes, or any text you want to convert into flashcards...'
-                    {...register('sourceText')}
-                    className='min-h-[200px]'
-                    error={errors.sourceText?.message}
-                  />
+      <Tabs defaultValue={generationStep === 'reviewing' ? 'review' : 'generate'}>
+        <TabsList className='mb-6'>
+          <TabsTrigger value='generate' disabled={isGenerating && generationStep !== 'idle'}>
+            Generate
+          </TabsTrigger>
+          <TabsTrigger value='review' disabled={generationStep !== 'reviewing'}>
+            Review & Edit
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value='generate'>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(startGeneration)} className='space-y-8'>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Source Material</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4'>
                   <div className='grid md:grid-cols-2 gap-4'>
-                    <div>
+                    <div className='mb-4'>
                       <label htmlFor='collection-select' className='block text-sm font-medium text-neutral-700 mb-1'>
                         Select Collection
                       </label>
                       <select
                         id='collection-select'
                         className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
-                        value={selectedCollectionId}
-                        {...register('selectedCollectionId')}>
+                        value={selectedCollectionId || 'new'}
+                        onChange={e => {
+                          const value = e.target.value;
+
+                          form.setValue('selectedCollectionId', value);
+                        }}>
                         <option value='new'>Create New Collection</option>
                         {data?.collections.map(collection => (
                           <option key={collection.id} value={collection.id}>
@@ -202,162 +309,199 @@ export default function AIGenerate() {
                         ))}
                       </select>
                     </div>
+
                     {selectedCollectionId === 'new' && (
-                      <Input
-                        label='New Collection Name'
-                        placeholder='e.g., History Notes'
-                        {...register('collectionName')}
-                        error={errors.collectionName?.message}
+                      <FormField
+                        control={form.control}
+                        name='collectionName'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Collection Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder='e.g., Biology 101' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                     )}
                   </div>
-                  <div>
-                    <label htmlFor='card-count' className='block text-sm font-medium text-neutral-700 mb-1'>
-                      Number of Cards to Generate
-                    </label>
-                    <div className='flex items-center gap-4'>
-                      <input
-                        type='range'
-                        id='card-count'
-                        min='3'
-                        max='20'
-                        {...register('count', { valueAsNumber: true })}
-                        value={numberOfCards}
-                        className='flex-1'
-                      />
-                      <span className='font-medium text-lg w-8 text-center'>{numberOfCards}</span>
-                    </div>
-                    {errors.count && <span className='text-error-600 text-sm'>{errors.count.message}</span>}
-                  </div>
-                  <Button
-                    type='submit'
-                    variant='primary'
-                    className='w-full'
-                    leftIcon={<Sparkles className='h-4 w-4' />}
-                    isLoading={isGenerating}
-                    disabled={isGenerating}>
-                    {isGenerating ? 'Generating...' : 'Generate Flashcards'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          ) : (
-            <div>
-              <Card className='mb-6'>
-                <CardHeader>
-                  <CardTitle>Generated Flashcards</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className='mb-4'>
-                    We've generated {generatedCards.length} flashcards based on your text. You can edit them before
-                    saving.
-                  </p>
+
+                  <FormField
+                    control={form.control}
+                    name='sourceText'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Source Text</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder='Paste your text here (up to 50,000 characters)'
+                            className='min-h-[200px]'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>{field.value.length} / 50,000 characters</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='count'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel> Number of Cards to Generate</FormLabel>
+                        <FormControl>
+                          <div className='flex items-center gap-4'>
+                            <span className='text-sm text-muted-foreground'>{field.value} cards</span>
+                            <input
+                              type='range'
+                              id='card-count'
+                              min='3'
+                              max='20'
+                              {...field}
+                              onChange={e => field.onChange(Number(e.target.value))}
+                              className='flex-1'
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
-              <div className='space-y-4'>
-                {generatedCards.map((card, index: number) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}>
-                    <Card>
-                      <CardContent className='pt-5'>
-                        <div className='space-y-4'>
-                          <div>
-                            <h3 className='font-medium mb-2'>Question</h3>
-                            <Textarea
-                              value={card.front}
-                              onChange={e => {
-                                const updatedCards = [...generatedCards];
-                                updatedCards[index] = {
-                                  ...updatedCards[index],
-                                  front: e.target.value,
-                                };
-                                setGeneratedCards(updatedCards);
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <h3 className='font-medium mb-2'>Answer</h3>
-                            <Textarea
-                              value={card.back}
-                              onChange={e => {
-                                const updatedCards = [...generatedCards];
-                                updatedCards[index] = {
-                                  ...updatedCards[index],
-                                  back: e.target.value,
-                                };
-                                setGeneratedCards(updatedCards);
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-              <div className='mt-6 flex justify-end gap-3'>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setGeneratedCards([]);
-                    setTargetCollectionId(null);
-                  }}>
-                  Go Back
-                </Button>
-                <Button variant='primary' onClick={handleSaveCards} isLoading={isSaving} disabled={isSaving}>
-                  Save All Flashcards
+
+              {generationStep !== 'idle' && (
+                <Card>
+                  <CardContent className='pt-6'>
+                    <div className='space-y-2'>
+                      <div className='flex items-center justify-between'>
+                        <p className='text-sm font-medium'>
+                          {generationStep === 'uploading'
+                            ? 'Uploading content...'
+                            : generationStep === 'processing'
+                              ? 'Generating flashcards...'
+                              : 'Finalizing...'}
+                        </p>
+                        <span className='text-sm'>{progressPercentage}%</span>
+                      </div>
+                      <Progress value={progressPercentage} className='h-2' />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className='flex justify-end'>
+                <Button type='submit' disabled={isGenerating} className='w-full sm:w-auto'>
+                  {isGenerating ? 'Generating...' : 'Generate Flashcards'}
                 </Button>
               </div>
-            </div>
-          )}
-        </div>
-        <div className='md:col-span-1'>
-          <div className='sticky top-20'>
+            </form>
+          </Form>
+        </TabsContent>
+
+        <TabsContent value='review'>
+          <div className='space-y-6'>
             <Card>
               <CardHeader>
-                <CardTitle>How It Works</CardTitle>
+                <CardTitle>Generated Flashcards</CardTitle>
               </CardHeader>
               <CardContent>
-                <ol className='space-y-4 list-decimal list-inside text-neutral-700'>
-                  <li>
-                    <span className='font-medium text-neutral-900'>Input your text</span>
-                    <p className='mt-1 pl-5 text-sm'>
-                      Paste any content you want to learn - lecture notes, articles, book chapters, or study materials.
-                    </p>
-                  </li>
-                  <li>
-                    <span className='font-medium text-neutral-900'>AI generates flashcards</span>
-                    <p className='mt-1 pl-5 text-sm'>
-                      Our AI analyzes your text and creates question-answer pairs focused on key concepts.
-                    </p>
-                  </li>
-                  <li>
-                    <span className='font-medium text-neutral-900'>Review and edit</span>
-                    <p className='mt-1 pl-5 text-sm'>
-                      Tweak the generated flashcards to better suit your learning style.
-                    </p>
-                  </li>
-                  <li>
-                    <span className='font-medium text-neutral-900'>Save and study</span>
-                    <p className='mt-1 pl-5 text-sm'>
-                      Add the flashcards to your collection and start studying with our spaced repetition system.
-                    </p>
-                  </li>
-                </ol>
-                <div className='mt-6 p-3 bg-primary-50 border border-primary-200 rounded-lg'>
-                  <p className='text-sm text-primary-800'>
-                    <span className='font-medium'>Pro tip:</span> For best results, use clear, structured text with
-                    well-defined concepts.
-                  </p>
+                <p className='text-muted-foreground mb-4'>
+                  Review and edit the generated flashcards. Click the checkmark to accept, or the X to reject. You can
+                  also edit any flashcard by clicking the edit button.
+                </p>
+
+                <div className='space-y-4 mt-6'>
+                  {generatedCards.map(flashcard => (
+                    <Card
+                      key={flashcard.id}
+                      className={`border ${flashcard.reviewStatus === ReviewStatus.Approved ? 'border-primary' : 'border-muted'}`}>
+                      <CardContent className='pt-6'>
+                        {editingCard === flashcard.id ? (
+                          <div className='space-y-4'>
+                            <div>
+                              <FormLabel className='block mb-2'>Question</FormLabel>
+                              <Textarea
+                                value={editedQuestion}
+                                onChange={e => setEditedQuestion(e.target.value)}
+                                rows={2}
+                                className='w-full'
+                              />
+                            </div>
+                            <div>
+                              <FormLabel className='block mb-2'>Answer</FormLabel>
+                              <Textarea
+                                value={editedAnswer}
+                                onChange={e => setEditedAnswer(e.target.value)}
+                                rows={3}
+                                className='w-full'
+                              />
+                            </div>
+                            <div className='flex justify-end gap-2'>
+                              <Button type='button' variant='outline' size='sm' onClick={cancelEditing}>
+                                Cancel
+                              </Button>
+                              <Button type='button' size='sm' onClick={saveEditing}>
+                                Save Changes
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className='mb-4'>
+                              <p className='font-medium'>Question:</p>
+                              <p className='mt-1'>{flashcard.front}</p>
+                            </div>
+                            <div className='mb-4'>
+                              <p className='font-medium'>Answer:</p>
+                              <p className='mt-1'>{flashcard.back}</p>
+                            </div>
+                            <div className='flex justify-end gap-2'>
+                              <Button
+                                type='button'
+                                size='sm'
+                                variant={flashcard.reviewStatus === ReviewStatus.Approved ? 'default' : 'outline'}
+                                className={
+                                  flashcard.reviewStatus === ReviewStatus.Approved ? '' : 'text-muted-foreground'
+                                }
+                                onClick={() => toggleCardAcceptance(flashcard.id)}>
+                                {flashcard.reviewStatus === ReviewStatus.Approved ? (
+                                  <>
+                                    <Check size={16} className='mr-1' /> Accepted
+                                  </>
+                                ) : (
+                                  <>
+                                    <X size={16} className='mr-1' /> Rejected
+                                  </>
+                                )}
+                              </Button>
+                              <Button type='button' variant='outline' size='sm' onClick={() => startEditing(flashcard)}>
+                                <Edit size={16} className='mr-1' /> Edit
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
+
+            <div className='flex justify-end gap-4'>
+              <Button type='button' variant='outline' onClick={() => navigate('/dashboard')}>
+                Cancel
+              </Button>
+              <Button type='button' onClick={saveCollection} disabled={isGenerating}>
+                {isGenerating ? 'Saving...' : 'Save Collection'}
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
