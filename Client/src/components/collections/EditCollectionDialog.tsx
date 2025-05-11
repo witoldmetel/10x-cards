@@ -18,6 +18,9 @@ import { toast } from 'sonner';
 import { CollectionIcon } from './CollectionIcon';
 import { CollectionResponse } from '@/api/collections/types';
 import { useUpdateCollection } from '@/api/collections/mutations';
+import { TagBadge } from '../ui/tag-badge';
+import { useState } from 'react';
+import { X } from 'lucide-react';
 
 interface EditCollectionDialogProps {
   open: boolean;
@@ -48,8 +51,8 @@ const PRESET_COLORS = [
 const formSchema = z.object({
   name: z.string().min(1, 'Collection name is required'),
   description: z.string().optional(),
-  categories: z.string().optional(),
-  tags: z.string().optional(),
+  categories: z.array(z.string()).optional(),
+  tags: z.array(z.string()).optional(),
   color: z.string().min(1, 'Color is required'),
 });
 
@@ -58,14 +61,13 @@ type FormValues = z.infer<typeof formSchema>;
 export function EditCollectionDialog({ open, onOpenChange, collection }: EditCollectionDialogProps) {
   const updateCollectionMutation = useUpdateCollection();
 
-  // Initialize form with React Hook Form + Zod
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: collection.name,
       description: collection.description || '',
-      categories: collection.categories.join(', '),
-      tags: collection.tags.join(', '),
+      categories: collection.categories,
+      tags: collection.tags,
       color: collection.color || PRESET_COLORS[0],
     },
   });
@@ -76,24 +78,41 @@ export function EditCollectionDialog({ open, onOpenChange, collection }: EditCol
       collection: {
         name: data.name,
         description: data.description || '',
-        categories: data.categories
-          ? data.categories
-              .split(',')
-              .map(s => s.trim())
-              .filter(Boolean)
-          : [],
-        tags: data.tags
-          ? data.tags
-              .split(',')
-              .map(s => s.trim())
-              .filter(Boolean)
-          : [],
+        categories,
+        tags,
         color: data.color,
       },
     });
 
     toast.success('Collection updated successfully');
     onOpenChange(false);
+  };
+
+  const [categoryInput, setCategoryInput] = useState('');
+  const [categories, setCategories] = useState<string[]>(collection.categories || []);
+  const [tagInput, setTagInput] = useState('');
+  const [tags, setTags] = useState<string[]>(collection.tags || []);
+
+  const handleAddCategory = () => {
+    if (categoryInput.trim() && !categories.includes(categoryInput.trim())) {
+      setCategories([...categories, categoryInput.trim()]);
+      setCategoryInput('');
+    }
+  };
+
+  const handleRemoveCategory = (category: string) => {
+    setCategories(categories.filter(c => c !== category));
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTags(tags.filter(t => t !== tag));
   };
 
   return (
@@ -140,57 +159,122 @@ export function EditCollectionDialog({ open, onOpenChange, collection }: EditCol
 
               <FormField
                 control={form.control}
-                name='categories'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categories</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder='Science, Math, etc. (comma separated)' />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='tags'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder='vocabulary, grammar, etc. (comma separated)' />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name='color'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Color</FormLabel>
+                    <FormLabel>Collection Color</FormLabel>
                     <FormControl>
-                      <div className='flex flex-wrap gap-2'>
-                        {PRESET_COLORS.map(color => (
-                          <button
-                            key={color}
-                            type='button'
-                            className={`w-6 h-6 rounded-full ${
-                              color === field.value ? 'ring-2 ring-offset-2 ring-primary' : ''
-                            }`}
-                            style={{ backgroundColor: color }}
-                            onClick={() => form.setValue('color', color)}
-                          />
-                        ))}
+                      <div className='flex flex-wrap gap-4 items-center'>
+                        <div className='flex items-center gap-2'>
+                          <div
+                            className='w-8 h-8 rounded-full cursor-pointer ring-2 ring-offset-2 ring-gray-200 hover:ring-primary transition-all'
+                            style={{ backgroundColor: field.value }}>
+                            <input
+                              type='color'
+                              id='color'
+                              {...field}
+                              className='w-8 h-8 rounded-full cursor-pointer opacity-0'
+                              title='Choose custom color'
+                            />
+                          </div>
+                          <span className='text-sm text-gray-500'>Custom</span>
+                        </div>
+                        <div className='flex flex-wrap gap-2'>
+                          {PRESET_COLORS.map(color => (
+                            <button
+                              key={color}
+                              type='button'
+                              className={`w-8 h-8 rounded-full transition-all hover:scale-110 ${
+                                color === field.value ? 'ring-2 ring-offset-2 ring-primary scale-110' : ''
+                              }`}
+                              style={{ backgroundColor: color }}
+                              onClick={() => form.setValue('color', color)}
+                              title='Select preset color'
+                            />
+                          ))}
+                        </div>
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className='space-y-2'>
+                <FormLabel>Categories</FormLabel>
+                <div className='flex gap-2'>
+                  <Input
+                    value={categoryInput}
+                    onChange={e => setCategoryInput(e.target.value)}
+                    placeholder='Add a category'
+                    className='flex-1'
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCategory();
+                      }
+                    }}
+                  />
+                  <Button type='button' onClick={handleAddCategory}>
+                    Add
+                  </Button>
+                </div>
+                {categories.length > 0 && (
+                  <div className='flex flex-wrap gap-2 mt-2'>
+                    {categories.map(category => (
+                      <div key={category} className='flex items-center'>
+                        <TagBadge text={category} variant='category' />
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          className='h-5 w-5 p-0 ml-1'
+                          onClick={() => handleRemoveCategory(category)}>
+                          <X size={12} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className='space-y-2'>
+                <FormLabel>Tags</FormLabel>
+                <div className='flex gap-2'>
+                  <Input
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    placeholder='Add a tag'
+                    className='flex-1'
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                  />
+                  <Button type='button' onClick={handleAddTag}>
+                    Add
+                  </Button>
+                </div>
+                {tags.length > 0 && (
+                  <div className='flex flex-wrap gap-2 mt-2'>
+                    {tags.map(tag => (
+                      <div key={tag} className='flex items-center'>
+                        <TagBadge text={tag} variant='tag' />
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          className='h-5 w-5 p-0 ml-1'
+                          onClick={() => handleRemoveTag(tag)}>
+                          <X size={12} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <DialogFooter>

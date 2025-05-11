@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Plus, Edit, ArrowLeft, BookOpen, Archive, Eye } from 'lucide-react';
+import { Plus, Edit, ArrowLeft, BookOpen, Archive, Eye, Trash2 } from 'lucide-react';
 
 import { useCollection } from '@/api/collections/queries';
 import { useDeleteCollection, useArchiveCollection } from '@/api/collections/mutations';
@@ -157,6 +157,9 @@ export default function CollectionDetails() {
           </Button>
           <Button variant='outline' size='sm' className='gap-1' onClick={handleArchiveCollection}>
             <Archive size={16} /> Archive
+          </Button>
+          <Button variant='destructive' size='sm' className='gap-1' onClick={() => setIsDeleteModalOpen(true)}>
+            <Trash2 size={16} /> Delete
           </Button>
           <Button variant='outline' size='sm' className='gap-1' onClick={handleAddCards}>
             <Plus size={16} /> Add Cards
