@@ -9,17 +9,15 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./src/lib/vitest.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'src/test/',
+        'src/lib/',
         'src/e2e/',
-        '**/*.d.ts',
-        '**/*.test.{ts,tsx}',
-        '**/*.spec.{ts,tsx}',
+        '**/*.d.ts'
       ],
       thresholds: {
         statements: 80,
@@ -28,7 +26,7 @@ export default defineConfig({
         lines: 80,
       },
     },
-    include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['src/e2e/**/*'],
   },
   resolve: {
