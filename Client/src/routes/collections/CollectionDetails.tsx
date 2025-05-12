@@ -10,10 +10,11 @@ import { ReviewStatus } from '@/api/flashcard/types';
 import { FlashcardView } from '@/components/flashcards/FlashcardView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TagBadge } from '@/components/ui/tag-badge';
-import { CollectionIcon } from '@/components/collections/CollectionIcon';
-import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog';
+
 import { toast } from 'sonner';
 import { FlashcardActions } from '@/components/flashcards/FlashcardActions';
+import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
+import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog/EditCollectionDialog';
 
 export default function CollectionDetails() {
   const navigate = useNavigate();

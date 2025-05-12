@@ -15,6 +15,7 @@ export function CollectionIcon({ color = '#60a5fa', size = 'md', className = '' 
 
   return (
     <div
+      data-testid='collection-icon'
       className={`flex items-center justify-center rounded-md ${sizeClasses[size]} ${className}`}
       style={{ backgroundColor: color }}>
       <BookOpen size={size === 'sm' ? 14 : size === 'md' ? 18 : 22} className='text-white' />

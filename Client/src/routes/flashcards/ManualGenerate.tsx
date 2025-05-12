@@ -9,14 +9,14 @@ import { useCreateCollection } from '@/api/collections/mutations';
 import { useCreateFlashcard } from '@/api/flashcard/mutations';
 import type { CreateCollection } from '@/api/collections/types';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { CollectionIcon } from '@/components/collections/CollectionIcon';
 import { TagBadge } from '@/components/ui/tag-badge';
 import { useState } from 'react';
+import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 
 // --- SCHEMA DEFINITION ---
 const flashcardSchema = z.object({
