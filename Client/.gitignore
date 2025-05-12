@@ -30,10 +30,6 @@ dist-ssr
 .env.production.local
 
 # E2E Testing
-e2e/
-playwright-report/
-test-results/
-playwright/.auth/
 .env.test
 .env.test.ci
 
