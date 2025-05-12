@@ -5,6 +5,22 @@ Frontend:
 - Tailwind 4 enables convenient application styling
 - Shadcn/ui provides a library of accessible React components on which we'll base our UI
 
+Testing:
+- Frontend Testing:
+  - React Testing Library + Vitest for unit and integration tests
+  - Playwright for E2E testing and cross-browser compatibility
+  - Lighthouse and WebPageTest for performance testing
+  - Axe and WAVE for accessibility testing (WCAG 2.1 Level AA compliance)
+- Backend Testing:
+  - xUnit with NSubstitute/Moq and Fluent Assertions
+  - WebApplicationFactory for API integration tests
+  - TestServer for advanced test scenarios
+  - k6 and JMeter for performance testing
+- CI/CD Testing:
+  - GitHub Actions for automated test pipelines
+  - Sentry for production error tracking
+  - Swagger/OpenAPI for API contract validation
+
 Backend:
 
 - .NET 8 (LTS)
