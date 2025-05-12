@@ -144,7 +144,7 @@ export default function ManualGenerate() {
     }
 
     // Create flashcards
-    let flashcardCreationErrors: Record<number, { front?: string }> = {};
+    const flashcardCreationErrors: Record<number, { front?: string }> = {};
     let hasFlashcardErrors = false;
     for (let i = 0; i < data.flashcards.length; i++) {
       const card = data.flashcards[i];

@@ -16,6 +16,7 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'src/test/',
+        'src/e2e/',
         '**/*.d.ts',
         '**/*.test.{ts,tsx}',
         '**/*.spec.{ts,tsx}',
@@ -27,8 +28,8 @@ export default defineConfig({
         lines: 80,
       },
     },
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    watchExclude: ['node_modules', 'coverage'],
+    include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['src/e2e/**/*'],
   },
   resolve: {
     alias: {
