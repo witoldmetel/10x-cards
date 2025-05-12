@@ -166,7 +166,7 @@ export default function ManualGenerate() {
     }
     if (hasFlashcardErrors) {
       Object.entries(flashcardCreationErrors).forEach(([idx, err]) => {
-        form.setError(`flashcards.${idx}.front` as any, { message: err.front });
+        form.setError(`flashcards.${idx}.front` as keyof FormValues, { message: err.front });
       });
       return;
     }
