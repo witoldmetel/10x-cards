@@ -1,12 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+
+// Paths are relative to the config file
+const e2eDir = './src/e2e';
+const authDir = path.join(e2eDir, '.auth');
+const testResultsDir = path.join(e2eDir, 'test-results');
 
 export default defineConfig({
-  testDir: './src/e2e',
+  testDir: e2eDir,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? 'html' : 'list',
+  outputDir: testResultsDir,
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
@@ -21,8 +28,8 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Use prepared auth state
-        storageState: 'playwright/.auth/user.json',
+        // Use auth state from e2e folder
+        storageState: path.join(authDir, 'user.json'),
       },
       dependencies: ['setup'],
     },

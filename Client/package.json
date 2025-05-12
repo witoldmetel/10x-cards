@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:e2e": "vite --config vite.e2e.config.ts",
     "build": "tsc -b && vite build",
     "check-types": "tsc",
     "lint": "eslint \"./src/**/*.+(js|ts|tsx)\" --report-unused-disable-directives --max-warnings 0",
@@ -18,8 +19,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "start-server-and-test dev http://localhost:5173 'playwright test'",
-    "test:e2e:ui": "start-server-and-test dev http://localhost:5173 'playwright test --ui'"
+    "test:e2e": "start-server-and-test 'dev:e2e' http://localhost:5173 'playwright test'",
+    "test:e2e:ui": "start-server-and-test 'dev:e2e' http://localhost:5173 'playwright test --ui'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -74,7 +74,7 @@ export default function Login() {
 
         {error && <div className='mb-4 p-3 bg-error-50 text-error-700 rounded-lg border border-error-200'>{error}</div>}
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} data-testid="login-form">
           <div className='space-y-4'>
             <Input
               type='email'
@@ -84,6 +84,7 @@ export default function Login() {
               error={errors.email?.message}
               leftElement={<Mail className='h-4 w-4' />}
               autoComplete='email'
+              data-testid="email-input"
             />
 
             <Input
@@ -94,10 +95,17 @@ export default function Login() {
               error={errors.password?.message}
               leftElement={<Lock className='h-4 w-4' />}
               autoComplete='current-password'
+              data-testid="password-input"
             />
 
             <div>
-              <Button type='submit' variant='primary' className='w-full' isLoading={isLoading}>
+              <Button 
+                type='submit' 
+                variant='primary' 
+                className='w-full' 
+                isLoading={isLoading}
+                data-testid="login-submit"
+              >
                 Log in
               </Button>
             </div>
