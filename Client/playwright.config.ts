@@ -6,7 +6,6 @@ const e2eDir = './src/e2e';
 const authDir = path.join(e2eDir, '.auth');
 const testResultsDir = path.join(e2eDir, 'test-results');
 
-
 export default defineConfig({
   testDir: e2eDir,
   fullyParallel: true,
@@ -24,7 +23,6 @@ export default defineConfig({
   projects: [
     // Setup project
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
-    
     {
       name: 'chromium',
       use: { 

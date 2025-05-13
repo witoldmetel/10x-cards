@@ -6,7 +6,6 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    ignores: ['dist'],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2020,
@@ -24,5 +23,6 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-unused-vars': 'off',
     },
+    ignores: ['dist', 'playwright.config.ts', 'vitest.config.ts'],
   },
 );
