@@ -12,6 +12,9 @@ public record CollectionResponseDto
     [SwaggerSchema(Description = "Unique identifier of the collection")]
     public Guid Id { get; init; }
 
+    [SwaggerSchema(Description = "Identifier of the user who owns the collection")]
+    public Guid UserId { get; init; }
+
     [SwaggerSchema(Description = "Name of the collection")]
     public string Name { get; init; } = string.Empty;
 

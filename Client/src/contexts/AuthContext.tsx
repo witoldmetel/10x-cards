@@ -22,12 +22,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const location = useLocation();
 
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
-  const [userId, setUserId] = useState(() => localStorage.getItem('userId') || undefined);
+  const [userId, setUserId] = useState(() => {
+    const storedUserId = localStorage.getItem('userId');
+    return storedUserId || undefined;
+  });
 
   const handleLogin = async (token: string, userId: string) => {
     if (!token) {
       throw new Error('Token is required');
     }
+    
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
     setToken(token);
     setUserId(userId);
 
@@ -41,14 +49,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const handleLogout = () => {
     setToken('');
-    setUserId('');
+    setUserId(undefined);
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     navigate('/');
   };
 
   const value = {
-    isAuth: !!token,
+    isAuth: Boolean(token && userId),
     userId,
     onLogin: handleLogin,
     onLogout: handleLogout,

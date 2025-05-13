@@ -37,6 +37,11 @@ namespace TenXCards.Infrastructure.Repositories
         {
             var query = _context.Flashcards.AsQueryable();
 
+            if (queryParams.CollectionId.HasValue)
+            {
+                query = query.Where(f => f.CollectionId == queryParams.CollectionId);
+            }
+
             if (queryParams.Archived.HasValue)
             {
                 query = queryParams.Archived.Value
@@ -45,6 +50,15 @@ namespace TenXCards.Infrastructure.Repositories
             }
 
             query = ApplyFilters(query, queryParams);
+
+            // Join with collections to filter by userId
+            query = query.Join(
+                _context.Collections,
+                f => f.CollectionId,
+                c => c.Id,
+                (f, c) => new { Flashcard = f, Collection = c })
+                .Where(x => x.Collection.UserId == queryParams.UserId)
+                .Select(x => x.Flashcard);
 
             var total = await query.CountAsync();
 

@@ -32,6 +32,10 @@ namespace TenXCards.Infrastructure.Data
                 entity.HasIndex(e => e.Email)
                     .IsUnique();
                 
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .IsRequired();
+                
                 entity.Property(e => e.Password)
                     .HasColumnName("password")
                     .IsRequired();
@@ -150,6 +154,10 @@ namespace TenXCards.Infrastructure.Data
                     .HasConversion<string>()
                     .HasColumnType("varchar(50)")
                     .IsRequired();
+
+                entity.Property(e => e.ReviewedAt)
+                    .HasColumnName("reviewed_at")
+                    .HasColumnType("timestamp with time zone");
 
                 entity.Property(e => e.SourceTextHash)
                     .HasColumnName("source_text_hash")

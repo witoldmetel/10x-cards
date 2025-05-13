@@ -13,7 +13,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250513060126_InitialCreate")]
+    [Migration("20250513072629_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -136,7 +136,8 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnName("review_status");
 
                     b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
 
                     b.Property<DateTime?>("Sm2DueDate")
                         .HasColumnType("timestamp with time zone")
@@ -205,7 +206,8 @@ namespace TenXCards.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<string>("Password")
                         .IsRequired()

@@ -109,16 +109,19 @@ namespace TenXCards.Core.Services
 
         public async Task<CollectionResponseDto> CreateAsync(CreateCollectionDto createDto, Guid userId)
         {
+            ValidateUserId(userId);
+            
             var collection = new Collection
             {
                 Id = Guid.NewGuid(),
+                UserId = userId,
                 Name = createDto.Name,
                 Description = createDto.Description,
                 Color = createDto.Color,
-                UserId = userId,
                 Tags = createDto.Tags ?? new List<string>(),
                 Categories = createDto.Categories ?? new List<string>()
             };
+            
             var created = await _collectionRepository.CreateAsync(collection);
             return MapToResponseDto(created);
         }
@@ -168,6 +171,7 @@ namespace TenXCards.Core.Services
             return new CollectionResponseDto
             {
                 Id = collection.Id,
+                UserId = collection.UserId,
                 Name = collection.Name,
                 Description = collection.Description,
                 CreatedAt = collection.CreatedAt,
@@ -188,6 +192,8 @@ namespace TenXCards.Core.Services
             return new FlashcardResponseDto
             {
                 Id = flashcard.Id,
+                UserId = flashcard.UserId,
+                CollectionId = flashcard.CollectionId,
                 Front = flashcard.Front,
                 Back = flashcard.Back,
                 ReviewStatus = flashcard.ReviewStatus,
@@ -201,6 +207,14 @@ namespace TenXCards.Core.Services
                 Sm2Efactor = flashcard.Sm2Efactor,
                 Sm2DueDate = flashcard.Sm2DueDate
             };
+        }
+
+        private void ValidateUserId(Guid userId)
+        {
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User ID cannot be found", nameof(userId));
+            }
         }
     }
 }

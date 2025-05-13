@@ -116,6 +116,9 @@ public record FlashcardsQueryParams
 
     [SwaggerSchema(Description = "Filter by collection ID")]
     public Guid? CollectionId { get; init; }
+
+    [SwaggerSchema(Description = "Filter by user ID")]
+    public Guid UserId { get; init; }
 }
 
 [SwaggerSchema(Title = "Paginated Response")]

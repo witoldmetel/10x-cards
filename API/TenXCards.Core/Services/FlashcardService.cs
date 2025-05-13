@@ -29,6 +29,7 @@ namespace TenXCards.Core.Services
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
+        private readonly IUserContextService _userContextService;
 
         public FlashcardService(
             ILogger<FlashcardService> logger,
@@ -36,7 +37,8 @@ namespace TenXCards.Core.Services
             IOptions<OpenRouterOptions> options,
             IFlashcardRepository repository, 
             ICollectionService collectionService,
-            ICollectionRepository collectionRepository)
+            ICollectionRepository collectionRepository,
+            IUserContextService userContextService)
         {
             _logger = logger;
             _openRouterService = openRouterService;
@@ -44,6 +46,7 @@ namespace TenXCards.Core.Services
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
+            _userContextService = userContextService;
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -54,11 +57,12 @@ namespace TenXCards.Core.Services
 
         public async Task<PaginatedResponse<FlashcardResponseDto>> GetAllAsync(FlashcardsQueryParams queryParams)
         {
+            queryParams = queryParams with { UserId = _userContextService.GetUserId() };
             var (items, total) = await _repository.GetAllAsync(queryParams);
             
             return new PaginatedResponse<FlashcardResponseDto>
             {
-                Items = MapToResponseDtos(items),
+                Items = items.Select(MapToResponseDto),
                 Limit = queryParams.Limit,
                 Offset = queryParams.Offset,
                 TotalCount = total
@@ -67,21 +71,16 @@ namespace TenXCards.Core.Services
 
         public async Task<PaginatedResponse<FlashcardResponseDto>> GetArchivedAsync(FlashcardsQueryParams queryParams)
         {
-            var archivedQueryParams = new FlashcardsQueryParams
-            {
-                Offset = queryParams.Offset,
-                Limit = queryParams.Limit,
-                ReviewStatus = queryParams.ReviewStatus,
-                SearchPhrase = queryParams.SearchPhrase,
-                CollectionId = queryParams.CollectionId,
-                Archived = true
+            queryParams = queryParams with { 
+                UserId = _userContextService.GetUserId(),
+                Archived = true 
             };
             
-            var (items, total) = await _repository.GetAllAsync(archivedQueryParams);
+            var (items, total) = await _repository.GetAllAsync(queryParams);
             
             return new PaginatedResponse<FlashcardResponseDto>
             {
-                Items = MapToResponseDtos(items),
+                Items = items.Select(MapToResponseDto),
                 Limit = queryParams.Limit,
                 Offset = queryParams.Offset,
                 TotalCount = total
@@ -106,17 +105,12 @@ namespace TenXCards.Core.Services
 
         public async Task<FlashcardResponseDto> CreateForCollectionAsync(Guid collectionId, CreateFlashcardDto createDto)
         {
-            // Try to get the collection owner from an existing flashcard
-            var existingFlashcard = await _repository.GetByCollectionIdAsync(collectionId);
-            var userId = existingFlashcard?.UserId;
-
-            // If no flashcards exist yet, get the collection directly
-            if (userId == null)
+            var userId = _userContextService.GetUserId();
+            var collection = await _collectionRepository.GetByIdAsync(collectionId, userId);
+            
+            if (collection == null)
             {
-                var existingCollection = await _collectionRepository.GetByIdAsync(collectionId, Guid.Empty);
-                if (existingCollection == null)
-                    throw new Exception($"Collection with id {collectionId} not found");
-                userId = existingCollection.UserId;
+                throw new Exception($"Collection with id {collectionId} not found");
             }
 
             var flashcard = new Flashcard
@@ -128,7 +122,7 @@ namespace TenXCards.Core.Services
                 ReviewStatus = createDto.ReviewStatus,
                 Sm2Efactor = 2.5, // Default value for new cards
                 CollectionId = collectionId,
-                UserId = userId.Value
+                UserId = userId
             };
             var created = await _repository.CreateAsync(flashcard);
             return MapToResponseDto(created);
@@ -252,30 +246,14 @@ namespace TenXCards.Core.Services
             };
         }
 
-        private static IEnumerable<FlashcardResponseDto> MapToResponseDtos(IEnumerable<Flashcard> flashcards)
-        {
-            return flashcards.Select(MapToResponseDto);
-        }
-
         public async Task<List<FlashcardResponseDto>> GenerateFlashcardsAsync(
             FlashcardGenerationRequestDto request, 
             Guid collectionId, 
             CancellationToken cancellationToken = default)
         {
-            // Try to get the collection owner from an existing flashcard
-            var firstFlashcard = await _repository.GetByCollectionIdAsync(collectionId);
-            var userId = firstFlashcard?.UserId;
-
-            // If no flashcards exist yet, get the collection directly
-            if (userId == null)
-            {
-                var existingCollection = await _collectionRepository.GetByIdAsync(collectionId, Guid.Empty);
-                if (existingCollection == null)
-                    throw new Exception($"Collection with id {collectionId} not found");
-                userId = existingCollection.UserId;
-            }
-
-            var collection = await _collectionRepository.GetByIdAsync(collectionId, userId.Value);
+            var userId = _userContextService.GetUserId();
+            var collection = await _collectionRepository.GetByIdAsync(collectionId, userId);
+            
             if (collection == null)
                 throw new Exception($"Collection with id {collectionId} not found");
 
@@ -337,7 +315,7 @@ namespace TenXCards.Core.Services
                             CreationSource = FlashcardCreationSource.AI,
                             ReviewStatus = ReviewStatus.New,
                             CollectionId = collectionId,
-                            UserId = collection.UserId,
+                            UserId = userId,
                             SourceTextHash = sourceTextHash,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow,

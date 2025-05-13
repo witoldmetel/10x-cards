@@ -17,7 +17,7 @@ namespace TenXCards.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
                     email = table.Column<string>(type: "text", nullable: false),
                     password = table.Column<string>(type: "text", nullable: false),
                     api_model_key = table.Column<string>(type: "text", nullable: true),
@@ -67,7 +67,7 @@ namespace TenXCards.Infrastructure.Migrations
                     back = table.Column<string>(type: "text", nullable: false),
                     review_status = table.Column<string>(type: "varchar(50)", nullable: false),
                     creation_source = table.Column<string>(type: "varchar(50)", nullable: false),
-                    ReviewedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    reviewed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     archived_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     source_text_hash = table.Column<string>(type: "varchar(64)", nullable: true),
                     sm2_repetitions = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),

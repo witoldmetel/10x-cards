@@ -19,7 +19,7 @@ export type RegisterCredentials ={
 }
 
 export type AuthResponse ={
-  id: string;
+  userId: string;
   name: string;
   email: string;
   createdAt: string;
