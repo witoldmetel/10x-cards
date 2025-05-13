@@ -53,11 +53,11 @@ export default function Register() {
         password: formData.password,
       });
 
-      if (!data.userId || !data.token) {
+      if (!data.user?.userId || !data.token) {
         throw new Error('Invalid response from server');
       }
 
-      onLogin(data.token, data.userId);
+      onLogin(data.token, data.user.userId);
     } catch (error) {
       if (error instanceof Error && 'detail' in error) {
         setError(error.detail as string);

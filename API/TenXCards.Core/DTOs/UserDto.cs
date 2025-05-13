@@ -4,6 +4,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TenXCards.Core.DTOs;
 
+public record UserDto
+{
+    public Guid UserId { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+    public string? ApiModelKey { get; init; }
+}
+
 public record UserRegistrationRequest
 {
     [Required]
@@ -55,28 +64,14 @@ public record PasswordResetRequest
 
 public record UserRegistrationResponse
 {
-    public Guid UserId { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string Email { get; init; } = string.Empty;
-    public DateTime CreatedAt { get; init; }
+    public UserDto User { get; init; } = null!;
     public string Token { get; init; } = string.Empty;
-    public int ExpiresIn { get; init; }
 }
 
 public record UserLoginResponse
 {
-    public Guid UserId { get; init; }
+    public UserDto User { get; init; } = null!;
     public string Token { get; init; } = string.Empty;
-    public int ExpiresIn { get; init; }
-}
-
-public record UserDataResponse
-{
-    public Guid UserId { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string Email { get; init; } = string.Empty;
-    public DateTime CreatedAt { get; init; }
-    public string? ApiModelKey { get; init; }
 }
 
 public record PasswordResetResponse

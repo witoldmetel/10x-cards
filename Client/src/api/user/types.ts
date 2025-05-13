@@ -19,10 +19,7 @@ export type RegisterCredentials ={
 }
 
 export type AuthResponse ={
-  userId: string;
-  name: string;
-  email: string;
-  createdAt: string;
+  user: User;
   token: string;
   expiresIn: number;
 }

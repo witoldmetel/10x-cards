@@ -192,18 +192,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Add middleware to pipeline
-app.UseMiddleware<RequestValidationMiddleware>();
-app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-
 // Use CORS before auth middleware
 app.UseCors("AllowFrontend");
 
 // Use rate limiting
 app.UseRateLimiter();
 
+// Authentication and authorization should come before other middleware
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add middleware to pipeline
+app.UseMiddleware<RequestValidationMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 // Configure routing
 app.MapControllers();

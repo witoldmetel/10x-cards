@@ -54,6 +54,7 @@ namespace TenXCards.Infrastructure.Repositories
         public async Task<IEnumerable<Collection>> GetAllForDashboardAsync(Guid userId)
         {
             ValidateUserId(userId);
+
             return await _context.Collections
                 .Where(c => c.UserId == userId && c.ArchivedAt == null &&
                     _context.Flashcards.Any(f => f.CollectionId == c.Id && f.ArchivedAt == null))
@@ -64,6 +65,7 @@ namespace TenXCards.Infrastructure.Repositories
         public async Task<IEnumerable<Collection>> GetAllArchivedAsync(Guid userId)
         {
             ValidateUserId(userId);
+
             return await _context.Collections
                 .Where(c => c.UserId == userId && c.ArchivedAt != null)
                 .ToListAsync();

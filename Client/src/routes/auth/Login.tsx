@@ -33,7 +33,7 @@ export default function Login() {
     try {
       const data = await loginMutation.mutateAsync(formData);
       
-      onLogin(data.token, data.userId);
+      onLogin(data.token, data.user.userId);
     } catch (error) {
       if (error instanceof Error && 'detail' in error) {
         setError(error.detail as string);
