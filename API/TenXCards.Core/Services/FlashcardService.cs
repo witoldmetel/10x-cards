@@ -67,8 +67,17 @@ namespace TenXCards.Core.Services
 
         public async Task<PaginatedResponse<FlashcardResponseDto>> GetArchivedAsync(FlashcardsQueryParams queryParams)
         {
-            queryParams.Archived = true;
-            var (items, total) = await _repository.GetAllAsync(queryParams);
+            var archivedQueryParams = new FlashcardsQueryParams
+            {
+                Offset = queryParams.Offset,
+                Limit = queryParams.Limit,
+                ReviewStatus = queryParams.ReviewStatus,
+                SearchPhrase = queryParams.SearchPhrase,
+                CollectionId = queryParams.CollectionId,
+                Archived = true
+            };
+            
+            var (items, total) = await _repository.GetAllAsync(archivedQueryParams);
             
             return new PaginatedResponse<FlashcardResponseDto>
             {

@@ -35,8 +35,17 @@ namespace TenXCards.API.Controllers
         [ProducesResponseType(typeof(PaginatedResponse<FlashcardResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<FlashcardResponseDto>>> GetByCollection(Guid collectionId, [FromQuery] FlashcardsQueryParams queryParams)
         {
-            queryParams.CollectionId = collectionId;
-            var flashcards = await _flashcardService.GetAllAsync(queryParams);
+            var collectionQueryParams = new FlashcardsQueryParams
+            {
+                Offset = queryParams.Offset,
+                Limit = queryParams.Limit,
+                ReviewStatus = queryParams.ReviewStatus,
+                SearchPhrase = queryParams.SearchPhrase,
+                Archived = queryParams.Archived,
+                CollectionId = collectionId
+            };
+            
+            var flashcards = await _flashcardService.GetAllAsync(collectionQueryParams);
             return Ok(flashcards);
         }
 
