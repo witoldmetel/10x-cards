@@ -15,12 +15,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 import { toast } from 'sonner';
-import { CollectionIcon } from './CollectionIcon';
+import { CollectionIcon } from '../CollectionIcon/CollectionIcon';
 import { CollectionResponse } from '@/api/collections/types';
 import { useUpdateCollection } from '@/api/collections/mutations';
-import { TagBadge } from '../ui/tag-badge';
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { TagBadge } from '@/components/ui/tag-badge';
 
 interface EditCollectionDialogProps {
   open: boolean;

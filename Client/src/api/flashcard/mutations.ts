@@ -8,6 +8,11 @@ import type {
   GenerateFlashcardsResponse,
 } from './types';
 
+type ErrorResponse = {
+  message: string;
+  status: number;
+};
+
 export const useCreateFlashcard = () => {
   const queryClient = useQueryClient();
 
@@ -65,8 +70,9 @@ export const useGenerateFlashcardsAI = () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', variables.collectionId] });
     },
-    onError: (error: any) => {
-      console.error('Error generating flashcards:', error);
+    onError: (error: unknown) => {
+      const errorResponse = error as ErrorResponse;
+      console.error('Error generating flashcards:', errorResponse.message);
       throw error;
     },
   });

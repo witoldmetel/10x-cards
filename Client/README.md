@@ -7,6 +7,48 @@ Currently, two official plugins are available:
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
+## Testing
+
+### Unit and Integration Tests
+We use React Testing Library with Vitest for unit and integration testing. Run tests with:
+
+```bash
+npm run test        # Run all tests
+npm run test:watch  # Run tests in watch mode
+```
+
+Key test areas:
+- React components and hooks
+- Helper functions
+- Form validation
+- State management
+- API integration
+
+### End-to-End Tests
+We use Playwright for E2E testing across different browsers:
+
+```bash
+npm run e2e        # Run all E2E tests
+npm run e2e:ui     # Open Playwright Test Runner UI
+```
+
+### Performance and Accessibility Tests
+- Lighthouse for performance metrics
+- WebPageTest for detailed performance analysis
+- Axe and WAVE for WCAG 2.1 Level AA compliance
+
+```bash
+npm run perf       # Run Lighthouse tests
+npm run a11y       # Run accessibility tests
+```
+
+### Test Coverage Requirements
+- Minimum 80% coverage for business logic
+- All critical user paths must be covered by E2E tests
+- Performance requirements:
+  - Page load time < 2s
+  - API response time < 200ms (95th percentile)
+
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:

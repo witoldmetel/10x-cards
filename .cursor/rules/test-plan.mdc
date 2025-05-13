@@ -1,0 +1,46 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+You are an experienced QA engineer tasked with creating a comprehensive test plan for a software development project. Analyze the following project information:
+
+<tech_stack>
+[tech-stack.md](mdc:.ai/tech-stack.md)
+</tech_stack>
+
+Your task is to generate a detailed test plan that will be tailored to the project specifics, taking into account the technologies used, code structure, and key repository elements.
+
+Before creating the test plan, conduct a thorough project analysis within the <project_analysis> block in your thought process. In the analysis, include:
+
+1. Key project components resulting from code analysis:
+   - List and describe main project components
+2. Technology stack specifics and their impact on testing strategy:
+   - Analyze each element of the technology stack and its testing implications
+3. Testing priorities based on repository structure:
+   - Identify and prioritize testing areas by importance
+4. Potential risk areas requiring special attention in tests:
+   - List potential risks and justify why they require special attention
+
+After completing the analysis, create a test plan within the <test_plan> block. The plan should include:
+
+1. Introduction and testing objectives
+2. Test scope
+3. Types of tests to be conducted (e.g., unit tests, integration tests, performance tests)
+4. Test scenarios for key functionalities
+5. Test environment
+6. Testing tools
+7. Test schedule
+8. Test acceptance criteria
+9. Roles and responsibilities in the testing process
+10. Bug reporting procedures
+
+Remember that the test plan should be:
+- Precisely tailored to the project context
+- Consider the specifics of used technologies
+- Prioritize key repository elements
+- Present high quality and professionalism
+
+Start with the analysis, then proceed to create the test plan. Your final output should consist only of the test plan and should not duplicate or summarize any work done in the project analysis block.
+
+Present this plan in Markdown format.

@@ -28,3 +28,11 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+
+# E2E Testing
+.env.test
+.env.test.ci
+
+# New e2e test directories
+src/e2e/.auth/
+src/e2e/test-results/
