@@ -57,7 +57,7 @@ export default function Register() {
         throw new Error('Invalid response from server');
       }
 
-      onLogin(data.token, data.user.userId);
+      onLogin(data);
     } catch (error) {
       if (error instanceof Error && 'detail' in error) {
         setError(error.detail as string);

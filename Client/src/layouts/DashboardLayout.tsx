@@ -6,11 +6,9 @@ import { Home, Plus, Settings, LogOut, Archive, Menu, X, Brain } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/tailwind';
-import { useUser } from '@/api/user/queries';
 
 export default function DashboardLayout() {
-  const { isAuth, onLogout, userId } = useAuth();
-  const { data: user } = useUser(userId || '');
+  const { isAuth, onLogout, user } = useAuth();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
