@@ -30,14 +30,12 @@ export default function AuthLayout() {
         </div>
       </header>
 
+
+
       {/* Main Content */}
       <div className='flex-1 flex items-center justify-center p-4 sm:p-8'>
-        <div className='w-full max-w-md'>
-          <div className='mb-8 text-center'>
-            <Brain className='h-8 w-8 text-blue-600' />
-            <h1 className='text-2xl font-bold'>10x Cards</h1>
-          </div>
-          <Outlet />
+        <div className='max-w-md w-full bg-white p-8 rounded-lg shadow-sm'>
+        <Outlet />
         </div>
       </div>
 
@@ -46,7 +44,6 @@ export default function AuthLayout() {
         <div className='container mx-auto px-4'>
           <div className='flex flex-col md:flex-row justify-between items-center'>
             <div className='mb-4 md:mb-0'>
-              <Brain className='h-8 w-8 text-blue-600 mb-2' />
               <p className='text-sm text-muted-foreground'>© 2025 10x Cards. All rights reserved.</p>
             </div>
             <div className='flex gap-6'>

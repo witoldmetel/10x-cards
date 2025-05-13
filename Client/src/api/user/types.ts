@@ -19,7 +19,10 @@ export interface RegisterCredentials {
 }
 
 export interface AuthResponse {
-  userId: string;
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
   token: string;
   expiresIn: number;
 }

@@ -6,6 +6,7 @@ const e2eDir = './src/e2e';
 const authDir = path.join(e2eDir, '.auth');
 const testResultsDir = path.join(e2eDir, 'test-results');
 
+
 export default defineConfig({
   testDir: e2eDir,
   fullyParallel: true,
@@ -15,7 +16,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'html' : 'list',
   outputDir: testResultsDir,
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:5173',
+    baseURL: `http://localhost:5173`,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -35,8 +36,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
+    command: 'npm run dev:e2e',
+    url: `http://localhost:5173`,
     reuseExistingServer: !process.env.CI,
   },
 }); 

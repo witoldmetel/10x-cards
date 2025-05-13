@@ -1,73 +1,107 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from "react-router";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
-import { ArrowLeft, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address."),
+});
 
-export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
-  const [loading] = useState(false);
-  const [message] = useState('');
-  const [error] = useState('');
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+
+export default function ForgotPasswordPage()  {
+  // TODO: Implement forgot password
+  // const { forgotPassword } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  const onSubmit = async (data: ForgotPasswordFormValues) => {
+    try {
+      setIsSubmitting(true);
+      await console.log(data.email);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Forgot password error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="w-full text-center">
+        <h1 className="text-2xl font-bold mb-4">Check Your Email</h1>
+        <p className="mb-6 text-muted-foreground">
+          If an account exists with the email you provided, we've sent instructions to reset your password.
+        </p>
+        <Link to="/login">
+          <Button variant="outline" className="mx-auto">
+            Return to login
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
-      <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <Link
-          to='/login'
-          className='absolute top-8 left-8 inline-flex items-center text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors'>
-          <ArrowLeft className='w-4 h-4 mr-2' />
-          Back to login
-        </Link>
-
-        <h2 className='text-center text-4xl font-bold text-gray-900 mb-2'>Reset your password</h2>
-        <p className='text-center text-lg text-gray-600'>
-          Enter your email address and we'll send you instructions to reset your password.
-        </p>
-      </div>
-
-      <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
-        <Card>
-          <CardHeader>
-            {error && (
-              <div className='mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md'>{error}</div>
-            )}
-            {message && (
-              <div className='mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md'>
-                {message}
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={() => {}} className='space-y-6'>
-              <div className='space-y-2'>
-                <Label htmlFor='email'>Email address</Label>
-                <div className='relative'>
-                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <Mail className='h-5 w-5 text-gray-400' />
-                  </div>
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-2">Forgot Password</h1>
+      <p className="text-muted-foreground mb-6">
+        Enter your email address and we'll send you a link to reset your password.
+      </p>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
                   <Input
-                    id='email'
-                    type='email'
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className='pl-10'
-                    placeholder='you@example.com'
-                    required
+                    placeholder="your@email.com"
+                    type="email"
+                    autoComplete="email"
+                    {...field}
                   />
-                </div>
-              </div>
-
-              <Button type='submit' disabled={loading} className='w-full' size='lg'>
-                {loading ? 'Sending...' : 'Send reset instructions'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Sending..." : "Send reset link"}
+          </Button>
+        </form>
+      </Form>
+      <div className="mt-6 text-center text-sm">
+        Remember your password?{" "}
+        <Link to="/login" className="text-primary hover:underline">
+          Sign in
+        </Link>
       </div>
     </div>
   );
-}
+};

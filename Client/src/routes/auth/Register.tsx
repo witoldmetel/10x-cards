@@ -1,12 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Lock, Mail, User } from 'lucide-react';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRegister } from '@/api/user/mutations';
 
 const registerSchema = z
   .object({
@@ -23,15 +31,11 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function Register() {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { onLogin } = useAuth();
+  const registerMutation = useRegister();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
+  const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: '',
@@ -42,124 +46,118 @@ export default function Register() {
   });
 
   const onSubmit = async (formData: RegisterFormData) => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const response = await fetch('http://localhost:5001/api/users/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
+      const data = await registerMutation.mutateAsync({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create account');
-      }
-
-      const session = {
-        user: {
-          id: data.id,
-          email: data.email,
-          name: data.name,
-        },
-        token: data.token,
-      };
-
-      if (!session.user.id || !session.user.email || !session.token) {
+      if (!data.id || !data.token) {
         throw new Error('Invalid response from server');
       }
 
-      localStorage.setItem('flashcards_auth', JSON.stringify(session));
-
-      onLogin(session.token, session.user.id);
+      onLogin(data.token, data.id);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to create account');
-    } finally {
-      setIsLoading(false);
+      if (error instanceof Error && 'detail' in error) {
+        setError(error.detail as string);
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to create account');
+      }
     }
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-neutral-50'>
-      <Link
-        to='/'
-        className='absolute top-8 left-8 inline-flex items-center text-sm font-medium text-neutral-600 hover:text-primary-600 transition-colors'>
-        <ArrowLeft className='h-4 w-4 mr-2' />
-        Back to home
-      </Link>
-
-      <div className='max-w-md w-full bg-white p-8 rounded-lg shadow-sm'>
-        <h2 className='text-3xl font-bold mb-2'>Create your account</h2>
-        <p className='text-neutral-600 mb-6'>Enter your details to get started</p>
-
-        {error && <div className='mb-4 p-3 bg-error-50 text-error-700 rounded-lg border border-error-200'>{error}</div>}
-
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className='space-y-4'>
-            <Input
-              type='text'
-              label='Full Name'
-              placeholder='Your name'
-              {...register('name')}
-              error={errors.name?.message}
-              leftElement={<User className='h-4 w-4' />}
-              autoComplete='name'
-            />
-
-            <Input
-              type='email'
-              label='Email'
-              placeholder='your@email.com'
-              {...register('email')}
-              error={errors.email?.message}
-              leftElement={<Mail className='h-4 w-4' />}
-              autoComplete='email'
-            />
-
-            <Input
-              type='password'
-              label='Password'
-              placeholder='••••••••'
-              {...register('password')}
-              error={errors.password?.message}
-              leftElement={<Lock className='h-4 w-4' />}
-              autoComplete='new-password'
-            />
-
-            <Input
-              type='password'
-              label='Confirm Password'
-              placeholder='••••••••'
-              {...register('confirmPassword')}
-              error={errors.confirmPassword?.message}
-              leftElement={<Lock className='h-4 w-4' />}
-              autoComplete='new-password'
-            />
-
-            <div>
-              <Button type='submit' variant='primary' className='w-full' isLoading={isLoading}>
-                {isLoading ? 'Creating account...' : 'Create account'}
-              </Button>
-            </div>
-          </div>
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-6">Create an Account</h1>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="John Doe"
+                    autoComplete="name"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="your@email.com"
+                    type="email"
+                    autoComplete="email"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="••••••••"
+                    type="password"
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="••••••••"
+                    type="password"
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={registerMutation.isPending}
+          >
+            {registerMutation.isPending ? "Creating account..." : "Create account"}
+          </Button>
+          {error && <div className="text-red-500 text-sm">{error}</div>}
         </form>
-
-        <div className='mt-6 text-center'>
-          <p className='text-neutral-600'>
-            Already have an account?{' '}
-            <Link to='/login' className='text-primary-600 hover:underline'>
-              Sign in
-            </Link>
-          </p>
-        </div>
+      </Form>
+      <div className="mt-6 text-center text-sm">
+        Already have an account?{" "}
+        <Link to="/login" className="text-primary hover:underline">
+          Sign in
+        </Link>
       </div>
     </div>
   );

@@ -34,6 +34,22 @@ export class LoginPage {
   }
 
   async login(email: string, password: string) {
+    // Add request logging
+    this.page.on('request', request => {
+      console.log(`>> ${request.method()} ${request.url()}`);
+      if (request.url().includes('/api/users/login')) {
+        console.log('Request headers:', request.headers());
+        console.log('Request body:', request.postData());
+      }
+    });
+
+    this.page.on('response', response => {
+      console.log(`<< ${response.status()} ${response.url()}`);
+      if (response.url().includes('/api/users/login')) {
+        response.json().then(data => console.log('Response data:', data));
+      }
+    });
+
     // Wait for inputs to be ready
     await this.emailInput.waitFor({ state: 'visible' });
     await this.passwordInput.waitFor({ state: 'visible' });
@@ -50,14 +66,31 @@ export class LoginPage {
     await expect(this.emailInput).toHaveValue(email);
     await expect(this.passwordInput).toHaveValue(password);
     
-    // Wait for both the click and the login request
-    await Promise.all([
-      this.page.waitForResponse('**/api/users/login'),
-      this.submitButton.click()
-    ]);
-    
-    // After successful login, we should be redirected to dashboard
-    await this.page.waitForURL('**/dashboard');
+    // Wait for the response with a more specific matcher and longer timeout
+    const responsePromise = this.page.waitForResponse(
+      response => {
+        return response.url().includes('/api/users/login') && response.request().method() === 'POST';
+      },
+      { timeout: 60000 }
+    );
+
+    // Click the submit button
+    await this.submitButton.click();
+
+    try {
+      const response = await responsePromise;
+      const responseData = await response.json();
+      
+      if (!response.ok()) {
+        throw new Error(`Login failed: ${responseData.message || 'Unknown error'}`);
+      }
+      
+      // After successful login, we should be redirected to dashboard
+      await this.page.waitForURL('**/dashboard', { timeout: 10000 });
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   }
 
   async logout() {

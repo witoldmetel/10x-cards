@@ -7,6 +7,8 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useLogin } from '@/api/user/mutations';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -16,15 +18,11 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { onLogin } = useAuth();
+  const loginMutation = useLogin();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
+  const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
@@ -33,93 +31,86 @@ export default function Login() {
   });
 
   const onSubmit = async (formData: LoginFormData) => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      const response = await fetch('http://localhost:5001/api/users/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to sign in');
-      }
-
-      onLogin(data.token, data.userId);
+      const data = await loginMutation.mutateAsync(formData);
+      
+      onLogin(data.token, data.id);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to sign in');
-    } finally {
-      setIsLoading(false);
+      if (error instanceof Error && 'detail' in error) {
+        setError(error.detail as string);
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to sign in');
+      }
     }
   };
 
   return (
-    <div className='min-h-screen flex items-center justify-center bg-neutral-50'>
-      <Link
-        to='/'
-        className='absolute top-8 left-8 inline-flex items-center text-sm font-medium text-neutral-600 hover:text-primary-600 transition-colors'>
-        <ArrowLeft className='h-4 w-4 mr-2' />
-        Back to home
-      </Link>
-
-      <div className='max-w-md w-full bg-white p-8 rounded-lg shadow-sm'>
-        <h2 className='text-3xl font-bold mb-2'>Welcome back</h2>
-        <p className='text-neutral-600 mb-6'>Enter your credentials to continue</p>
-
-        {error && <div className='mb-4 p-3 bg-error-50 text-error-700 rounded-lg border border-error-200'>{error}</div>}
-
-        <form onSubmit={handleSubmit(onSubmit)} data-testid="login-form">
-          <div className='space-y-4'>
-            <Input
-              type='email'
-              label='Email'
-              placeholder='your@email.com'
-              {...register('email')}
-              error={errors.email?.message}
-              leftElement={<Mail className='h-4 w-4' />}
-              autoComplete='email'
-              data-testid="email-input"
-            />
-
-            <Input
-              type='password'
-              label='Password'
-              placeholder='••••••••'
-              {...register('password')}
-              error={errors.password?.message}
-              leftElement={<Lock className='h-4 w-4' />}
-              autoComplete='current-password'
-              data-testid="password-input"
-            />
-
-            <div>
-              <Button 
-                type='submit' 
-                variant='primary' 
-                className='w-full' 
-                isLoading={isLoading}
-                data-testid="login-submit"
-              >
-                Log in
-              </Button>
-            </div>
-          </div>
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-6">Welcome Back</h1>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="your@email.com"
+                    type="email"
+                    autoComplete="email"
+                    data-testid="email-input"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Password</FormLabel>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <FormControl>
+                  <Input
+                    placeholder="••••••••"
+                    type="password"
+                    autoComplete="current-password"
+                    data-testid="password-input"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loginMutation.isPending}
+            data-testid="login-submit"
+          >
+            {loginMutation.isPending ? "Signing in..." : "Sign in"}
+          </Button>
+          {error && <div className="text-red-500 text-sm" data-testid="login-error">{error}</div>}
         </form>
-
-        <div className='mt-6 text-center'>
-          <p className='text-neutral-600'>
-            Don't have an account?{' '}
-            <Link to='/register' className='text-primary-600 hover:underline'>
-              Sign up
-            </Link>
-          </p>
-        </div>
+      </Form>
+      <div className="mt-6 text-center text-sm">
+        Don't have an account?{" "}
+        <Link to="/register" className="text-primary hover:underline" data-testid="register-link">
+          Sign up
+        </Link>
       </div>
     </div>
   );
