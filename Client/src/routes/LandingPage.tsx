@@ -23,7 +23,7 @@ export default function LandingPage() {
                   <Button variant='ghost'>Sign in</Button>
                 </Link>
                 <Link to='/register'>
-                  <Button>Sign up</Button>
+                  <Button data-testid="signup-button">Sign up</Button>
                 </Link>
               </>
             )}

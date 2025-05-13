@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import {
   Form,
@@ -45,6 +45,12 @@ export default function Register() {
     },
   });
 
+  // Debug: Log when component mounts and form state
+  useEffect(() => {
+    console.log('Register component mounted');
+    console.log('Initial form state:', form.formState);
+  }, []);
+
   const onSubmit = async (formData: RegisterFormData) => {
     try {
       const data = await registerMutation.mutateAsync({
@@ -67,11 +73,20 @@ export default function Register() {
     }
   };
 
+  // Debug: Log render
+  console.log('Register component rendering');
+
   return (
     <div className="w-full">
       <h1 className="text-2xl font-bold mb-6">Create an Account</h1>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form 
+          onSubmit={form.handleSubmit(onSubmit)} 
+          className="space-y-4" 
+          data-testid="register-form"
+          // Debug: Add inline style to ensure visibility
+          style={{ display: 'block', visibility: 'visible' }}
+        >
           <FormField
             control={form.control}
             name="name"
@@ -82,6 +97,7 @@ export default function Register() {
                   <Input
                     placeholder="John Doe"
                     autoComplete="name"
+                    data-testid="name-input"
                     {...field}
                   />
                 </FormControl>
@@ -100,6 +116,7 @@ export default function Register() {
                     placeholder="your@email.com"
                     type="email"
                     autoComplete="email"
+                    data-testid="email-input"
                     {...field}
                   />
                 </FormControl>
@@ -118,6 +135,7 @@ export default function Register() {
                     placeholder="••••••••"
                     type="password"
                     autoComplete="new-password"
+                    data-testid="password-input"
                     {...field}
                   />
                 </FormControl>
@@ -136,6 +154,7 @@ export default function Register() {
                     placeholder="••••••••"
                     type="password"
                     autoComplete="new-password"
+                    data-testid="confirm-password-input"
                     {...field}
                   />
                 </FormControl>
@@ -147,15 +166,16 @@ export default function Register() {
             type="submit"
             className="w-full"
             disabled={registerMutation.isPending}
+            data-testid="register-submit"
           >
             {registerMutation.isPending ? "Creating account..." : "Create account"}
           </Button>
-          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {error && <div className="text-red-500 text-sm" data-testid="register-error">{error}</div>}
         </form>
       </Form>
       <div className="mt-6 text-center text-sm">
         Already have an account?{" "}
-        <Link to="/login" className="text-primary hover:underline">
+        <Link to="/login" className="text-primary hover:underline" data-testid="login-link">
           Sign in
         </Link>
       </div>

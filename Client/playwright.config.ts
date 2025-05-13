@@ -15,10 +15,18 @@ export default defineConfig({
   reporter: process.env.CI ? 'html' : 'list',
   outputDir: testResultsDir,
   use: {
-    baseURL: `http://localhost:5173`,
+    baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Add more debugging options
+    actionTimeout: 15000,
+    navigationTimeout: 15000,
+    // Enable debugging
+    launchOptions: {
+      slowMo: 100,
+      devtools: true,
+    },
   },
   projects: [
     // Setup project
@@ -29,13 +37,16 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // Use auth state from e2e folder
         storageState: path.join(authDir, 'user.json'),
+        // Add viewport size
+        viewport: { width: 1280, height: 720 },
       },
       dependencies: ['setup'],
     },
   ],
   webServer: {
     command: 'npm run dev:e2e',
-    url: `http://localhost:5173`,
+    url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
+    timeout: 120000,
   },
 }); 

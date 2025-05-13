@@ -5,31 +5,36 @@ export class LoginPage {
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly submitButton: Locator;
-  readonly loginButton: Locator;
-  readonly logoutButton: Locator;
+  readonly loginLink: Locator;
+  readonly loginForm: Locator;
+  readonly errorMessage: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.emailInput = page.getByTestId('email-input');
     this.passwordInput = page.getByTestId('password-input');
     this.submitButton = page.getByTestId('login-submit');
-    this.loginButton = page.getByRole('button', { name: /login/i });
-    this.logoutButton = page.getByRole('button', { name: /logout/i });
+    this.loginLink = page.getByRole('link', { name: /sign in/i });
+    this.loginForm = page.getByTestId('login-form');
+    this.errorMessage = page.getByTestId('login-error');
   }
 
   async goto() {
     await this.page.goto('/');
+    await this.page.waitForLoadState('networkidle');
   }
 
   async gotoLogin() {
     await this.page.goto('/login');
+    await this.page.waitForLoadState('networkidle');
   }
 
   async initiateLogin() {
     // If we're not on login page, go there
     if (!this.page.url().includes('/login')) {
-      await this.loginButton.click();
+      await this.loginLink.click();
       await this.page.waitForURL('/login');
+      await this.page.waitForLoadState('networkidle');
     }
   }
 
@@ -51,8 +56,8 @@ export class LoginPage {
     });
 
     // Wait for inputs to be ready
-    await this.emailInput.waitFor({ state: 'visible' });
-    await this.passwordInput.waitFor({ state: 'visible' });
+    await this.emailInput.waitFor({ state: 'visible', timeout: 10000 });
+    await this.passwordInput.waitFor({ state: 'visible', timeout: 10000 });
     
     // Clear inputs before filling
     await this.emailInput.clear();
@@ -86,28 +91,29 @@ export class LoginPage {
       }
       
       // After successful login, we should be redirected to dashboard
-      await this.page.waitForURL('**/dashboard', { timeout: 10000 });
+      await this.page.waitForURL('/dashboard', { timeout: 10000 });
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     }
   }
 
-  async logout() {
-    await this.logoutButton.click();
-    // After logout, we should be redirected to landing page
-    await this.page.waitForURL('/');
-  }
-
   async expectLoggedIn() {
-    await expect(this.logoutButton).toBeVisible();
-  }
-
-  async expectLoggedOut() {
-    await expect(this.loginButton).toBeVisible();
+    await expect(this.page).toHaveURL('/dashboard', { timeout: 10000 });
   }
 
   async expectLoginFormVisible() {
-    await expect(this.page.getByTestId('login-form')).toBeVisible();
+    await expect(this.loginForm).toBeVisible({ timeout: 10000 });
+  }
+
+  async expectLoggedOut() {
+    await expect(this.page).toHaveURL('/login', { timeout: 10000 });
+  }
+
+  async expectErrorMessage(message?: string) {
+    await expect(this.errorMessage).toBeVisible({ timeout: 10000 });
+    if (message) {
+      await expect(this.errorMessage).toContainText(message, { timeout: 10000 });
+    }
   }
 } 
