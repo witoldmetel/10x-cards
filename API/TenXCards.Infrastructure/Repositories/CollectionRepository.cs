@@ -19,9 +19,18 @@ namespace TenXCards.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<(IEnumerable<Collection> Items, int Total)> GetAllAsync(CollectionsQueryParams queryParams)
+        private void ValidateUserId(Guid userId)
         {
-            var query = _context.Collections.AsQueryable();
+            if (userId == Guid.Empty)
+            {
+                throw new ArgumentException("User ID cannot be found", nameof(userId));
+            }
+        }
+
+        public async Task<(IEnumerable<Collection> Items, int Total)> GetAllAsync(CollectionsQueryParams queryParams, Guid userId)
+        {
+            ValidateUserId(userId);
+            var query = _context.Collections.Where(c => c.UserId == userId);
 
             if (queryParams.Archived.HasValue)
             {
@@ -42,43 +51,61 @@ namespace TenXCards.Infrastructure.Repositories
             return (items, total);
         }
 
-        public async Task<IEnumerable<Collection>> GetAllForDashboardAsync()
+        public async Task<IEnumerable<Collection>> GetAllForDashboardAsync(Guid userId)
         {
+            ValidateUserId(userId);
+
             return await _context.Collections
-                .Where(c => c.ArchivedAt == null &&
+                .Where(c => c.UserId == userId && c.ArchivedAt == null &&
                     _context.Flashcards.Any(f => f.CollectionId == c.Id && f.ArchivedAt == null))
                 .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Collection>> GetAllArchivedAsync()
+        public async Task<IEnumerable<Collection>> GetAllArchivedAsync(Guid userId)
         {
+            ValidateUserId(userId);
+
             return await _context.Collections
-                .Where(c => c.ArchivedAt != null)
+                .Where(c => c.UserId == userId && c.ArchivedAt != null)
                 .ToListAsync();
         }
 
-        public async Task<Collection?> GetByIdAsync(Guid id)
+        public async Task<Collection?> GetByIdAsync(Guid id, Guid userId)
         {
+            ValidateUserId(userId);
             return await _context.Collections
                 .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
         }
 
         public async Task<Collection> CreateAsync(Collection collection)
         {
+            ValidateUserId(collection.UserId);
+            
             collection.CreatedAt = DateTime.UtcNow;
+            collection.UpdatedAt = DateTime.UtcNow;
             collection.TotalCards = 0;
             collection.DueCards = 0;
             
             _context.Collections.Add(collection);
             await _context.SaveChangesAsync();
-            return collection;
+            
+            // Reload the collection to ensure we have all the properties
+            var created = await _context.Collections
+                .Include(c => c.Flashcards)
+                .FirstOrDefaultAsync(c => c.Id == collection.Id);
+            
+            if (created == null)
+                throw new InvalidOperationException("Failed to create collection");
+            
+            return created;
         }
 
         public async Task<Collection?> UpdateAsync(Collection collection)
         {
-            var existing = await _context.Collections.FindAsync(collection.Id);
+            ValidateUserId(collection.UserId);
+            var existing = await _context.Collections.FirstOrDefaultAsync(c => c.Id == collection.Id && c.UserId == collection.UserId);
             if (existing == null) return null;
 
             existing.Name = collection.Name;
@@ -92,9 +119,10 @@ namespace TenXCards.Infrastructure.Repositories
             return existing;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id, Guid userId)
         {
-            var collection = await _context.Collections.FindAsync(id);
+            ValidateUserId(userId);
+            var collection = await _context.Collections.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
             if (collection == null) return false;
 
             _context.Collections.Remove(collection);
@@ -102,11 +130,12 @@ namespace TenXCards.Infrastructure.Repositories
             return true;
         }
 
-        public async Task<bool> ArchiveAsync(Guid id)
+        public async Task<bool> ArchiveAsync(Guid id, Guid userId)
         {
+            ValidateUserId(userId);
             var collection = await _context.Collections
                 .Include(c => c.Flashcards)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
             if (collection == null) return false;
 
@@ -123,11 +152,12 @@ namespace TenXCards.Infrastructure.Repositories
             return true;
         }
 
-        public async Task<bool> UnarchiveAsync(Guid id)
+        public async Task<bool> UnarchiveAsync(Guid id, Guid userId)
         {
+            ValidateUserId(userId);
             var collection = await _context.Collections
                 .Include(c => c.Flashcards)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
 
             if (collection == null) return false;
 

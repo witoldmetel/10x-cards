@@ -19,6 +19,11 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
         {
             await next(context);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized access attempt");
+            await HandleExceptionAsync(context, ex, HttpStatusCode.Unauthorized);
+        }
         catch (InvalidOperationException ex)
         {
             _logger.LogError(ex, "Invalid operation error occurred");
@@ -52,6 +57,7 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
     {
         HttpStatusCode.BadRequest => "Bad Request",
         HttpStatusCode.NotFound => "Resource Not Found",
+        HttpStatusCode.Unauthorized => "Unauthorized",
         HttpStatusCode.InternalServerError => "Internal Server Error",
         _ => "An error occurred"
     };

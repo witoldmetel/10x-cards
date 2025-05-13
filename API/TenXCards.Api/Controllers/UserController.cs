@@ -33,7 +33,7 @@ namespace TenXCards.API.Controllers
             try
             {
                 var response = await _userService.RegisterUserAsync(request);
-                return CreatedAtAction(nameof(GetUserData), new { id = response.Id }, response);
+                return Created($"/api/users/{response.User.UserId}", response);
             }
             catch (Exception ex)
             {
@@ -99,9 +99,9 @@ namespace TenXCards.API.Controllers
         /// </summary>
         [HttpGet("{id:guid}")]
         [Authorize]
-        [ProducesResponseType(typeof(UserDataResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<UserDataResponse>> GetUserData([FromRoute] Guid id)
+        public async Task<ActionResult<UserDto>> GetUserData([FromRoute] Guid id)
         {
             try
             {
@@ -124,10 +124,10 @@ namespace TenXCards.API.Controllers
         /// </summary>
         [HttpPut("{id:guid}")]
         [Authorize]
-        [ProducesResponseType(typeof(UserDataResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<UserDataResponse>> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserRequest request)
+        public async Task<ActionResult<UserDto>> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserRequest request)
         {
             try
             {

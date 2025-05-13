@@ -1,14 +1,16 @@
 import { createContext, useContext, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
+import { AuthResponse, User } from '@/api/user/types';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext<{
   isAuth: boolean;
-  userId: string | undefined;
-  onLogin: (token: string, userId: string) => void;
+  user: User | null;
+  onLogin: (data: AuthResponse) => void;
   onLogout: () => void;
 }>({
   isAuth: false,
-  userId: undefined,
+  user: null,
   onLogin: () => {},
   onLogout: () => {},
 });
@@ -20,19 +22,27 @@ type AuthProviderProps = {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
-  const [userId, setUserId] = useState(() => localStorage.getItem('userId') || undefined);
+  const [user, setUser] = useState<User | null>(null);
 
-  const handleLogin = async (token: string, userId: string) => {
-    if (!token) {
+  const handleLogin = async (data: AuthResponse) => {
+    if (!data.token) {
       throw new Error('Token is required');
     }
-    setToken(token);
-    setUserId(userId);
+    
+    if (!data.user.userId) {
+      throw new Error('User ID is required');
+    }
 
-    localStorage.setItem('token', token);
-    localStorage.setItem('userId', userId);
+    setToken(data.token);
+    setUser(data.user);
+
+    localStorage.setItem('token', data.token);
+
+    // Invalidate all queries to force fresh data fetch
+    await queryClient.invalidateQueries();
 
     const origin = location.state?.from?.pathname || '/dashboard';
 
@@ -41,15 +51,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const handleLogout = () => {
     setToken('');
-    setUserId('');
+    setUser(null);
     localStorage.removeItem('token');
-    localStorage.removeItem('userId');
+    
+    // Clear all queries on logout
+    queryClient.clear();
+    
     navigate('/');
   };
 
   const value = {
-    isAuth: !!token,
-    userId,
+    isAuth: Boolean(token),
+    user,
     onLogin: handleLogin,
     onLogout: handleLogout,
   };

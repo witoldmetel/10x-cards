@@ -9,6 +9,7 @@ namespace TenXCards.Core.Repositories
     public interface IFlashcardRepository
     {
         Task<Flashcard?> GetByIdAsync(Guid id);
+        Task<Flashcard?> GetByCollectionIdAsync(Guid collectionId);
         Task<(IEnumerable<Flashcard> Items, int Total)> GetAllAsync(FlashcardsQueryParams queryParams);
         Task<Flashcard> CreateAsync(Flashcard flashcard);
         Task<Flashcard?> UpdateAsync(Flashcard flashcard);

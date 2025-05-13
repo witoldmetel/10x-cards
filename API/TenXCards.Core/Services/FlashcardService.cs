@@ -29,6 +29,7 @@ namespace TenXCards.Core.Services
         private readonly IFlashcardRepository _repository;
         private readonly ICollectionService _collectionService;
         private readonly ICollectionRepository _collectionRepository;
+        private readonly IUserContextService _userContextService;
 
         public FlashcardService(
             ILogger<FlashcardService> logger,
@@ -36,7 +37,8 @@ namespace TenXCards.Core.Services
             IOptions<OpenRouterOptions> options,
             IFlashcardRepository repository, 
             ICollectionService collectionService,
-            ICollectionRepository collectionRepository)
+            ICollectionRepository collectionRepository,
+            IUserContextService userContextService)
         {
             _logger = logger;
             _openRouterService = openRouterService;
@@ -44,6 +46,7 @@ namespace TenXCards.Core.Services
             _repository = repository;
             _collectionService = collectionService;
             _collectionRepository = collectionRepository;
+            _userContextService = userContextService;
         }
 
         public async Task<FlashcardResponseDto?> GetByIdAsync(Guid id)
@@ -54,11 +57,12 @@ namespace TenXCards.Core.Services
 
         public async Task<PaginatedResponse<FlashcardResponseDto>> GetAllAsync(FlashcardsQueryParams queryParams)
         {
+            queryParams = queryParams with { UserId = _userContextService.GetUserId() };
             var (items, total) = await _repository.GetAllAsync(queryParams);
             
             return new PaginatedResponse<FlashcardResponseDto>
             {
-                Items = MapToResponseDtos(items),
+                Items = items.Select(MapToResponseDto),
                 Limit = queryParams.Limit,
                 Offset = queryParams.Offset,
                 TotalCount = total
@@ -67,12 +71,16 @@ namespace TenXCards.Core.Services
 
         public async Task<PaginatedResponse<FlashcardResponseDto>> GetArchivedAsync(FlashcardsQueryParams queryParams)
         {
-            queryParams.Archived = true;
+            queryParams = queryParams with { 
+                UserId = _userContextService.GetUserId(),
+                Archived = true 
+            };
+            
             var (items, total) = await _repository.GetAllAsync(queryParams);
             
             return new PaginatedResponse<FlashcardResponseDto>
             {
-                Items = MapToResponseDtos(items),
+                Items = items.Select(MapToResponseDto),
                 Limit = queryParams.Limit,
                 Offset = queryParams.Offset,
                 TotalCount = total
@@ -97,9 +105,13 @@ namespace TenXCards.Core.Services
 
         public async Task<FlashcardResponseDto> CreateForCollectionAsync(Guid collectionId, CreateFlashcardDto createDto)
         {
-            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            var userId = _userContextService.GetUserId();
+            var collection = await _collectionRepository.GetByIdAsync(collectionId, userId);
+            
             if (collection == null)
+            {
                 throw new Exception($"Collection with id {collectionId} not found");
+            }
 
             var flashcard = new Flashcard
             {
@@ -110,7 +122,7 @@ namespace TenXCards.Core.Services
                 ReviewStatus = createDto.ReviewStatus,
                 Sm2Efactor = 2.5, // Default value for new cards
                 CollectionId = collectionId,
-                UserId = collection.UserId
+                UserId = userId
             };
             var created = await _repository.CreateAsync(flashcard);
             return MapToResponseDto(created);
@@ -170,7 +182,7 @@ namespace TenXCards.Core.Services
                 if (allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Archive the collection if all flashcards are archived
-                    await _collectionService.ArchiveAsync(flashcard.CollectionId);
+                    await _collectionService.ArchiveAsync(flashcard.CollectionId, flashcard.UserId);
                 }
             }
             return MapToResponseDto(flashcard);
@@ -191,7 +203,7 @@ namespace TenXCards.Core.Services
                 if (!allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Unarchive the collection if not all flashcards are archived
-                    await _collectionService.UnarchiveAsync(flashcard.CollectionId);
+                    await _collectionService.UnarchiveAsync(flashcard.CollectionId, flashcard.UserId);
                 }
             }
             return MapToResponseDto(flashcard);
@@ -234,17 +246,14 @@ namespace TenXCards.Core.Services
             };
         }
 
-        private static IEnumerable<FlashcardResponseDto> MapToResponseDtos(IEnumerable<Flashcard> flashcards)
-        {
-            return flashcards.Select(MapToResponseDto);
-        }
-
         public async Task<List<FlashcardResponseDto>> GenerateFlashcardsAsync(
             FlashcardGenerationRequestDto request, 
             Guid collectionId, 
             CancellationToken cancellationToken = default)
         {
-            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            var userId = _userContextService.GetUserId();
+            var collection = await _collectionRepository.GetByIdAsync(collectionId, userId);
+            
             if (collection == null)
                 throw new Exception($"Collection with id {collectionId} not found");
 
@@ -306,7 +315,7 @@ namespace TenXCards.Core.Services
                             CreationSource = FlashcardCreationSource.AI,
                             ReviewStatus = ReviewStatus.New,
                             CollectionId = collectionId,
-                            UserId = collection.UserId,
+                            UserId = userId,
                             SourceTextHash = sourceTextHash,
                             CreatedAt = DateTime.UtcNow,
                             UpdatedAt = DateTime.UtcNow,

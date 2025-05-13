@@ -36,8 +36,8 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(User user)
     {
-        var existingUser = await _context.Users.FindAsync(user.Id);
-        if (existingUser == null) throw new KeyNotFoundException($"User with ID {user.Id} not found");
+        var existingUser = await _context.Users.FindAsync(user.UserId);
+        if (existingUser == null) throw new KeyNotFoundException($"User with ID {user.UserId} not found");
 
         existingUser.Name = user.Name;
         existingUser.Email = user.Email;

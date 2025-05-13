@@ -26,9 +26,21 @@ namespace TenXCards.Infrastructure.Repositories
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
+        public async Task<Flashcard?> GetByCollectionIdAsync(Guid collectionId)
+        {
+            return await _context.Flashcards
+                .Include(f => f.Collection)
+                .FirstOrDefaultAsync(f => f.CollectionId == collectionId);
+        }
+
         public async Task<(IEnumerable<Flashcard> Items, int Total)> GetAllAsync(FlashcardsQueryParams queryParams)
         {
             var query = _context.Flashcards.AsQueryable();
+
+            if (queryParams.CollectionId.HasValue)
+            {
+                query = query.Where(f => f.CollectionId == queryParams.CollectionId);
+            }
 
             if (queryParams.Archived.HasValue)
             {
@@ -38,6 +50,15 @@ namespace TenXCards.Infrastructure.Repositories
             }
 
             query = ApplyFilters(query, queryParams);
+
+            // Join with collections to filter by userId
+            query = query.Join(
+                _context.Collections,
+                f => f.CollectionId,
+                c => c.Id,
+                (f, c) => new { Flashcard = f, Collection = c })
+                .Where(x => x.Collection.UserId == queryParams.UserId)
+                .Select(x => x.Flashcard);
 
             var total = await query.CountAsync();
 

@@ -2,270 +2,186 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using TenXCards.Core.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
-namespace TenXCards.Core.DTOs
+namespace TenXCards.Core.DTOs;
+
+[SwaggerSchema(Title = "Create Flashcard Request")]
+public record CreateFlashcardDto
 {
-    /// <summary>
-    /// DTO for creating a new flashcard
-    /// </summary>
-    public class CreateFlashcardDto
-    {
-        /// <summary>
-        /// Front side content of the flashcard
-        /// </summary>
-        public required string Front { get; set; }
+    [Required]
+    [MinLength(1)]
+    [SwaggerSchema(Description = "Front side content of the flashcard")]
+    public string Front { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Back side content of the flashcard
-        /// </summary>
-        public required string Back { get; set; }
+    [Required]
+    [MinLength(1)]
+    [SwaggerSchema(Description = "Back side content of the flashcard")]
+    public string Back { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Source of flashcard creation (Manual or AI-generated)
-        /// </summary>
-        public FlashcardCreationSource CreationSource { get; set; } = FlashcardCreationSource.Manual;
+    [SwaggerSchema(Description = "Source of flashcard creation (Manual or AI-generated)")]
+    public FlashcardCreationSource CreationSource { get; init; } = FlashcardCreationSource.Manual;
 
-        /// <summary>
-        /// Initial review status of the flashcard
-        /// </summary>
-        public ReviewStatus ReviewStatus { get; set; } = ReviewStatus.Approved;
-    }
+    [SwaggerSchema(Description = "Initial review status of the flashcard")]
+    public ReviewStatus ReviewStatus { get; init; } = ReviewStatus.Approved;
+}
 
-    /// <summary>
-    /// DTO for updating an existing flashcard
-    /// </summary>
-    public class UpdateFlashcardDto
-    {
-        /// <summary>
-        /// Updated front side content
-        /// </summary>
-        public string? Front { get; set; }
+[SwaggerSchema(Title = "Update Flashcard Request")]
+public record UpdateFlashcardDto
+{
+    [MinLength(1)]
+    [SwaggerSchema(Description = "Updated front side content")]
+    public string? Front { get; init; }
 
-        /// <summary>
-        /// Updated back side content
-        /// </summary>
-        public string? Back { get; set; }
+    [MinLength(1)]
+    [SwaggerSchema(Description = "Updated back side content")]
+    public string? Back { get; init; }
 
-        /// <summary>
-        /// Updated review status
-        /// </summary>
-        public ReviewStatus? ReviewStatus { get; set; }
+    [SwaggerSchema(Description = "Updated review status")]
+    public ReviewStatus? ReviewStatus { get; init; }
 
-        /// <summary>
-        /// Archive timestamp
-        /// </summary>
-        public DateTime? ArchivedAt { get; set; }
-    }
+    [SwaggerSchema(Description = "Archive timestamp")]
+    public DateTime? ArchivedAt { get; init; }
+}
 
-    /// <summary>
-    /// Response DTO for a flashcard
-    /// </summary>
-    public class FlashcardResponseDto
-    {
-        /// <summary>
-        /// Unique identifier of the flashcard
-        /// </summary>
-        public Guid Id { get; set; }
+[SwaggerSchema(Title = "Flashcard Response")]
+public record FlashcardResponseDto
+{
+    [SwaggerSchema(Description = "Unique identifier of the flashcard")]
+    public Guid Id { get; init; }
 
-        /// <summary>
-        /// ID of the user who owns the flashcard
-        /// </summary>
-        public Guid UserId { get; set; }
+    [SwaggerSchema(Description = "ID of the user who owns the flashcard")]
+    public Guid UserId { get; init; }
 
-        /// <summary>
-        /// ID of the collection this flashcard belongs to
-        /// </summary>
-        public Guid CollectionId { get; set; }
+    [SwaggerSchema(Description = "ID of the collection this flashcard belongs to")]
+    public Guid CollectionId { get; init; }
 
-        /// <summary>
-        /// Front side content of the flashcard
-        /// </summary>
-        public required string Front { get; set; }
+    [Required]
+    [SwaggerSchema(Description = "Front side content of the flashcard")]
+    public string Front { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Back side content of the flashcard
-        /// </summary>
-        public required string Back { get; set; }
+    [Required]
+    [SwaggerSchema(Description = "Back side content of the flashcard")]
+    public string Back { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Current review status of the flashcard
-        /// </summary>
-        public ReviewStatus ReviewStatus { get; set; }
+    [SwaggerSchema(Description = "Current review status of the flashcard")]
+    public ReviewStatus ReviewStatus { get; init; }
 
-        /// <summary>
-        /// Last review timestamp
-        /// </summary>
-        public DateTime? ReviewedAt { get; set; }
+    [SwaggerSchema(Description = "Last review timestamp")]
+    public DateTime? ReviewedAt { get; init; }
 
-        /// <summary>
-        /// Source of flashcard creation
-        /// </summary>
-        public FlashcardCreationSource CreationSource { get; set; }
+    [SwaggerSchema(Description = "Source of flashcard creation")]
+    public FlashcardCreationSource CreationSource { get; init; }
 
-        /// <summary>
-        /// SuperMemo2 algorithm: number of repetitions
-        /// </summary>
-        public int Sm2Repetitions { get; set; }
+    [SwaggerSchema(Description = "SuperMemo2 algorithm: number of repetitions")]
+    public int Sm2Repetitions { get; init; }
 
-        /// <summary>
-        /// SuperMemo2 algorithm: interval in days
-        /// </summary>
-        public int Sm2Interval { get; set; }
+    [SwaggerSchema(Description = "SuperMemo2 algorithm: interval in days")]
+    public int Sm2Interval { get; init; }
 
-        /// <summary>
-        /// SuperMemo2 algorithm: easiness factor
-        /// </summary>
-        public double Sm2Efactor { get; set; }
+    [SwaggerSchema(Description = "SuperMemo2 algorithm: easiness factor")]
+    public double Sm2Efactor { get; init; }
 
-        /// <summary>
-        /// Next review date based on SuperMemo2 algorithm
-        /// </summary>
-        public DateTime? Sm2DueDate { get; set; }
+    [SwaggerSchema(Description = "Next review date based on SuperMemo2 algorithm")]
+    public DateTime? Sm2DueDate { get; init; }
 
-        /// <summary>
-        /// Creation timestamp
-        /// </summary>
-        public DateTime CreatedAt { get; set; }
+    [SwaggerSchema(Description = "Creation timestamp")]
+    public DateTime CreatedAt { get; init; }
 
-        /// <summary>
-        /// Last update timestamp
-        /// </summary>
-        public DateTime? UpdatedAt { get; set; }
+    [SwaggerSchema(Description = "Last update timestamp")]
+    public DateTime? UpdatedAt { get; init; }
 
-        /// <summary>
-        /// Archive timestamp
-        /// </summary>
-        public DateTime? ArchivedAt { get; set; }
-    }
+    [SwaggerSchema(Description = "Archive timestamp")]
+    public DateTime? ArchivedAt { get; init; }
+}
 
-    /// <summary>
-    /// Query parameters for flashcard listing
-    /// </summary>
-    public class FlashcardsQueryParams
-    {
-        /// <summary>
-        /// Number of items to skip
-        /// </summary>
-        public int Offset { get; set; } = 0;
+[SwaggerSchema(Title = "Flashcard Query Parameters")]
+public record FlashcardsQueryParams
+{
+    [SwaggerSchema(Description = "Number of items to skip")]
+    public int Offset { get; init; }
 
-        /// <summary>
-        /// Maximum number of items to return (1-100)
-        /// </summary>
-        [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
-        public int Limit { get; set; } = 20;
+    [Range(1, 100, ErrorMessage = "Limit must be between 1 and 100")]
+    [SwaggerSchema(Description = "Maximum number of items to return (1-100)")]
+    public int Limit { get; init; } = 20;
 
-        /// <summary>
-        /// Filter by review status
-        /// </summary>
-        public ReviewStatus? ReviewStatus { get; set; }
+    [SwaggerSchema(Description = "Filter by review status")]
+    public ReviewStatus? ReviewStatus { get; init; }
 
-        /// <summary>
-        /// Search phrase to filter flashcards
-        /// </summary>
-        public string? SearchPhrase { get; set; }
+    [SwaggerSchema(Description = "Search phrase to filter flashcards")]
+    public string? SearchPhrase { get; init; }
 
-        /// <summary>
-        /// Filter by archived status
-        /// </summary>
-        public bool? Archived { get; set; }
+    [SwaggerSchema(Description = "Filter by archived status")]
+    public bool? Archived { get; init; }
 
-        /// <summary>
-        /// Filter by collection ID
-        /// </summary>
-        public Guid? CollectionId { get; set; }
-    }
+    [SwaggerSchema(Description = "Filter by collection ID")]
+    public Guid? CollectionId { get; init; }
 
-    /// <summary>
-    /// Generic paginated response
-    /// </summary>
-    public class PaginatedResponse<T>
-    {
-        /// <summary>
-        /// List of items
-        /// </summary>
-        public required IEnumerable<T> Items { get; set; }
+    [SwaggerSchema(Description = "Filter by user ID")]
+    public Guid UserId { get; init; }
+}
 
-        /// <summary>
-        /// Maximum number of items returned
-        /// </summary>
-        public int Limit { get; set; }
+[SwaggerSchema(Title = "Paginated Response")]
+public record PaginatedResponse<T>
+{
+    [Required]
+    [SwaggerSchema(Description = "List of items")]
+    public IEnumerable<T> Items { get; init; } = new List<T>();
 
-        /// <summary>
-        /// Number of items skipped
-        /// </summary>
-        public int Offset { get; set; }
+    [SwaggerSchema(Description = "Maximum number of items returned")]
+    public int Limit { get; init; }
 
-        /// <summary>
-        /// Total number of items available
-        /// </summary>
-        public int TotalCount { get; set; }
-    }
+    [SwaggerSchema(Description = "Number of items skipped")]
+    public int Offset { get; init; }
 
-    /// <summary>
-    /// Request for batch updating flashcards
-    /// </summary>
-    public class BatchUpdateRequest
-    {
-        /// <summary>
-        /// List of flashcard IDs to update
-        /// </summary>
-        public required IEnumerable<Guid> FlashcardIds { get; set; }
+    [SwaggerSchema(Description = "Total number of items available")]
+    public int TotalCount { get; init; }
+}
 
-        /// <summary>
-        /// Update to apply to all selected flashcards
-        /// </summary>
-        public required UpdateFlashcardDto Update { get; set; }
-    }
+[SwaggerSchema(Title = "Batch Update Request")]
+public record BatchUpdateRequest
+{
+    [Required]
+    [SwaggerSchema(Description = "List of flashcard IDs to update")]
+    public IEnumerable<Guid> FlashcardIds { get; init; } = new List<Guid>();
 
-    /// <summary>
-    /// Response for batch update operation
-    /// </summary>
-    public class BatchUpdateResponse
-    {
-        /// <summary>
-        /// List of successfully updated flashcard IDs
-        /// </summary>
-        public required IEnumerable<Guid> UpdatedIds { get; set; }
+    [Required]
+    [SwaggerSchema(Description = "Update to apply to all selected flashcards")]
+    public UpdateFlashcardDto Update { get; init; } = null!;
+}
 
-        /// <summary>
-        /// Operation result message
-        /// </summary>
-        public required string Message { get; set; }
-    }
+[SwaggerSchema(Title = "Batch Update Response")]
+public record BatchUpdateResponse
+{
+    [Required]
+    [SwaggerSchema(Description = "List of successfully updated flashcard IDs")]
+    public IEnumerable<Guid> UpdatedIds { get; init; } = new List<Guid>();
 
-    /// <summary>
-    /// Statistics about archived flashcards
-    /// </summary>
-    public class ArchivedStatisticsDto
-    {
-        /// <summary>
-        /// Total number of archived flashcards
-        /// </summary>
-        public int TotalArchived { get; set; }
-    }
+    [Required]
+    [SwaggerSchema(Description = "Operation result message")]
+    public string Message { get; init; } = string.Empty;
+}
 
-    /// <summary>
-    /// Request DTO for flashcard generation
-    /// </summary>
-    public class FlashcardGenerationRequestDto
-    {
-        /// <summary>
-        /// The text from which flashcards should be generated
-        /// </summary>
-        [Required]
-        [MinLength(10)]
-        [MaxLength(4000)]
-        public required string SourceText { get; set; }
+[SwaggerSchema(Title = "Archived Statistics")]
+public record ArchivedStatisticsDto
+{
+    [SwaggerSchema(Description = "Total number of archived flashcards")]
+    public int TotalArchived { get; init; }
+}
 
-        /// <summary>
-        /// The number of flashcards to generate (3-20)
-        /// </summary>
-        [Range(3, 20)]
-        public int Count { get; set; } = 3;
+[SwaggerSchema(Title = "Flashcard Generation Request")]
+public record FlashcardGenerationRequestDto
+{
+    [Required]
+    [MinLength(10)]
+    [MaxLength(4000)]
+    [SwaggerSchema(Description = "The text from which flashcards should be generated")]
+    public string SourceText { get; init; } = string.Empty;
 
-        /// <summary>
-        /// Optional model to use for generation
-        /// </summary>
-        public string? Model { get; set; }
-    }
+    [Range(3, 20)]
+    [SwaggerSchema(Description = "The number of flashcards to generate (3-20)")]
+    public int Count { get; init; } = 3;
+
+    [SwaggerSchema(Description = "Optional model to use for generation")]
+    public string? Model { get; init; }
 } 

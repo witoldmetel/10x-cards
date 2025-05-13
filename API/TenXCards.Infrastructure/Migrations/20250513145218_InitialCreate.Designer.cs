@@ -13,7 +13,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250510043256_InitialCreate")]
+    [Migration("20250513145218_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -136,7 +136,8 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnName("review_status");
 
                     b.Property<DateTime?>("ReviewedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
 
                     b.Property<DateTime?>("Sm2DueDate")
                         .HasColumnType("timestamp with time zone")
@@ -183,7 +184,7 @@ namespace TenXCards.Infrastructure.Migrations
 
             modelBuilder.Entity("TenXCards.Core.Models.User", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("UserId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
@@ -205,14 +206,15 @@ namespace TenXCards.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("password");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId");
 
                     b.HasIndex("Email")
                         .IsUnique();

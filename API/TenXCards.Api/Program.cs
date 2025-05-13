@@ -24,6 +24,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.AllowTrailingCommas = true;
     });
 builder.Services.AddEndpointsApiExplorer();
@@ -191,18 +192,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Add middleware to pipeline
-app.UseMiddleware<RequestValidationMiddleware>();
-app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-
 // Use CORS before auth middleware
 app.UseCors("AllowFrontend");
 
 // Use rate limiting
 app.UseRateLimiter();
 
+// Authentication and authorization should come before other middleware
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add middleware to pipeline
+app.UseMiddleware<RequestValidationMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 // Configure routing
 app.MapControllers();

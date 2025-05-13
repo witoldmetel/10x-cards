@@ -20,13 +20,16 @@ namespace TenXCards.API.Controllers
     {
         private readonly IFlashcardService _flashcardService;
         private readonly ILogger<FlashcardsController> _logger;
+        private readonly IUserContextService _userContextService;
 
         public FlashcardsController(
             IFlashcardService flashcardService, 
-            ILogger<FlashcardsController> logger)
+            ILogger<FlashcardsController> logger,
+            IUserContextService userContextService)
         {
             _flashcardService = flashcardService;
             _logger = logger;
+            _userContextService = userContextService;
         }
 
         // GET: api/collections/{collectionId}/flashcards
@@ -35,7 +38,11 @@ namespace TenXCards.API.Controllers
         [ProducesResponseType(typeof(PaginatedResponse<FlashcardResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<FlashcardResponseDto>>> GetByCollection(Guid collectionId, [FromQuery] FlashcardsQueryParams queryParams)
         {
-            queryParams.CollectionId = collectionId;
+            queryParams = queryParams with { 
+                CollectionId = collectionId,
+                UserId = _userContextService.GetUserId()
+            };
+            
             var flashcards = await _flashcardService.GetAllAsync(queryParams);
             return Ok(flashcards);
         }
