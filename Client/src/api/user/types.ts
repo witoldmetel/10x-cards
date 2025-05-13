@@ -21,7 +21,6 @@ export type RegisterCredentials ={
 export type AuthResponse ={
   user: User;
   token: string;
-  expiresIn: number;
 }
 
 export type UpdateUserRequest ={
