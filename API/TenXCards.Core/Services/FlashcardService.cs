@@ -97,9 +97,18 @@ namespace TenXCards.Core.Services
 
         public async Task<FlashcardResponseDto> CreateForCollectionAsync(Guid collectionId, CreateFlashcardDto createDto)
         {
-            var collection = await _collectionRepository.GetByIdAsync(collectionId);
-            if (collection == null)
-                throw new Exception($"Collection with id {collectionId} not found");
+            // Try to get the collection owner from an existing flashcard
+            var existingFlashcard = await _repository.GetByCollectionIdAsync(collectionId);
+            var userId = existingFlashcard?.UserId;
+
+            // If no flashcards exist yet, get the collection directly
+            if (userId == null)
+            {
+                var existingCollection = await _collectionRepository.GetByIdAsync(collectionId, Guid.Empty);
+                if (existingCollection == null)
+                    throw new Exception($"Collection with id {collectionId} not found");
+                userId = existingCollection.UserId;
+            }
 
             var flashcard = new Flashcard
             {
@@ -110,7 +119,7 @@ namespace TenXCards.Core.Services
                 ReviewStatus = createDto.ReviewStatus,
                 Sm2Efactor = 2.5, // Default value for new cards
                 CollectionId = collectionId,
-                UserId = collection.UserId
+                UserId = userId.Value
             };
             var created = await _repository.CreateAsync(flashcard);
             return MapToResponseDto(created);
@@ -170,7 +179,7 @@ namespace TenXCards.Core.Services
                 if (allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Archive the collection if all flashcards are archived
-                    await _collectionService.ArchiveAsync(flashcard.CollectionId);
+                    await _collectionService.ArchiveAsync(flashcard.CollectionId, flashcard.UserId);
                 }
             }
             return MapToResponseDto(flashcard);
@@ -191,7 +200,7 @@ namespace TenXCards.Core.Services
                 if (!allInCollection.Items.All(f => f.ArchivedAt != null))
                 {
                     // Unarchive the collection if not all flashcards are archived
-                    await _collectionService.UnarchiveAsync(flashcard.CollectionId);
+                    await _collectionService.UnarchiveAsync(flashcard.CollectionId, flashcard.UserId);
                 }
             }
             return MapToResponseDto(flashcard);
@@ -244,7 +253,20 @@ namespace TenXCards.Core.Services
             Guid collectionId, 
             CancellationToken cancellationToken = default)
         {
-            var collection = await _collectionRepository.GetByIdAsync(collectionId);
+            // Try to get the collection owner from an existing flashcard
+            var firstFlashcard = await _repository.GetByCollectionIdAsync(collectionId);
+            var userId = firstFlashcard?.UserId;
+
+            // If no flashcards exist yet, get the collection directly
+            if (userId == null)
+            {
+                var existingCollection = await _collectionRepository.GetByIdAsync(collectionId, Guid.Empty);
+                if (existingCollection == null)
+                    throw new Exception($"Collection with id {collectionId} not found");
+                userId = existingCollection.UserId;
+            }
+
+            var collection = await _collectionRepository.GetByIdAsync(collectionId, userId.Value);
             if (collection == null)
                 throw new Exception($"Collection with id {collectionId} not found");
 

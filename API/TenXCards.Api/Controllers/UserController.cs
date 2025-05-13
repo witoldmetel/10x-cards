@@ -33,7 +33,7 @@ namespace TenXCards.API.Controllers
             try
             {
                 var response = await _userService.RegisterUserAsync(request);
-                return CreatedAtAction(nameof(GetUserData), new { id = response.Id }, response);
+                return CreatedAtAction(nameof(GetUserData), new { id = response.UserId }, response);
             }
             catch (Exception ex)
             {

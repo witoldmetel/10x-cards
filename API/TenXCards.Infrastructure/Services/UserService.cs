@@ -49,7 +49,7 @@ public class UserService : IUserService
 
         return new UserRegistrationResponse
         {
-            Id = user.Id,
+            UserId = user.Id,
             Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,
@@ -102,7 +102,7 @@ public class UserService : IUserService
 
         return new UserDataResponse
         {
-            Id = user.Id,
+            UserId = user.Id,
             Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,
@@ -132,7 +132,7 @@ public class UserService : IUserService
 
         return new UserDataResponse
         {
-            Id = user.Id,
+            UserId = user.Id,
             Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,

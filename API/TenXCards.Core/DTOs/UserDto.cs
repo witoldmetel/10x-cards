@@ -4,6 +4,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TenXCards.Core.DTOs;
 
+// Base auth response that can be reused
+public record AuthResponseBase
+{
+    public Guid UserId { get; init; }
+    public string Token { get; init; } = string.Empty;
+    public int ExpiresIn { get; init; }
+}
+
+// Request DTOs
 public record UserRegistrationRequest
 {
     [Required]
@@ -19,16 +28,6 @@ public record UserRegistrationRequest
     public string Name { get; init; } = string.Empty;
 }
 
-public record UserRegistrationResponse
-{
-    public Guid Id { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string Email { get; init; } = string.Empty;
-    public DateTime CreatedAt { get; init; }
-    public string Token { get; init; } = string.Empty;
-    public int ExpiresIn { get; init; }
-}
-
 public record UserLoginRequest
 {
     [Required]
@@ -37,38 +36,6 @@ public record UserLoginRequest
 
     [Required]
     public string Password { get; init; } = string.Empty;
-}
-
-public record UserLoginResponse
-{
-    public Guid UserId { get; init; }
-    public string Token { get; init; } = string.Empty;
-    public int ExpiresIn { get; init; }
-}
-
-public record PasswordResetRequest
-{
-    [Required]
-    [EmailAddress]
-    public string Email { get; init; } = string.Empty;
-
-    [Required]
-    [MinLength(8)]
-    public string NewPassword { get; init; } = string.Empty;
-}
-
-public record PasswordResetResponse
-{
-    public string Message { get; init; } = string.Empty;
-}
-
-public record UserDataResponse
-{
-    public Guid Id { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string Email { get; init; } = string.Empty;
-    public DateTime CreatedAt { get; init; }
-    public string? ApiModelKey { get; init; }
 }
 
 public record UpdateUserRequest
@@ -84,15 +51,45 @@ public record UpdateUserRequest
     public string? ApiModelKey { get; init; }
 }
 
+public record PasswordResetRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(8)]
+    public string NewPassword { get; init; } = string.Empty;
+}
+
+// Response DTOs
+public record UserRegistrationResponse : AuthResponseBase
+{
+    public string Name { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+}
+
+public record UserLoginResponse : AuthResponseBase
+{
+}
+
+public record UserDataResponse
+{
+    public Guid UserId { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Email { get; init; } = string.Empty;
+    public DateTime CreatedAt { get; init; }
+    public string? ApiModelKey { get; init; }
+}
+
+public record PasswordResetResponse
+{
+    public string Message { get; init; } = string.Empty;
+}
+
 public record PasswordResetResult
 {
     public bool Success { get; init; }
     public IEnumerable<string>? Errors { get; init; }
-}
-
-public class AuthResponse
-{
-    public Guid UserId { get; set; }
-    public string Token { get; set; } = string.Empty;
-    public int ExpiresIn { get; set; }
 } 

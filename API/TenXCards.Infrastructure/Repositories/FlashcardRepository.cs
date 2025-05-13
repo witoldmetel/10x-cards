@@ -26,6 +26,13 @@ namespace TenXCards.Infrastructure.Repositories
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
+        public async Task<Flashcard?> GetByCollectionIdAsync(Guid collectionId)
+        {
+            return await _context.Flashcards
+                .Include(f => f.Collection)
+                .FirstOrDefaultAsync(f => f.CollectionId == collectionId);
+        }
+
         public async Task<(IEnumerable<Flashcard> Items, int Total)> GetAllAsync(FlashcardsQueryParams queryParams)
         {
             var query = _context.Flashcards.AsQueryable();

@@ -43,7 +43,8 @@ namespace TenXCards.API.Controllers
                 Archived = archived
             };
 
-            var response = await _collectionService.GetAllAsync(queryParams);
+            var userId = _userContextService.GetUserId();
+            var response = await _collectionService.GetAllAsync(queryParams, userId);
             return Ok(response);
         }
 
@@ -57,7 +58,17 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                var collection = await _collectionService.GetByIdAsync(id);
+                var userId = _userContextService.GetUserId();
+                var collection = await _collectionService.GetByIdAsync(id, userId);
+                if (collection == null)
+                {
+                    return NotFound(new ProblemDetails
+                    {
+                        Title = "Collection not found",
+                        Detail = "The requested collection does not exist or you don't have access to it",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
                 return Ok(collection);
             }
             catch (Exception ex)
@@ -107,17 +118,18 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                var collection = await _collectionService.UpdateAsync(id, request);
-                return Ok(collection);
-            }
-            catch (Exception ex) when (ex.Message.Contains("not found"))
-            {
-                return NotFound(new ProblemDetails
+                var userId = _userContextService.GetUserId();
+                var collection = await _collectionService.UpdateAsync(id, request, userId);
+                if (collection == null)
                 {
-                    Title = "Collection not found",
-                    Detail = ex.Message,
-                    Status = StatusCodes.Status404NotFound
-                });
+                    return NotFound(new ProblemDetails
+                    {
+                        Title = "Collection not found",
+                        Detail = "The requested collection does not exist or you don't have access to it",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
+                return Ok(collection);
             }
             catch (Exception ex)
             {
@@ -140,7 +152,17 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                await _collectionService.DeleteAsync(id);
+                var userId = _userContextService.GetUserId();
+                var result = await _collectionService.DeleteAsync(id, userId);
+                if (!result)
+                {
+                    return NotFound(new ProblemDetails
+                    {
+                        Title = "Collection not found",
+                        Detail = "The requested collection does not exist or you don't have access to it",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
                 return NoContent();
             }
             catch (Exception ex)
@@ -161,18 +183,20 @@ namespace TenXCards.API.Controllers
         [ProducesResponseType(typeof(PaginatedResponse<CollectionResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<CollectionResponseDto>>> GetDashboard()
         {
-            var response = await _collectionService.GetAllForDashboardAsync();
+            var userId = _userContextService.GetUserId();
+            var response = await _collectionService.GetAllForDashboardAsync(userId);
             return Ok(response);
         }
 
-         /// <summary>
+        /// <summary>
         /// Get archived collections
         /// </summary>
         [HttpGet("archived")]
         [ProducesResponseType(typeof(PaginatedResponse<CollectionResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<CollectionResponseDto>>> GetArchived()
         {
-            var response = await _collectionService.GetAllArchivedAsync();
+            var userId = _userContextService.GetUserId();
+            var response = await _collectionService.GetAllArchivedAsync(userId);
             return Ok(response);
         }
 
@@ -186,7 +210,17 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                await _collectionService.ArchiveAsync(id);
+                var userId = _userContextService.GetUserId();
+                var result = await _collectionService.ArchiveAsync(id, userId);
+                if (!result)
+                {
+                    return NotFound(new ProblemDetails
+                    {
+                        Title = "Collection not found",
+                        Detail = "The requested collection does not exist or you don't have access to it",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
                 return NoContent();
             }
             catch (Exception ex)
@@ -210,7 +244,17 @@ namespace TenXCards.API.Controllers
         {
             try
             {
-                await _collectionService.UnarchiveAsync(id);
+                var userId = _userContextService.GetUserId();
+                var result = await _collectionService.UnarchiveAsync(id, userId);
+                if (!result)
+                {
+                    return NotFound(new ProblemDetails
+                    {
+                        Title = "Collection not found",
+                        Detail = "The requested collection does not exist or you don't have access to it",
+                        Status = StatusCodes.Status404NotFound
+                    });
+                }
                 return NoContent();
             }
             catch (Exception ex)
