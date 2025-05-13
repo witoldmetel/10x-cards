@@ -22,8 +22,8 @@ namespace TenXCards.Infrastructure.Data
             {
                 entity.ToTable("users");
                 
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("id");
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.UserId).HasColumnName("id");
                 
                 entity.Property(e => e.Email)
                     .HasColumnName("email")

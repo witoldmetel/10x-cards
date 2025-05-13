@@ -1,5 +1,5 @@
-export interface User {
-  id: string;
+export type User ={
+  userId: string;
   email: string;
   name: string;
   createdAt: string;
@@ -7,18 +7,18 @@ export interface User {
   apiModelKey?: string;
 }
 
-export interface LoginCredentials {
+export type LoginCredentials ={
   email: string;
   password: string;
 }
 
-export interface RegisterCredentials {
+export type RegisterCredentials ={
   email: string;
   password: string;
   name: string;
 }
 
-export interface AuthResponse {
+export type AuthResponse ={
   id: string;
   name: string;
   email: string;
@@ -27,7 +27,7 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
-export interface UpdateUserRequest {
+export type UpdateUserRequest ={
   name: string;
   email: string;
   apiModelKey?: string;

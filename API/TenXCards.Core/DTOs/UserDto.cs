@@ -4,15 +4,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TenXCards.Core.DTOs;
 
-// Base auth response that can be reused
-public record AuthResponseBase
-{
-    public Guid UserId { get; init; }
-    public string Token { get; init; } = string.Empty;
-    public int ExpiresIn { get; init; }
-}
-
-// Request DTOs
 public record UserRegistrationRequest
 {
     [Required]
@@ -62,16 +53,21 @@ public record PasswordResetRequest
     public string NewPassword { get; init; } = string.Empty;
 }
 
-// Response DTOs
-public record UserRegistrationResponse : AuthResponseBase
+public record UserRegistrationResponse
 {
+    public Guid UserId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Email { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
+    public string Token { get; init; } = string.Empty;
+    public int ExpiresIn { get; init; }
 }
 
-public record UserLoginResponse : AuthResponseBase
+public record UserLoginResponse
 {
+    public Guid UserId { get; init; }
+    public string Token { get; init; } = string.Empty;
+    public int ExpiresIn { get; init; }
 }
 
 public record UserDataResponse

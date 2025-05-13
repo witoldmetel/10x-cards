@@ -36,7 +36,7 @@ public class UserService : IUserService
 
         var user = new User
         {
-            Id = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
             Email = request.Email,
             Password = _passwordHashService.HashPassword(request.Password),
             Name = request.Name,
@@ -49,7 +49,7 @@ public class UserService : IUserService
 
         return new UserRegistrationResponse
         {
-            UserId = user.Id,
+            UserId = user.UserId,
             Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,
@@ -69,7 +69,7 @@ public class UserService : IUserService
         var token = _jwtTokenService.GenerateToken(user);
         return new UserLoginResponse
         {
-            UserId = user.Id,
+            UserId = user.UserId,
             Token = token,
             ExpiresIn = 604800 // 7 days
         };
@@ -102,7 +102,7 @@ public class UserService : IUserService
 
         return new UserDataResponse
         {
-            UserId = user.Id,
+            UserId = user.UserId,
             Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,
@@ -132,7 +132,7 @@ public class UserService : IUserService
 
         return new UserDataResponse
         {
-            UserId = user.Id,
+            UserId = user.UserId,
             Name = user.Name,
             Email = user.Email,
             CreatedAt = user.CreatedAt,
