@@ -6,13 +6,13 @@ WORKDIR /src
 COPY API/ API/
 
 WORKDIR "/src/API"
-RUN dotnet restore
+RUN dotnet restore "TenXCards.sln"
 
 WORKDIR "/src/API/TenXCards.API"
-RUN dotnet build "TenXCards.Api.csproj" -c Release -o /app/build
+RUN dotnet build "TenXCards.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "TenXCards.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish "TenXCards.API.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
@@ -27,4 +27,4 @@ EXPOSE ${PORT}
 ENV ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
 ENV TZ=UTC
 
-ENTRYPOINT ["dotnet", "TenXCards.Api.dll"] 
+ENTRYPOINT ["dotnet", "TenXCards.API.dll"] 
