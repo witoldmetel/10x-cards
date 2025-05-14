@@ -5,8 +5,21 @@ WORKDIR /build
 # Copy the entire API directory
 COPY . .
 
+# Debug: Show directory structure
+RUN echo "Current directory:" && \
+    pwd && \
+    echo "\nDirectory contents:" && \
+    ls -la && \
+    echo "\nAPI directory contents:" && \
+    ls -la API/
+
 # Move to API directory and build
 WORKDIR /build/API
+RUN echo "Current directory:" && \
+    pwd && \
+    echo "\nDirectory contents:" && \
+    ls -la
+
 RUN dotnet restore
 RUN dotnet build -c Release -o /app/build
 
