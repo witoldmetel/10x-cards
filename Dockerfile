@@ -2,17 +2,22 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /API
 
-# Copy solution and project files
-COPY API/TenXCards.sln .
-COPY TenXCards.API/TenXCards.Api.csproj TenXCards.API/
-COPY API/TenXCards.Core/TenXCards.Core.csproj TenXCards.Core/
-COPY API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj TenXCards.Infrastructure/
+# First copy only the solution file
+COPY ["API/TenXCards.sln", "./"]
+
+# Create project directories
+RUN mkdir -p TenXCards.API TenXCards.Core TenXCards.Infrastructure
+
+# Copy project files
+COPY ["API/TenXCards.API/TenXCards.Api.csproj", "./TenXCards.API/"]
+COPY ["API/TenXCards.Core/TenXCards.Core.csproj", "./TenXCards.Core/"]
+COPY ["API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj", "./TenXCards.Infrastructure/"]
 
 # Restore dependencies
 RUN dotnet restore
 
-# Copy the rest of the files
-COPY API/ .
+# Copy everything else
+COPY ["API/.", "./"]
 
 # Build
 RUN dotnet build -c Release -o /app/build
