@@ -1,29 +1,18 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /API
+WORKDIR /build
 
-# First copy only the solution file
-COPY ["API/TenXCards.sln", "./"]
+# Copy the entire API directory
+COPY . .
 
-# Create project directories
-RUN mkdir -p TenXCards.API TenXCards.Core TenXCards.Infrastructure
-
-# Copy project files
-COPY ["API/TenXCards.API/TenXCards.Api.csproj", "./TenXCards.API/"]
-COPY ["API/TenXCards.Core/TenXCards.Core.csproj", "./TenXCards.Core/"]
-COPY ["API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj", "./TenXCards.Infrastructure/"]
-
-# Restore dependencies
+# Move to API directory and build
+WORKDIR /build/API
 RUN dotnet restore
-
-# Copy everything else
-COPY ["API/.", "./"]
-
-# Build
 RUN dotnet build -c Release -o /app/build
 
 # Publish
 FROM build AS publish
+WORKDIR /build/API
 RUN dotnet publish -c Release -o /app/publish
 
 # Final stage
