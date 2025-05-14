@@ -25,12 +25,44 @@ Key test areas:
 - API integration
 
 ### End-to-End Tests
-We use Playwright for E2E testing across different browsers:
+We use Playwright for E2E testing. Our setup includes:
+
+- Single browser configuration (Chromium) for consistent testing
+- Authentication state handling
+- Automatic test retries in CI environment
+- Screenshot and video capture on test failures
+- Page Object Model implementation for maintainable tests
+
+#### Running Tests
 
 ```bash
-npm run e2e        # Run all E2E tests
-npm run e2e:ui     # Open Playwright Test Runner UI
+# Run all E2E tests
+npm run test:e2e
+
+# Run E2E tests with UI mode
+npm run test:e2e:ui
+
+# Run specific test file
+npx playwright test auth.spec.ts
+
+# Run tests in debug mode
+npx playwright test --debug
 ```
+
+#### Test Structure
+- `src/e2e/` - Main test directory
+  - `pages/` - Page Object Models
+  - `auth.setup.ts` - Authentication setup
+  - `*.spec.ts` - Test specifications
+
+#### Configuration
+The Playwright configuration (`playwright.config.ts`) includes:
+
+- Base URL: `http://localhost:5173`
+- Automatic screenshot on test failure
+- Video recording retained on failure
+- Trace capture on first retry
+- CI-specific settings (retries, workers)
 
 ### Performance and Accessibility Tests
 - Lighthouse for performance metrics

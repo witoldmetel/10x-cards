@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Clear all queries on logout
     queryClient.clear();
     
-    navigate('/');
+    navigate('/login');
   };
 
   const value = {

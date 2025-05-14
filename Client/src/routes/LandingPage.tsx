@@ -20,10 +20,10 @@ export default function LandingPage() {
             ) : (
               <>
                 <Link to='/login'>
-                  <Button variant='ghost'>Sign in</Button>
+                  <Button variant='ghost' data-testid="signin-button">Sign in</Button>
                 </Link>
                 <Link to='/register'>
-                  <Button>Sign up</Button>
+                  <Button data-testid="signup-button">Sign up</Button>
                 </Link>
               </>
             )}

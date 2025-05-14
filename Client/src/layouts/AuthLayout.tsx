@@ -30,12 +30,10 @@ export default function AuthLayout() {
         </div>
       </header>
 
-
-
       {/* Main Content */}
       <div className='flex-1 flex items-center justify-center p-4 sm:p-8'>
-        <div className='max-w-md w-full bg-white p-8 rounded-lg shadow-sm'>
-        <Outlet />
+        <div className='max-w-md w-full bg-white p-8 rounded-lg shadow-sm' style={{ opacity: 1, visibility: 'visible' }}>
+          <Outlet />
         </div>
       </div>
 
