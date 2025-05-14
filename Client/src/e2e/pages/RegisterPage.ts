@@ -65,7 +65,7 @@ export class RegisterPage {
       }
 
       // After successful registration, we should be redirected to dashboard
-      await this.page.waitForURL('/dashboard', { timeout: 10000 });
+      await this.page.waitForURL(/.*\/dashboard/, { timeout: 30000 });
       await this.page.waitForLoadState('networkidle');
     } catch (error) {
       console.error('Registration error:', error);

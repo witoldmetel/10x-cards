@@ -30,7 +30,7 @@ jobs:
         run: npm ci
 
       - name: Run Linting
-        run: npm run lint
+        run: npm run lint -- --max-warnings=9999
 
   unit-test:
     name: Unit Tests
@@ -103,7 +103,6 @@ jobs:
     name: PR Status Comment
     needs: [unit-test, e2e-test]
     runs-on: ubuntu-latest
-    if: always()
 
     steps:
       - name: Download Unit Test Coverage

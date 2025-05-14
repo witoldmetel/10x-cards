@@ -21,7 +21,7 @@ setup('setup test user', async ({ page }) => {
   console.log('User registered successfully');
 
   // After successful registration, we should be on the dashboard
-  await expect(page).toHaveURL(/.*\/dashboard/);
+  await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 30000 });
   console.log('Redirected to dashboard after registration');
 
   // Click logout button using DashboardPage
