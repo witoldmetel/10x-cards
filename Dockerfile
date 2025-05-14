@@ -1,12 +1,11 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /app
+WORKDIR /src
 
 # Copy everything at first to ensure all files are available
-COPY . .
+COPY API/ .
 
 # Restore dependencies
-WORKDIR /app/API
 RUN dotnet restore TenXCards.API/TenXCards.Api.csproj
 
 # Build
@@ -14,7 +13,6 @@ RUN dotnet build TenXCards.API/TenXCards.Api.csproj -c Release -o /app/build
 
 # Publish
 FROM build AS publish
-WORKDIR /app/API
 RUN dotnet publish TenXCards.API/TenXCards.Api.csproj -c Release -o /app/publish
 
 # Final stage
