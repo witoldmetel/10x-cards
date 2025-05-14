@@ -12,12 +12,12 @@ const authFile = path.join(__dirname, '.auth/user.json');
 
 setup('setup test user', async ({ page }) => {
   console.log('Starting test user setup...');
-  
+
   // First register a new user
   console.log('Registering new user...');
   const registerPage = new RegisterPage(page);
   await registerPage.goto();
-  await registerPage.register(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
+  await registerPage.submitRegistration(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
   console.log('User registered successfully');
 
   // After successful registration, we should be on the dashboard
@@ -43,4 +43,4 @@ setup('setup test user', async ({ page }) => {
   console.log('Saving authentication state...');
   await page.context().storageState({ path: authFile });
   console.log('Authentication state saved');
-}); 
+});

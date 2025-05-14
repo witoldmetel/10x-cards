@@ -35,26 +35,36 @@ export class RegisterPage {
     await expect(this.emailInput).toBeVisible({ timeout: 30000 });
     await expect(this.passwordInput).toBeVisible({ timeout: 30000 });
     await expect(this.confirmPasswordInput).toBeVisible({ timeout: 30000 });
-    
+
     // Fill the form
     await this.nameInput.fill(name);
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
     await this.confirmPasswordInput.fill(confirmPassword);
 
+    await this.submitButton.click();
+  }
+
+  async submitRegistration(name: string, email: string, password: string, confirmPassword: string) {
+    await this.register(name, email, password, confirmPassword);
+
     // Wait for response with a more specific matcher and longer timeout
     const responsePromise = this.page.waitForResponse(
       response => response.url().includes('/api/users/register') && response.request().method() === 'POST',
-      { timeout: 60000 }
+      { timeout: 60000 },
     );
-
-    await this.submitButton.click();
 
     try {
       const response = await responsePromise;
       const responseData = await response.json();
 
       if (!response.ok()) {
+        // Don't throw error for expected error cases (like duplicate email)
+        if (response.status() === 400 || response.status() === 409) {
+          // Wait for the error message to be displayed
+          await expect(this.errorMessage).toBeVisible({ timeout: 30000 });
+          return;
+        }
         throw new Error(`Registration failed: ${responseData.message || 'Unknown error'}`);
       }
 
@@ -75,12 +85,9 @@ export class RegisterPage {
   }
 
   async expectFieldValidationError(field: 'name' | 'email' | 'password' | 'confirmPassword', message: string) {
-    // Get the form field container
-    const fieldContainer = this.page.getByTestId(`${field}-input`).locator('..').locator('..');
-    
-    // Look for the error message within this container
-    const errorMessage = fieldContainer.getByText(message);
+    const errorMessage = this.page.getByTestId(`${field}-error`);
     await expect(errorMessage).toBeVisible({ timeout: 30000 });
+    await expect(errorMessage).toContainText(message, { timeout: 30000 });
   }
 
   async navigateToLogin() {
@@ -89,4 +96,4 @@ export class RegisterPage {
     await this.page.waitForURL('/login');
     await this.page.waitForLoadState('networkidle');
   }
-} 
+}

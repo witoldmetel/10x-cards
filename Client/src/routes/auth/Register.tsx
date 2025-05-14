@@ -101,7 +101,7 @@ export default function Register() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage data-testid="name-error" />
               </FormItem>
             )}
           />
@@ -120,7 +120,7 @@ export default function Register() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage data-testid="email-error" />
               </FormItem>
             )}
           />
@@ -139,7 +139,7 @@ export default function Register() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage data-testid="password-error" />
               </FormItem>
             )}
           />
@@ -158,7 +158,7 @@ export default function Register() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage data-testid="confirmPassword-error" />
               </FormItem>
             )}
           />
