@@ -1,24 +1,23 @@
 # Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /app
 
-# Copy the entire API directory with correct casing
-COPY API/TenXCards.sln ./API/
-COPY API/TenXCards.API/TenXCards.Api.csproj ./API/TenXCards.API/
-COPY API/TenXCards.Core/TenXCards.Core.csproj ./API/TenXCards.Core/
-COPY API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj ./API/TenXCards.Infrastructure/
+# Copy everything at first to ensure all files are available
+COPY . .
 
-WORKDIR "/src/API"
-RUN dotnet restore
+# Restore dependencies
+WORKDIR /app/API
+RUN dotnet restore ./TenXCards.API/TenXCards.Api.csproj
 
-COPY API/ API/
+# Build
+RUN dotnet build ./TenXCards.API/TenXCards.Api.csproj -c Release -o /app/build
 
-WORKDIR "/src/API/TenXCards.API"
-RUN dotnet build "TenXCards.Api.csproj" -c Release -o /app/build
-
+# Publish
 FROM build AS publish
-RUN dotnet publish "TenXCards.Api.csproj" -c Release -o /app/publish
+WORKDIR /app/API
+RUN dotnet publish ./TenXCards.API/TenXCards.Api.csproj -c Release -o /app/publish
 
+# Final stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
