@@ -12,6 +12,7 @@
 - [Project Status](#project-status)
 - [License](#license)
 - [Features](#features)
+- [CI/CD Pipeline](#ci-cd-pipeline)
 
 ## Project Description
 
@@ -332,3 +333,52 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
      "AllowedOrigins": "http://localhost:3000"
    }
    ```
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment. The pipeline is configured to run:
+
+### Trigger Conditions
+- Automatically on push to `main` branch
+- Automatically on pull requests targeting `main` branch
+- Manually through GitHub Actions interface
+
+### Pipeline Stages
+
+#### Frontend (Client)
+- Type checking with TypeScript
+- Unit tests with Vitest
+- E2E tests with Playwright
+- Production build
+
+#### Backend (API)
+- .NET build
+- Unit tests with code coverage
+- Integration tests
+
+#### Deployment
+- Automatic deployment to Render when changes are merged to main
+
+### Required Secrets
+
+For deployment to work, you need to set up the following secret in your GitHub repository:
+- `RENDER_DEPLOY_HOOK_URL`: The deploy hook URL from your Render service
+
+### Local Development
+
+To run the same checks locally before pushing:
+
+```bash
+# Frontend checks
+cd Client
+npm run check-types
+npm run test:coverage
+npm run test:e2e
+npm run build
+
+# Backend checks
+cd API
+dotnet restore
+dotnet build
+dotnet test
+```
