@@ -53,15 +53,15 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Unit Tests with Coverage
-        run: npm run test:coverage
+      - name: Run Unit Tests
+        run: npm run test
 
-      - name: Upload Unit Test Coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-coverage
-          path: ./Client/coverage/
-          retention-days: 30
+      # - name: Upload Unit Test Coverage
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: unit-test-coverage
+      #     path: ./Client/coverage/
+      #     retention-days: 30
 
   e2e-test:
     name: E2E Tests
@@ -84,6 +84,24 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Setup .NET for API
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Start Backend API
+        working-directory: ./API
+        run: |
+          dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
+          dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
+          dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
