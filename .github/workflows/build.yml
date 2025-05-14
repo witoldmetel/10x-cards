@@ -37,39 +37,18 @@ jobs:
         run: npm run test
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps
 
-      - name: Create E2E Test Directories
-        run: |
-          mkdir -p src/e2e/.auth
-          mkdir -p src/e2e/test-results
-          echo '{"cookies":[],"origins":[]}' > src/e2e/.auth/user.json
+      - name: Run Playwright tests
+        run: npx playwright test
 
-      - name: Kill any existing processes on port 5173
-        run: |
-          lsof -ti:5173 | xargs -r kill -9 || true
-
-      - name: Run E2E Tests
-        run: |
-          # Start the dev server in the background
-          npm run dev:e2e &
-          # Wait for the server to be ready
-          npx wait-on http://localhost:5173
-          # Run the tests
-          npx playwright test
-        env:
-          CI: true
-          PLAYWRIGHT_HTML_REPORT: ./src/e2e/test-results
-          NODE_ENV: test
-          PORT: 5173
-
-      - name: Upload E2E Test Results
+      - name: Upload Playwright Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: ./Client/src/e2e/test-results/
-          retention-days: 7
+          path: ./Client/playwright-report/
+          retention-days: 30
 
       - name: Build Frontend
         run: npm run build
@@ -77,6 +56,9 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./API
 
     steps:
       - uses: actions/checkout@v4
@@ -89,17 +71,13 @@ jobs:
       - name: Display Structure
         run: |
           pwd
-          echo "Repository root contents:"
+          echo "Current directory contents:"
           ls -la
-          echo "API directory contents:"
-          ls -la API/
-          echo "API solution file:"
-          ls -la API/TenXCards.sln
+          echo "Solution file:"
+          ls -la TenXCards.sln
 
       - name: Restore Solution Dependencies
-        run: |
-          cd API
-          dotnet restore
+        run: dotnet restore
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -108,9 +86,7 @@ jobs:
           JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Build Solution
-        run: |
-          cd API
-          dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release --no-restore
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -119,8 +95,7 @@ jobs:
           JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       # - name: Run Tests
-      #   working-directory: API
-      #   run: dotnet test TenXCards.sln --no-restore --verbosity normal --collect:"XPlat Code Coverage"
+      #   run: dotnet test --no-restore --verbosity normal --collect:"XPlat Code Coverage"
       #   env:
       #     DOTNET_ENVIRONMENT: Development
       #     ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -134,7 +109,7 @@ jobs:
         with:
           name: backend-test-results
           path: ./API/TestResults/
-          retention-days: 7
+          retention-days: 30
 
   # deploy:
   #   name: Deploy to Render
