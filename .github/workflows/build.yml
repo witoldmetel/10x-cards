@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '19.x'
+          node-version: '22.x'
           cache: 'npm'
           cache-dependency-path: './Client/package-lock.json'
 
@@ -70,14 +70,40 @@ jobs:
       - name: Restore Solution Dependencies
         working-directory: API
         run: dotnet restore TenXCards.API/TenXCards.API.sln
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Build Solution
         working-directory: API
         run: dotnet build TenXCards.API/TenXCards.API.sln --configuration Release --no-restore
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Run Tests
         working-directory: API
         run: dotnet test TenXCards.API/TenXCards.API.sln --no-restore --verbosity normal --collect:"XPlat Code Coverage"
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+
+      - name: Upload Backend Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: ./API/TestResults/
+          retention-days: 7
 
   # deploy:
   #   name: Deploy to Render
