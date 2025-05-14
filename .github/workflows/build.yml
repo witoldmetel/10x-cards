@@ -48,9 +48,6 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./API
 
     steps:
       - uses: actions/checkout@v4
@@ -62,17 +59,25 @@ jobs:
 
       - name: Display Structure
         run: |
-          pwd
-          ls -R
+          echo "Current directory: $(pwd)"
+          echo "Directory contents:"
+          ls -la
+          echo "API directory contents:"
+          ls -la API/
+          echo "TenXCards.API directory contents:"
+          ls -la API/TenXCards.API/
 
       - name: Restore Solution Dependencies
-        run: dotnet restore
+        working-directory: API
+        run: dotnet restore TenXCards.API/TenXCards.API.sln
 
       - name: Build Solution
-        run: dotnet build --configuration Release --no-restore
+        working-directory: API
+        run: dotnet build TenXCards.API/TenXCards.API.sln --configuration Release --no-restore
 
       - name: Run Tests
-        run: dotnet test --no-restore --verbosity normal --collect:"XPlat Code Coverage"
+        working-directory: API
+        run: dotnet test TenXCards.API/TenXCards.API.sln --no-restore --verbosity normal --collect:"XPlat Code Coverage"
 
   # deploy:
   #   name: Deploy to Render
