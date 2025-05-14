@@ -45,14 +45,23 @@ jobs:
           mkdir -p src/e2e/test-results
           echo '{"cookies":[],"origins":[]}' > src/e2e/.auth/user.json
 
+      - name: Kill any existing processes on port 5173
+        run: |
+          lsof -ti:5173 | xargs -r kill -9 || true
+
       - name: Run E2E Tests
-        run: npm run test:e2e
+        run: |
+          # Start the dev server in the background
+          npm run dev:e2e &
+          # Wait for the server to be ready
+          npx wait-on http://localhost:5173
+          # Run the tests
+          npx playwright test
         env:
           CI: true
           PLAYWRIGHT_HTML_REPORT: ./src/e2e/test-results
           NODE_ENV: test
-          # Add any API endpoints or other environment variables if needed
-          # API_URL: ${{ secrets.API_URL }}
+          PORT: 5173
 
       - name: Upload E2E Test Results
         if: always()
@@ -79,17 +88,18 @@ jobs:
 
       - name: Display Structure
         run: |
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
+          pwd
+          echo "Repository root contents:"
           ls -la
           echo "API directory contents:"
           ls -la API/
-          echo "TenXCards.Api directory contents:"
-          ls -la API/TenXCards.Api/
+          echo "API solution file:"
+          ls -la API/TenXCards.sln
 
       - name: Restore Solution Dependencies
-        working-directory: API
-        run: dotnet restore TenXCards.sln
+        run: |
+          cd API
+          dotnet restore
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -98,8 +108,9 @@ jobs:
           JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Build Solution
-        working-directory: API
-        run: dotnet build TenXCards.sln --configuration Release --no-restore
+        run: |
+          cd API
+          dotnet build --configuration Release --no-restore
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
