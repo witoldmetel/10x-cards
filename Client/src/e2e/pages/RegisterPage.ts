@@ -42,17 +42,13 @@ export class RegisterPage {
     await this.passwordInput.fill(password);
     await this.confirmPasswordInput.fill(confirmPassword);
 
-    await this.submitButton.click();
-  }
-
-  async submitRegistration(name: string, email: string, password: string, confirmPassword: string) {
-    await this.register(name, email, password, confirmPassword);
-
     // Wait for response with a more specific matcher and longer timeout
     const responsePromise = this.page.waitForResponse(
       response => response.url().includes('/api/users/register') && response.request().method() === 'POST',
       { timeout: 60000 },
     );
+
+    await this.submitButton.click();
 
     try {
       const response = await responsePromise;
@@ -75,6 +71,10 @@ export class RegisterPage {
       console.error('Registration error:', error);
       throw error;
     }
+  }
+
+  async submitRegistration(name: string, email: string, password: string, confirmPassword: string) {
+    await this.register(name, email, password, confirmPassword);
   }
 
   async expectErrorMessage(message?: string) {

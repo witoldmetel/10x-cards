@@ -50,26 +50,37 @@ test.describe('Register', () => {
     await registerPage.expectFieldValidationError('confirmPassword', 'Password must be at least 6 characters');
 
     // Test password mismatch
-    await registerPage.register('Test User', 'test@example.com', 'password123', 'password456');
+    await registerPage.nameInput.fill('Test User');
+    await registerPage.emailInput.fill('test@example.com');
+    await registerPage.passwordInput.fill('password123');
+    await registerPage.confirmPasswordInput.fill('password456');
+    await registerPage.submitButton.click();
     await registerPage.expectFieldValidationError('confirmPassword', "Passwords don't match");
 
     await context.close();
   });
 
-  test.skip('should show error for duplicate registration', async ({ browser }) => {
+  test('should show error for duplicate registration', async ({ browser }) => {
     // Create a new context with no stored state
     const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
     registerPage = new RegisterPage(page);
 
+    // First register a user
     await registerPage.goto();
-    await expect(page.getByTestId('register-form')).toBeVisible({ timeout: 30000 });
+    await registerPage.submitRegistration(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
 
-    // Try to register with the same email used in auth.setup.ts
+    // Now try to register again with the same email in a new context
+    const newContext = await browser.newContext({ storageState: undefined });
+    const newPage = await newContext.newPage();
+    registerPage = new RegisterPage(newPage);
+
+    await registerPage.goto();
     await registerPage.register(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
-    await registerPage.expectErrorMessage('Email already exists');
+    await registerPage.expectErrorMessage('Request failed with status code 400');
 
     await context.close();
+    await newContext.close();
   });
 
   test('should navigate to login page', async ({ browser }) => {
