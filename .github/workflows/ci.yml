@@ -61,16 +61,16 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: List Directory Contents
-        run: ls -R
+        run: ls -la TenXCards.API/
 
       - name: Restore Dependencies
-        run: dotnet restore ./TenXCards.API/TenXCards.Api.csproj
+        run: dotnet restore TenXCards.API/TenXCards.Api.csproj
 
       - name: Build
-        run: dotnet build ./TenXCards.API/TenXCards.Api.csproj --configuration Release --no-restore
+        run: dotnet build TenXCards.API/TenXCards.Api.csproj --configuration Release --no-restore
 
       - name: Run Tests
-        run: dotnet test ./TenXCards.API/TenXCards.Api.csproj --no-restore --verbosity normal --collect:"XPlat Code Coverage"
+        run: dotnet test TenXCards.API/TenXCards.Api.csproj --no-restore --verbosity normal --collect:"XPlat Code Coverage"
 
   # deploy:
   #   name: Deploy to Render
