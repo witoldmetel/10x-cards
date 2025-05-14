@@ -53,6 +53,11 @@ export class RegisterPage {
     try {
       const response = await responsePromise;
       const responseData = await response.json();
+      console.log('Registration response:', {
+        status: response.status(),
+        ok: response.ok(),
+        data: responseData
+      });
 
       if (!response.ok()) {
         // Don't throw error for expected error cases (like duplicate email)
@@ -64,9 +69,24 @@ export class RegisterPage {
         throw new Error(`Registration failed: ${responseData.message || 'Unknown error'}`);
       }
 
-      // After successful registration, we should be redirected to dashboard
-      await this.page.waitForURL('/dashboard', { timeout: 10000 });
-      await this.page.waitForLoadState('networkidle');
+      // Wait for navigation to start
+      await Promise.all([
+        this.page.waitForNavigation({ timeout: 30000 }),
+        this.page.waitForURL(/.*\/dashboard/, { timeout: 30000 }),
+        this.page.waitForLoadState('networkidle', { timeout: 30000 })
+      ]).catch(async (error) => {
+        console.log('Current URL:', this.page.url());
+        console.log('Navigation error:', error);
+        throw error;
+      });
+
+      // Additional check to ensure we're actually on the dashboard
+      const currentUrl = this.page.url();
+      console.log('Final URL after registration:', currentUrl);
+      
+      if (!currentUrl.includes('/dashboard')) {
+        throw new Error(`Failed to redirect to dashboard. Current URL: ${currentUrl}`);
+      }
     } catch (error) {
       console.error('Registration error:', error);
       throw error;

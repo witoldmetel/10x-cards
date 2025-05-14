@@ -102,7 +102,7 @@ export default function Archive() {
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm'>Mastery</p>
-                    <p className='font-medium'>{collection.masteryPercentage || 0}%</p>
+                    <p className='font-medium'>{0}%</p>
                   </div>
                 </div>
               </CardContent>

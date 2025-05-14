@@ -1,0 +1,172 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  frontend:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Client
+
+    # services:
+    #   postgres:
+    #     image: postgres:latest
+    #     env:
+    #       POSTGRES_DB: ten_x_cards_db
+    #       POSTGRES_USER: postgres
+    #       POSTGRES_PASSWORD: <your-password>
+    #     ports:
+    #       - 5432:5432
+    #     options: >-
+    #       --health-cmd pg_isready
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+          cache-dependency-path: './Client/package-lock.json'
+
+      - name: Install Dependencies
+        run: |
+          npm install
+          npm ci
+
+      - name: Type Check
+        run: npm run check-types
+
+      - name: Run Unit Tests
+        run: npm run test
+
+      # - name: Setup .NET for API
+      #   uses: actions/setup-dotnet@v4
+      #   with:
+      #     dotnet-version: '8.0.x'
+
+      # - name: Start Backend API
+      #   working-directory: ./API
+      #   run: |
+      #     dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
+      #     dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
+      #     dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
+      #   env:
+      #     DOTNET_ENVIRONMENT: Development
+      #     ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
+      #     JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+      #     JWT__Issuer: "http://localhost:5001"
+      #     JWT__Audience: "http://localhost:5173"
+
+      # - name: Install Playwright Browsers
+      #   run: npx playwright install --with-deps
+
+      # - name: Start Frontend Dev Server
+      #   run: npm run dev &
+
+      # - name: Wait for Services
+      #   run: |
+      #     echo "Waiting for services to start..."
+      #     sleep 15
+
+      # - name: Run Playwright tests
+      #   run: npx playwright test
+      #   env:
+      #     DOTNET_ENVIRONMENT: Development
+      #     ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
+      #     JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+      #     JWT__Issuer: "http://localhost:5001"
+      #     JWT__Audience: "http://localhost:5173"
+
+      # - name: Upload Playwright Report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: playwright-report
+      #     path: ./Client/playwright-report/
+      #     retention-days: 30
+
+      - name: Build Frontend
+        run: npm run build
+
+  backend:
+    name: Backend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./API
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Display Structure
+        run: |
+          pwd
+          echo "Current directory contents:"
+          ls -la
+          echo "API project contents:"
+          ls -la TenXCards.Api/
+
+      - name: Restore Solution Dependencies
+        run: dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+
+      - name: Build Solution
+        run: dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+
+      # - name: Run Tests
+      #   run: dotnet test --no-restore --verbosity normal --collect:"XPlat Code Coverage"
+      #   env:
+      #     DOTNET_ENVIRONMENT: Development
+      #     ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+      #     JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+      #     JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+      #     JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+
+      # - name: Upload Backend Test Results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: backend-test-results
+      #     path: ./API/TestResults/
+      #     retention-days: 30
+
+  # deploy:
+  #   name: Deploy to Render
+  #   needs: [frontend, backend]
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+    
+  #   steps:
+  #     - name: Deploy to Render
+  #       env:
+  #         RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+  #       run: |
+  #         curl -X GET "$RENDER_DEPLOY_HOOK_URL" 

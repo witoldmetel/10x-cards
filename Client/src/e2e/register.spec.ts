@@ -1,15 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
 import { TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_NAME } from './test-data';
 
 test.describe('Register', () => {
   let registerPage: RegisterPage;
-  let dashboardPage: DashboardPage;
 
   test.beforeEach(async ({ page }) => {
     registerPage = new RegisterPage(page);
-    dashboardPage = new DashboardPage(page);
   });
 
   test('should show registration form on register page', async ({ browser }) => {

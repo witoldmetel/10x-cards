@@ -1,11 +1,10 @@
-import { UseMutationResult, useMutation, useQueryClient } from '@tanstack/react-query';
+import {  useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard, archiveFlashcard } from './api';
 import type {
   CreateFlashcardDTO,
   Flashcard,
   UpdateFlashcardDTO,
   GenerateFlashcardsRequest,
-  GenerateFlashcardsResponse,
 } from './types';
 
 type ErrorResponse = {

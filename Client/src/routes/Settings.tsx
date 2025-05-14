@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useUser } from '@/api/user/queries';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
@@ -44,8 +43,7 @@ type ApiFormValues = z.infer<typeof apiSchema>;
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { userId } = useAuth();
-  const { data: user } = useUser(userId || '');
+  const { user } = useAuth();
 
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
@@ -93,7 +91,7 @@ export default function Settings() {
     }
   };
 
-  const onPasswordSubmit = async (data: PasswordFormValues) => {
+  const onPasswordSubmit = async () => {
     try {
       setIsUpdatingPassword(true);
       // In a real app, this would update password via API
@@ -112,7 +110,7 @@ export default function Settings() {
     }
   };
 
-  const onApiSubmit = async (data: ApiFormValues) => {
+  const onApiSubmit = async () => {
     try {
       setIsUpdatingApiKeys(true);
       // In a real app, this would update API keys via API
