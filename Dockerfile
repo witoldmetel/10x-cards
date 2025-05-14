@@ -7,15 +7,15 @@ COPY . .
 
 # Restore dependencies
 WORKDIR /app/API
-RUN dotnet restore ./TenXCards.API/TenXCards.Api.csproj
+RUN dotnet restore TenXCards.API/TenXCards.Api.csproj
 
 # Build
-RUN dotnet build ./TenXCards.API/TenXCards.Api.csproj -c Release -o /app/build
+RUN dotnet build TenXCards.API/TenXCards.Api.csproj -c Release -o /app/build
 
 # Publish
 FROM build AS publish
 WORKDIR /app/API
-RUN dotnet publish ./TenXCards.API/TenXCards.Api.csproj -c Release -o /app/publish
+RUN dotnet publish TenXCards.API/TenXCards.Api.csproj -c Release -o /app/publish
 
 # Final stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
