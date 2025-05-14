@@ -36,11 +36,43 @@ jobs:
       - name: Run Unit Tests
         run: npm run test
 
+      - name: Setup .NET for API
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Start Backend API
+        working-directory: ./API
+        run: |
+          dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
+          dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
+          dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
+      - name: Start Frontend Dev Server
+        run: npm run dev &
+
+      - name: Wait for Services
+        run: |
+          echo "Waiting for services to start..."
+          sleep 15
+
       - name: Run Playwright tests
         run: npx playwright test
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Upload Playwright Report
         if: always()
@@ -73,11 +105,11 @@ jobs:
           pwd
           echo "Current directory contents:"
           ls -la
-          echo "Solution file:"
-          ls -la TenXCards.sln
+          echo "API project contents:"
+          ls -la TenXCards.Api/
 
       - name: Restore Solution Dependencies
-        run: dotnet restore
+        run: dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -86,7 +118,7 @@ jobs:
           JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
       - name: Build Solution
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
@@ -103,13 +135,13 @@ jobs:
       #     JWT__Issuer: ${{ secrets.JWT_ISSUER }}
       #     JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
-      - name: Upload Backend Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-test-results
-          path: ./API/TestResults/
-          retention-days: 30
+      # - name: Upload Backend Test Results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: backend-test-results
+      #     path: ./API/TestResults/
+      #     retention-days: 30
 
   # deploy:
   #   name: Deploy to Render
