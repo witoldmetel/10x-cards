@@ -4,7 +4,7 @@ WORKDIR /API
 
 # Copy solution and project files
 COPY API/TenXCards.sln .
-COPY API/TenXCards.API/TenXCards.Api.csproj TenXCards.API/
+COPY TenXCards.API/TenXCards.Api.csproj TenXCards.API/
 COPY API/TenXCards.Core/TenXCards.Core.csproj TenXCards.Core/
 COPY API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj TenXCards.Infrastructure/
 
