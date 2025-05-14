@@ -8,9 +8,14 @@ COPY . .
 # Move to API directory and build
 WORKDIR /build/API
 
+# Create symbolic link to handle case sensitivity
+RUN ln -s TenXCards.Api TenXCards.API
+
 # Debug: Show project directory contents
 RUN echo "API project contents:" && \
-    ls -la TenXCards.Api/
+    ls -la TenXCards.Api/ && \
+    echo "\nSymlink check:" && \
+    ls -la TenXCards.API/
 
 RUN dotnet restore TenXCards.sln
 RUN dotnet build TenXCards.sln -c Release -o /app/build
