@@ -3,10 +3,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy the entire API directory with correct casing
-COPY ["API/TenXCards.sln", "API/"]
-COPY ["API/TenXCards.API/TenXCards.Api.csproj", "API/TenXCards.API/"]
-COPY ["API/TenXCards.Core/TenXCards.Core.csproj", "API/TenXCards.Core/"]
-COPY ["API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj", "API/TenXCards.Infrastructure/"]
+COPY API/TenXCards.sln ./API/
+COPY API/TenXCards.API/TenXCards.Api.csproj ./API/TenXCards.API/
+COPY API/TenXCards.Core/TenXCards.Core.csproj ./API/TenXCards.Core/
+COPY API/TenXCards.Infrastructure/TenXCards.Infrastructure.csproj ./API/TenXCards.Infrastructure/
 
 WORKDIR "/src/API"
 RUN dotnet restore
