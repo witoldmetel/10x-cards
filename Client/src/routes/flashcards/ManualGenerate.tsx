@@ -84,7 +84,7 @@ export default function ManualGenerate() {
   const { data, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
   const { mutateAsync: createCollection, isPending: isCreatingCollection } = useCreateCollection();
   const { mutateAsync: createFlashcard, isPending: isCreatingFlashcard } = useCreateFlashcard();
-  const { userId } = useAuth();
+  const { user } = useAuth();
 
   const [categoryInput, setCategoryInput] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
@@ -117,7 +117,7 @@ export default function ManualGenerate() {
   const onSubmit = async (data: FormValues) => {
     let targetCollectionId: string | null = null;
 
-    if (isNewCollectionForm(data) && userId) {
+    if (isNewCollectionForm(data) && user?.userId) {
       console.log(data.collection.categories);
       // Create new collection
       const payload: CreateCollection = {

@@ -8,6 +8,7 @@ import { TagBadge } from '@/components/ui/tag-badge';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { CollectionResponse } from '@/api/collections/types';
+import { ReviewStatus } from '@/api/flashcard/types';
 
 export default function Dashboard() {
   const { data, isLoading } = useCollections({ archived: false });
@@ -19,36 +20,36 @@ export default function Dashboard() {
     name: collection.name,
     description: collection.description,
     cardCount: collection.flashcards.length,
-    lastStudied: collection.lastStudiedAt ? timeAgo(collection.lastStudiedAt) : 'Never',
-    dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.status === 'pending_review')
+    lastStudied: 'Never',
+    dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
       .length,
-    masteryLevel: collection.masteryPercentage || 0,
+    masteryLevel:  0,
     categories: collection.categories || [],
     tags: collection.tags || [],
   }));
 
-  function timeAgo(date: Date) {
-    const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+  // function timeAgo(date: Date) {
+  //   const now = new Date();
+  //   const diffInDays = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) return 'Today';
-    if (diffInDays === 1) return 'Yesterday';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    return new Date(date).toLocaleDateString();
-  }
+  //   if (diffInDays === 0) return 'Today';
+  //   if (diffInDays === 1) return 'Yesterday';
+  //   if (diffInDays < 7) return `${diffInDays} days ago`;
+  //   return new Date(date).toLocaleDateString();
+  // }
 
   // Calculate statistics from real data
   const statistics = {
     totalCards: data?.collections.reduce((acc, collection) => acc + collection.flashcards.length, 0) || 0,
     totalCollections: data?.collections.length || 0,
     cardsToReview:
-      data?.collections.reduce(
-        (acc, collection) => acc + collection.flashcards.filter(f => f.status === 'pending_review').length,
+      data?.collections.reduce( 
+        (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
         0,
       ) || 0,
     cardsLearned:
       data?.collections.reduce(
-        (acc, collection) => acc + collection.flashcards.filter(f => f.status !== 'pending_review').length,
+        (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length,
         0,
       ) || 0,
     masteryLevel: calculateOverallMastery(data?.collections || []),
@@ -58,7 +59,10 @@ export default function Dashboard() {
   function calculateOverallMastery(collections: CollectionResponse[]) {
     if (collections.length === 0) return 0;
 
-    const totalMastery = collections.reduce((sum, collection) => sum + (collection.masteryPercentage || 0), 0);
+    // @todo: Implement mastery calculation
+    // const totalMastery = collections.reduce((sum, collection) => sum + (collection.masteryPercentage || 0), 0);
+    const totalMastery = 0;
+
     return Math.round(totalMastery / collections.length);
   }
 
@@ -285,7 +289,17 @@ export default function Dashboard() {
   );
 }
 
-const CollectionCard = ({ collection }: { collection: any }) => {
+const CollectionCard = ({ collection }: { collection: {
+  id: string;
+  name: string;
+  description: string | null;
+  cardCount: number;
+  lastStudied: string;
+  dueCards: number;
+  masteryLevel: number;
+  categories: string[];
+  tags: string[];
+} }) => {
   return (
     <Card>
       <CardHeader>

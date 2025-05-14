@@ -81,7 +81,7 @@ export default function CollectionDetails() {
     }
 
     // In a real app, this would update the flashcard's spaced repetition data
-    const card = collectionFlashcards?.[currentCardIndex];
+    // const card = collectionFlashcards?.[currentCardIndex];
     // updateFlashcard(card.id, {
     //   lastReviewed: new Date(),
     //   repetitions: grade >= 3 ? card.repetitions + 1 : 0,
@@ -195,17 +195,17 @@ export default function CollectionDetails() {
             <div>
               <p className='text-muted-foreground text-sm'>Last Studied</p>
               <p className='text-2xl font-medium'>
-                {collection.lastStudiedAt ? new Date(collection.lastStudiedAt).toLocaleDateString() : 'Never'}
+              Never
               </p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
-                <p className='text-2xl font-medium'>{collection.masteryPercentage || 0}%</p>
+                <p className='text-2xl font-medium'>{0}%</p>
                 <div className='w-full max-w-[100px] bg-muted rounded-full h-2'>
                   <div
                     className='bg-primary rounded-full h-2'
-                    style={{ width: `${collection.masteryPercentage || 0}%` }}></div>
+                    style={{ width: `${0}%` }}></div>
                 </div>
               </div>
             </div>

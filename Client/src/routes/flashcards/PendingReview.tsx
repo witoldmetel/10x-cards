@@ -35,7 +35,8 @@ export default function PendingReview() {
           collectionName: collection?.name || 'Unknown Collection',
           cards: [],
           count: 0,
-          lastStudied: collection?.lastStudiedAt ? new Date(collection.lastStudiedAt).toLocaleDateString() : 'Never',
+          lastStudied: 'Never',
+          masteryPercentage: 0,
         };
       }
 
@@ -63,7 +64,7 @@ export default function PendingReview() {
   const handleApprove = () => {
     if (!reviewingCollection) return;
 
-    const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
+    // const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
 
     // updateFlashcardMutation.mutate({
     //   id: currentCard.id,
@@ -80,7 +81,7 @@ export default function PendingReview() {
   const handleReject = () => {
     if (!reviewingCollection) return;
 
-    const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
+    // const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
 
     // Instead of deleting, mark it for status change without adding a notes field
     // updateFlashcard(currentCard.id, {
