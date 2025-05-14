@@ -5,28 +5,20 @@ WORKDIR /build
 # Copy the entire API directory
 COPY . .
 
-# Debug: Show directory structure
-RUN echo "Current directory:" && \
-    pwd && \
-    echo "\nDirectory contents:" && \
-    ls -la && \
-    echo "\nAPI directory contents:" && \
-    ls -la API/
-
 # Move to API directory and build
 WORKDIR /build/API
-RUN echo "Current directory:" && \
-    pwd && \
-    echo "\nDirectory contents:" && \
-    ls -la
 
-RUN dotnet restore
-RUN dotnet build -c Release -o /app/build
+# Debug: Show project directory contents
+RUN echo "API project contents:" && \
+    ls -la TenXCards.Api/
+
+RUN dotnet restore TenXCards.sln
+RUN dotnet build TenXCards.sln -c Release -o /app/build
 
 # Publish
 FROM build AS publish
 WORKDIR /build/API
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish TenXCards.sln -c Release -o /app/publish
 
 # Final stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
