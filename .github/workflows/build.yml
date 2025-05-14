@@ -15,6 +15,21 @@ jobs:
       run:
         working-directory: ./Client
 
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: ten_x_cards_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: TenX@2024!SecurePass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -49,10 +64,10 @@ jobs:
           dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
         env:
           DOTNET_ENVIRONMENT: Development
-          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
           JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
-          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+          JWT__Issuer: "http://localhost:5001"
+          JWT__Audience: "http://localhost:5173"
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -69,10 +84,10 @@ jobs:
         run: npx playwright test
         env:
           DOTNET_ENVIRONMENT: Development
-          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
           JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
-          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+          JWT__Issuer: "http://localhost:5001"
+          JWT__Audience: "http://localhost:5173"
 
       - name: Upload Playwright Report
         if: always()
