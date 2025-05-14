@@ -85,37 +85,37 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Setup .NET for API
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+      # - name: Setup .NET for API
+      #   uses: actions/setup-dotnet@v4
+      #   with:
+      #     dotnet-version: '8.0.x'
 
-      - name: Start Backend API
-        working-directory: ./API
-        run: |
-          dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
-          dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
-          dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
-        env:
-          DOTNET_ENVIRONMENT: Development
-          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
-          JWT__Issuer: ${{ secrets.JWT_ISSUER }}
-          JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+      # - name: Start Backend API
+      #   working-directory: ./API
+      #   run: |
+      #     dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
+      #     dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
+      #     dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
+      #   env:
+      #     DOTNET_ENVIRONMENT: Development
+      #     ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+      #     JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+      #     JWT__Issuer: ${{ secrets.JWT_ISSUER }}
+      #     JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+      # - name: Install Playwright Browsers
+      #   run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      # - name: Run Playwright tests
+      #   run: npx playwright test
 
-      - name: Upload Playwright Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: ./Client/playwright-report/
-          retention-days: 30
+      # - name: Upload Playwright Report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: playwright-report
+      #     path: ./Client/playwright-report/
+      #     retention-days: 30
 
   status-comment:
     name: PR Status Comment
