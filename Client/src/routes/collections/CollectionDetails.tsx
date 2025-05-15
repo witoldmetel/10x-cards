@@ -42,11 +42,11 @@ export default function CollectionDetails() {
 
   const collectionFlashcards =
     collection?.flashcards.filter(
-      collection => collection.reviewStatus === ReviewStatus.Approved && !collection.archivedAt
+      collection => collection.reviewStatus === ReviewStatus.Approved && !collection.archivedAt,
     ) || [];
   const pendingReviewCount =
     collection?.flashcards.filter(
-      collection => collection.reviewStatus === ReviewStatus.ToCorrect && !collection.archivedAt
+      collection => collection.reviewStatus === ReviewStatus.ToCorrect && !collection.archivedAt,
     )?.length || 0;
 
   const startStudySession = () => {
@@ -314,10 +314,19 @@ export default function CollectionDetails() {
             <TabsTrigger value='pending' disabled={pendingReviewCount === 0}>
               Pending Review ({pendingReviewCount})
             </TabsTrigger>
-            {collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt).length > 0 && (
+            {collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt)
+              .length > 0 && (
               <TabsTrigger value='rejected'>
-                Rejected ({collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt).length})
+                Rejected (
+                {
+                  collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt)
+                    .length
+                }
+                )
               </TabsTrigger>
+            )}
+            {collection.archivedFlashcards.length > 0 && (
+              <TabsTrigger value='archived'>Archived ({collection.archivedFlashcards.length})</TabsTrigger>
             )}
           </TabsList>
 
@@ -393,6 +402,29 @@ export default function CollectionDetails() {
                     </CardContent>
                   </Card>
                 ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value='archived'>
+            <div className='space-y-4'>
+              {collection.archivedFlashcards.map(flashcard => (
+                <Card key={flashcard.id}>
+                  <CardContent className='p-4'>
+                    <div className='mb-2'>
+                      <h3 className='font-medium'>Question:</h3>
+                      <p>{flashcard.front}</p>
+                    </div>
+                    <div>
+                      <h3 className='font-medium'>Answer:</h3>
+                      <p>{flashcard.back}</p>
+                    </div>
+                    <div className='mt-3 text-xs inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded'>
+                      Archived
+                    </div>
+                    <FlashcardActions flashcard={flashcard} />
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
         </Tabs>

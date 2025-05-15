@@ -9,10 +9,12 @@ import type {
 } from './types';
 
 export async function getCollections(params?: CollectionsQueryParams): Promise<PaginatedCollectionsResponse> {
-  const cleanParams = params ? {
-    ...params,
-    searchQuery: params.searchQuery ? params.searchQuery : undefined
-  } : undefined;
+  const cleanParams = params
+    ? {
+        ...params,
+        searchQuery: params.searchQuery ? params.searchQuery : undefined,
+      }
+    : undefined;
 
   const { data } = await instance.get<PaginatedCollectionsResponse>(COLLECTIONS_API_BASE, { params: cleanParams });
 

@@ -16,11 +16,11 @@ export default function Archive() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCardsQuery, setSearchCardsQuery] = useState('');
-  
-  const { data, isLoading , refetch} = useCollections({
-    searchQuery
+
+  const { data, isLoading, refetch } = useCollections({
+    searchQuery,
   });
-  
+
   const unarchiveCollectionMutation = useUnarchiveCollection({
     onSuccess: () => {
       toast.success('Collection restored successfully');
@@ -57,27 +57,30 @@ export default function Archive() {
     );
   }
 
-  const allArchivedCollections = data?.collections.filter(collection => collection.archivedAt).map(collection => ({
-    ...collection,
-    archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date'
-  })) || [];
+  const allArchivedCollections =
+    data?.collections
+      .filter(collection => collection.archivedAt)
+      .map(collection => ({
+        ...collection,
+        archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date',
+      })) || [];
 
-  const allArchivedFlashcards = data?.collections.flatMap(collection => 
-    collection.archivedFlashcards.map(flashcard => ({
-      ...flashcard,
-      collectionName: collection.name
-    }))
-  ) || [];
+  const allArchivedFlashcards =
+    data?.collections.flatMap(collection =>
+      collection.archivedFlashcards.map(flashcard => ({
+        ...flashcard,
+        collectionName: collection.name,
+      })),
+    ) || [];
 
   const filteredFlashcards = searchCardsQuery
     ? allArchivedFlashcards.filter(
         card =>
           card.front.toLowerCase().includes(searchCardsQuery.toLowerCase()) ||
           card.back.toLowerCase().includes(searchCardsQuery.toLowerCase()) ||
-          card.collectionName.toLowerCase().includes(searchCardsQuery.toLowerCase())
+          card.collectionName.toLowerCase().includes(searchCardsQuery.toLowerCase()),
       )
     : allArchivedFlashcards;
-
 
   if (allArchivedCollections.length === 0 && allArchivedFlashcards.length === 0) {
     return (
@@ -134,54 +137,63 @@ export default function Archive() {
             </div>
           ) : (
             <div className='space-y-6'>
-              {allArchivedCollections.length > 0 ? allArchivedCollections.map(collection => (
-                <Card key={collection.id}>
-                  <CardHeader>
-                    <CardTitle>{collection.name}</CardTitle>
-                    <CardDescription>{collection.description}</CardDescription>
-                    {/* Display categories and tags */}
-                    <div className='flex flex-wrap gap-2 mt-2'>
-                      {collection.categories &&
-                        collection.categories.length > 0 &&
-                        collection.categories.map(category => (
-                          <TagBadge key={`category-${category}`} text={category} variant='category' />
-                        ))}
-                      {collection.tags &&
-                        collection.tags.length > 0 &&
-                        collection.tags.map(tag => <TagBadge key={`tag-${tag}`} text={tag} variant='tag' />)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <p className='text-muted-foreground text-sm'>Archived Cards</p>
-                        <p className='font-medium'>{collection.archivedFlashcards?.length || 0}</p>
+              {allArchivedCollections.length > 0 ? (
+                allArchivedCollections.map(collection => (
+                  <Card key={collection.id}>
+                    <CardHeader>
+                      <CardTitle>{collection.name}</CardTitle>
+                      <CardDescription>{collection.description}</CardDescription>
+                      {/* Display categories and tags */}
+                      <div className='flex flex-wrap gap-2 mt-2'>
+                        {collection.categories &&
+                          collection.categories.length > 0 &&
+                          collection.categories.map(category => (
+                            <TagBadge key={`category-${category}`} text={category} variant='category' />
+                          ))}
+                        {collection.tags &&
+                          collection.tags.length > 0 &&
+                          collection.tags.map(tag => <TagBadge key={`tag-${tag}`} text={tag} variant='tag' />)}
                       </div>
-                      <div>
-                        <p className='text-muted-foreground text-sm'>Archived Date</p>
-                        <p className='font-medium'>
-                          {collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date'}
-                        </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div>
+                          <p className='text-muted-foreground text-sm'>Archived Cards</p>
+                          <p className='font-medium'>{collection.archivedFlashcards?.length || 0}</p>
+                        </div>
+                        <div>
+                          <p className='text-muted-foreground text-sm'>Archived Date</p>
+                          <p className='font-medium'>
+                            {collection.archivedAt
+                              ? new Date(collection.archivedAt).toLocaleDateString()
+                              : 'Unknown date'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className='flex justify-between'>
-                    <Button variant='ghost' size='sm' onClick={() => handleUnarchive(collection.id)}>
-                      <ArchiveRestore size={16} className='mr-2' />
-                      Unarchive
-                    </Button>
-                    <Button variant='ghost' size='sm' onClick={() => navigate(`/collections/archive/${collection.id}`)}>
-                      View Details
-                      <ArrowRight size={16} className='ml-2' />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              )) : (
+                    </CardContent>
+                    <CardFooter className='flex justify-between'>
+                      <Button variant='ghost' size='sm' onClick={() => handleUnarchive(collection.id)}>
+                        <ArchiveRestore size={16} className='mr-2' />
+                        Unarchive
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => navigate(`/collections/archive/${collection.id}`)}>
+                        View Details
+                        <ArrowRight size={16} className='ml-2' />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))
+              ) : (
                 <div className='flex flex-col items-center justify-center my-24'>
-                <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
-                <h2 className='text-2xl font-semibold mb-2'>No archived collections</h2>
-                <p className='text-neutral-600 mb-6 text-center max-w-md'>Collections that you archive will appear here.</p>
-              </div>
+                  <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
+                  <h2 className='text-2xl font-semibold mb-2'>No archived collections</h2>
+                  <p className='text-neutral-600 mb-6 text-center max-w-md'>
+                    Collections that you archive will appear here.
+                  </p>
+                </div>
               )}
             </div>
           )}
@@ -223,9 +235,7 @@ export default function Archive() {
                       <p>{flashcard.back}</p>
                     </div>
                     <div className='flex items-center justify-between'>
-                      <div className='text-xs text-muted-foreground'>
-                        Collection: {flashcard.collectionName}
-                      </div>
+                      <div className='text-xs text-muted-foreground'>Collection: {flashcard.collectionName}</div>
                       <Button variant='ghost' size='sm' onClick={() => handleUnarchiveFlashcard(flashcard.id)}>
                         <ArchiveRestore size={16} className='mr-2' />
                         Restore

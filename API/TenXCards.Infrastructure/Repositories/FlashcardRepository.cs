@@ -42,11 +42,20 @@ namespace TenXCards.Infrastructure.Repositories
                 query = query.Where(f => f.CollectionId == queryParams.CollectionId);
             }
 
-            if (!queryParams.IncludeArchived && queryParams.Archived.HasValue)
+            // Handle archived status
+            if (!queryParams.IncludeArchived)
             {
-                query = queryParams.Archived.Value
-                    ? query.Where(f => f.ArchivedAt != null)
-                    : query.Where(f => f.ArchivedAt == null);
+                if (queryParams.Archived.HasValue)
+                {
+                    query = queryParams.Archived.Value
+                        ? query.Where(f => f.ArchivedAt != null)
+                        : query.Where(f => f.ArchivedAt == null);
+                }
+                else
+                {
+                    // Default to non-archived if not specified
+                    query = query.Where(f => f.ArchivedAt == null);
+                }
             }
 
             query = ApplyFilters(query, queryParams);

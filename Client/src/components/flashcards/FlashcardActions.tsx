@@ -3,10 +3,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Trash2, Archive, Check, X } from 'lucide-react';
+import { Edit, Trash2, Archive, Check, X, ArchiveRestore } from 'lucide-react';
 import { toast } from 'sonner';
 import { Flashcard } from '@/api/flashcard/types';
-import { useArchiveFlashcard, useDeleteFlashcard, useUpdateFlashcard } from '@/api/flashcard/mutations';
+import {
+  useArchiveFlashcard,
+  useDeleteFlashcard,
+  useUpdateFlashcard,
+  useUnarchiveFlashcard,
+} from '@/api/flashcard/mutations';
 import { ReviewStatus } from '@/api/flashcard/types';
 
 interface FlashcardActionsProps {
@@ -16,6 +21,7 @@ interface FlashcardActionsProps {
 export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
   const updateFlashcardMutation = useUpdateFlashcard();
   const archiveFlashcardMutation = useArchiveFlashcard();
+  const unarchiveFlashcardMutation = useUnarchiveFlashcard();
   const deleteFlashcardMutation = useDeleteFlashcard();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -68,6 +74,11 @@ export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
     toast.success('Flashcard archived');
   };
 
+  const handleUnarchive = async () => {
+    await unarchiveFlashcardMutation.mutateAsync(flashcard.id);
+    toast.success('Flashcard unarchived');
+  };
+
   if (isEditing) {
     return (
       <div className='space-y-4 mt-4'>
@@ -97,10 +108,21 @@ export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
         <Button size='sm' variant='outline' onClick={handleEdit} className='h-8 w-8 p-0' title='Edit'>
           <Edit size={16} />
         </Button>
-        <Button size='sm' variant='outline' onClick={handleArchive} className='h-8 w-8 p-0' title='Archive'>
-          <Archive size={16} />
-        </Button>
-        <Button size='sm' variant='outline' onClick={() => setIsDeleteModalOpen(true)} className='h-8 w-8 p-0' title='Delete'>
+        {flashcard.archivedAt ? (
+          <Button size='sm' variant='outline' onClick={handleUnarchive} className='h-8 w-8 p-0' title='Unarchive'>
+            <ArchiveRestore size={16} />
+          </Button>
+        ) : (
+          <Button size='sm' variant='outline' onClick={handleArchive} className='h-8 w-8 p-0' title='Archive'>
+            <Archive size={16} />
+          </Button>
+        )}
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={() => setIsDeleteModalOpen(true)}
+          className='h-8 w-8 p-0'
+          title='Delete'>
           <Trash2 size={16} />
         </Button>
       </div>

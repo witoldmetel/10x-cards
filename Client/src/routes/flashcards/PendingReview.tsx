@@ -20,7 +20,7 @@ export default function PendingReview() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState({
     front: '',
-    back: ''
+    back: '',
   });
 
   const { data: collections } = useCollections({ archived: false });
@@ -83,8 +83,8 @@ export default function PendingReview() {
       await updateFlashcardMutation.mutateAsync({
         id: currentCard.id,
         flashcard: {
-          reviewStatus: ReviewStatus.Approved
-        }
+          reviewStatus: ReviewStatus.Approved,
+        },
       });
 
       toast.success('Card approved and added to learning');
@@ -103,8 +103,8 @@ export default function PendingReview() {
       await updateFlashcardMutation.mutateAsync({
         id: currentCard.id,
         flashcard: {
-          reviewStatus: ReviewStatus.Rejected
-        }
+          reviewStatus: ReviewStatus.Rejected,
+        },
       });
 
       toast.error('Card rejected');
@@ -138,11 +138,11 @@ export default function PendingReview() {
 
   const handleEdit = () => {
     if (!reviewingCollection) return;
-    
+
     const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
     setEditedValues({
       front: currentCard.front,
-      back: currentCard.back
+      back: currentCard.back,
     });
     setIsEditing(true);
   };
@@ -157,8 +157,8 @@ export default function PendingReview() {
         id: currentCard.id,
         flashcard: {
           front: editedValues.front,
-          back: editedValues.back
-        }
+          back: editedValues.back,
+        },
       });
 
       // Update the card in local state to reflect changes
@@ -167,11 +167,9 @@ export default function PendingReview() {
         [reviewingCollection]: {
           ...prev[reviewingCollection],
           cards: prev[reviewingCollection].cards.map((card: typeof currentCard) =>
-            card.id === currentCard.id
-              ? { ...card, front: editedValues.front, back: editedValues.back }
-              : card
-          )
-        }
+            card.id === currentCard.id ? { ...card, front: editedValues.front, back: editedValues.back } : card,
+          ),
+        },
       }));
 
       setIsEditing(false);
@@ -185,7 +183,7 @@ export default function PendingReview() {
     setIsEditing(false);
     setEditedValues({
       front: '',
-      back: ''
+      back: '',
     });
   };
 
@@ -227,11 +225,11 @@ export default function PendingReview() {
           <CardContent>
             {isEditing ? (
               <Textarea
-                name="front"
+                name='front'
                 value={editedValues.front}
                 onChange={handleChange}
-                placeholder="Enter question..."
-                className="min-h-[100px]"
+                placeholder='Enter question...'
+                className='min-h-[100px]'
               />
             ) : (
               <p className='text-lg'>{currentCard.front}</p>
@@ -246,11 +244,11 @@ export default function PendingReview() {
           <CardContent>
             {isEditing ? (
               <Textarea
-                name="back"
+                name='back'
                 value={editedValues.back}
                 onChange={handleChange}
-                placeholder="Enter answer..."
-                className="min-h-[100px]"
+                placeholder='Enter answer...'
+                className='min-h-[100px]'
               />
             ) : (
               <p className='text-lg'>{currentCard.back}</p>

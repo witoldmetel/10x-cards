@@ -1,5 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard, archiveFlashcard, unarchiveFlashcard } from './api';
+import {
+  createFlashcard,
+  deleteFlashcard,
+  generateFlashcards,
+  updateFlashcard,
+  archiveFlashcard,
+  unarchiveFlashcard,
+} from './api';
 import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsRequest } from './types';
 
 import { UseMutationOptions } from '@tanstack/react-query';

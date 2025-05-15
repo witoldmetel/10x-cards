@@ -60,7 +60,7 @@ export default function ArchivedCollectionDetails() {
     ? collection.archivedFlashcards.filter(
         card =>
           card.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          card.back.toLowerCase().includes(searchQuery.toLowerCase())
+          card.back.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : collection.archivedFlashcards;
 
@@ -156,4 +156,4 @@ export default function ArchivedCollectionDetails() {
       </div>
     </div>
   );
-} 
+}

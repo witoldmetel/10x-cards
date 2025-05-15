@@ -1,4 +1,4 @@
-import {  ArrowRight, Plus, Search } from 'lucide-react';
+import { ArrowRight, Plus, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCollections } from '@/api/collections/queries';
@@ -24,9 +24,9 @@ export default function Dashboard() {
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data, isLoading } = useCollections({ 
+  const { data, isLoading } = useCollections({
     archived: false,
-    ...(searchQuery ? { searchQuery } : {})
+    ...(searchQuery ? { searchQuery } : {}),
   });
 
   const debouncedSetSearchQuery = debounce((value: string) => {
@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+
     setInputValue(value);
     debouncedSetSearchQuery(value);
   };
@@ -46,16 +46,18 @@ export default function Dashboard() {
     };
   }, []);
 
-  const collections = useMemo(() => 
-    data?.collections.map(collection => ({
-      ...collection,
-      cardCount: collection.flashcards.length,
-      lastStudied: 'Never',
-      dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
-        .length,
-      masteryLevel: 0,
-    })) as CollectionCardProps[],
-    [data?.collections]
+  const collections = useMemo(
+    () =>
+      data?.collections.map(collection => ({
+        ...collection,
+        cardCount: collection.flashcards.length,
+        lastStudied: 'Never',
+        dueCards: collection.flashcards.filter(
+          f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
+        ).length,
+        masteryLevel: 0,
+      })) as CollectionCardProps[],
+    [data?.collections],
   );
 
   // Keep the mock recent activity for now
@@ -238,7 +240,8 @@ export default function Dashboard() {
               <div className='flex flex-col sm:flex-row justify-between items-center'>
                 <div>
                   <p className='text-lg font-medium mb-1'>
-                    You have {collections.reduce((acc, collection) => acc + collection.dueCards, 0)} cards due for review
+                    You have {collections.reduce((acc, collection) => acc + collection.dueCards, 0)} cards due for
+                    review
                   </p>
                   <p className='text-muted-foreground'>Keeping up with reviews improves long-term memory retention</p>
                 </div>

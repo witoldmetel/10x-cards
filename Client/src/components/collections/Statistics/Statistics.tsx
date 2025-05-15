@@ -16,15 +16,26 @@ export function Statistics() {
   const collections = data.collections;
 
   const statistics = {
-    totalCards: collections.reduce((acc: number, collection: CollectionResponse) => 
-      acc + collection.flashcards.length + collection.archivedFlashcards.length, 0),
+    totalCards: collections.reduce(
+      (acc: number, collection: CollectionResponse) =>
+        acc + collection.flashcards.length + collection.archivedFlashcards.length,
+      0,
+    ),
     totalCollections: collections.length,
-    cardsToReview: collections.reduce((acc: number, collection: CollectionResponse) => 
-      acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length, 0),
-    cardsLearned: collections.reduce((acc: number, collection: CollectionResponse) => 
-      acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length, 0),
-    archivedCards: collections.reduce((acc: number, collection: CollectionResponse) => 
-      acc + collection.archivedFlashcards.length, 0),
+    cardsToReview: collections.reduce(
+      (acc: number, collection: CollectionResponse) =>
+        acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
+      0,
+    ),
+    cardsLearned: collections.reduce(
+      (acc: number, collection: CollectionResponse) =>
+        acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length,
+      0,
+    ),
+    archivedCards: collections.reduce(
+      (acc: number, collection: CollectionResponse) => acc + collection.archivedFlashcards.length,
+      0,
+    ),
     masteryLevel: calculateOverallMastery(collections),
     streak: 0,
   };
@@ -47,7 +58,9 @@ export function Statistics() {
           <CardTitle className='text-3xl'>{statistics.cardsToReview}</CardTitle>
         </CardHeader>
         <CardFooter>
-          <Link to='/flashcards/pending-review' className='text-sm text-primary hover:underline flex items-center gap-1'>
+          <Link
+            to='/flashcards/pending-review'
+            className='text-sm text-primary hover:underline flex items-center gap-1'>
             Review now <ArrowRight size={14} />
           </Link>
         </CardFooter>
@@ -118,4 +131,4 @@ export function Statistics() {
       </Card>
     </div>
   );
-} 
+}
