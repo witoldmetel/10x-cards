@@ -1,18 +1,21 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { AuthResponse, User } from '@/api/user/types';
 import { useQueryClient } from '@tanstack/react-query';
+import { getUserById } from '@/api/user/api';
 
 const AuthContext = createContext<{
   isAuth: boolean;
   user: User | null;
   onLogin: (data: AuthResponse) => void;
   onLogout: () => void;
+  updateUserData: (user: User) => void;
 }>({
   isAuth: false,
   user: null,
   onLogin: () => {},
   onLogout: () => {},
+  updateUserData: () => {},
 });
 
 type AuthProviderProps = {
@@ -25,7 +28,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const queryClient = useQueryClient();
 
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      if (token && !user) {
+        try {
+          const storedUser = localStorage.getItem('user');
+          const userData = storedUser ? JSON.parse(storedUser) : null;
+          
+          if (userData?.userId) {
+            const freshUserData = await getUserById(userData.userId);
+            setUser(freshUserData);
+            localStorage.setItem('user', JSON.stringify(freshUserData));
+          } else {
+            handleLogout();
+          }
+        } catch (error) {
+          handleLogout();
+        }
+      }
+    };
+
+    initializeAuth();
+  }, [token]);
 
   const handleLogin = async (data: AuthResponse) => {
     if (!data.token) {
@@ -40,12 +69,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(data.user);
 
     localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
 
-    // Invalidate all queries to force fresh data fetch
     await queryClient.invalidateQueries();
 
     const origin = location.state?.from?.pathname || '/dashboard';
-
     navigate(origin);
   };
 
@@ -53,11 +81,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setToken('');
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     
-    // Clear all queries on logout
     queryClient.clear();
     
     navigate('/login');
+  };
+
+  const updateUserData = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   const value = {
@@ -65,6 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     onLogin: handleLogin,
     onLogout: handleLogout,
+    updateUserData,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
