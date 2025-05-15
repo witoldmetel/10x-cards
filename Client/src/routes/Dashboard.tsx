@@ -5,7 +5,8 @@ import { useCollections } from '@/api/collections/queries';
 import { Link } from 'react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { debounce } from 'lodash';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -19,34 +20,50 @@ export type CollectionCardProps = CollectionResponse & {
 };
 
 export default function Dashboard() {
+  const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data, isLoading } = useCollections({ 
     archived: false,
-    searchQuery 
+    ...(searchQuery ? { searchQuery } : {})
   });
 
-  const collections = data?.collections.map(collection => ({
-    ...collection,
-    cardCount: collection.flashcards.length,
-    lastStudied: 'Never',
-    dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
-      .length,
-    masteryLevel: 0,
-  })) as CollectionCardProps[];
+  // Create a debounced version of setSearchQuery
+  const debouncedSetSearchQuery = useCallback(
+    debounce((value: string) => {
+      setSearchQuery(value.trim());
+    }, 300),
+    []
+  );
 
-  // function timeAgo(date: Date) {
-  //   const now = new Date();
-  //   const diffInDays = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+  // Handle input change
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    debouncedSetSearchQuery(value);
+  };
 
-  //   if (diffInDays === 0) return 'Today';
-  //   if (diffInDays === 1) return 'Yesterday';
-  //   if (diffInDays < 7) return `${diffInDays} days ago`;
-  //   return new Date(date).toLocaleDateString();
-  // }
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, [debouncedSetSearchQuery]);
+
+  const collections = useMemo(() => 
+    data?.collections.map(collection => ({
+      ...collection,
+      cardCount: collection.flashcards.length,
+      lastStudied: 'Never',
+      dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
+        .length,
+      masteryLevel: 0,
+    })) as CollectionCardProps[],
+    [data?.collections]
+  );
 
   // Calculate statistics from real data
-  const statistics = {
+  const statistics = useMemo(() => ({
     totalCards: data?.collections.reduce((acc, collection) => acc + collection.flashcards.length, 0) || 0,
     totalCollections: data?.collections.length || 0,
     cardsToReview:
@@ -60,8 +77,8 @@ export default function Dashboard() {
         0,
       ) || 0,
     masteryLevel: calculateOverallMastery(data?.collections || []),
-    streak: 0, // This would require a proper streak tracking system
-  };
+    streak: 0,
+  }), [data?.collections]);
 
   function calculateOverallMastery(collections: CollectionResponse[]) {
     if (collections.length === 0) return 0;
@@ -203,9 +220,9 @@ export default function Dashboard() {
               <Input
                 placeholder='Search collections...'
                 className='pl-9 bg-white'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                disabled={collections?.length === 0 && !searchQuery}
+                value={inputValue}
+                onChange={handleSearchInputChange}
+                disabled={collections?.length === 0 && !inputValue}
               />
             </div>
           </div>

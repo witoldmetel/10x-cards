@@ -146,11 +146,14 @@ namespace TenXCards.Infrastructure.Repositories
 
             if (collection == null) return false;
 
-            var activeFlashcards = collection.Flashcards.Count(f => f.ArchivedAt == null);
-            if (activeFlashcards > 0) return false;
-
             var now = DateTime.UtcNow;
             collection.ArchivedAt = now;
+
+            // Archive all flashcards in the collection
+            foreach (var flashcard in collection.Flashcards)
+            {
+                flashcard.ArchivedAt = now;
+            }
 
             await _context.SaveChangesAsync();
             return true;

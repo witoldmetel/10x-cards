@@ -178,26 +178,10 @@ namespace TenXCards.Core.Services
             flashcard.ArchivedAt = DateTime.UtcNow;
             var updatedFlashcard = await _repository.UpdateAsync(flashcard);
 
-            // Get the collection and update its statistics
+            // Update collection statistics
             if (flashcard.CollectionId != Guid.Empty)
             {
-                var collection = await _collectionRepository.GetByIdAsync(flashcard.CollectionId, flashcard.UserId);
-                if (collection != null)
-                {
-                    // Check if all flashcards in the collection are archived
-                    var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams 
-                    { 
-                        CollectionId = flashcard.CollectionId, 
-                        Offset = 0, 
-                        Limit = int.MaxValue 
-                    });
-
-                    if (allInCollection.Items.All(f => f.ArchivedAt != null))
-                    {
-                        // Archive the collection if all flashcards are archived
-                        await _collectionService.ArchiveAsync(flashcard.CollectionId, flashcard.UserId);
-                    }
-                }
+                await _collectionRepository.UpdateCollectionStatistics(flashcard.CollectionId);
             }
 
             return MapToResponseDto(updatedFlashcard);

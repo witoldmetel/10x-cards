@@ -17,7 +17,7 @@ export default function Archive() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCardsQuery, setSearchCardsQuery] = useState('');
   
-  const { data, isLoading } = useCollections({
+  const { data, isLoading , refetch} = useCollections({
     searchQuery
   });
   
@@ -33,6 +33,7 @@ export default function Archive() {
 
   const unarchiveFlashcardMutation = useUnarchiveFlashcard({
     onSuccess: () => {
+      refetch();
       toast.success('Flashcard restored successfully');
     },
     onError: () => {

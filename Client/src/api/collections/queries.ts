@@ -4,8 +4,9 @@ import type { CollectionResponse, CollectionsQueryParams, PaginatedCollectionsRe
 
 export function useCollections(params?: CollectionsQueryParams) {
   return useQuery<PaginatedCollectionsResponse>({
-    queryKey: ['collections', params],
+    queryKey: ['collections', { archived: params?.archived, searchQuery: params?.searchQuery }],
     queryFn: () => getCollections(params),
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 }
 

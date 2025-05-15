@@ -196,13 +196,8 @@ namespace TenXCards.Core.Services
             var archived = await _collectionRepository.ArchiveAsync(id, userId);
             if (!archived) return false;
             
-            // Cascade: archive all flashcards in this collection
-            var flashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams { CollectionId = id, Offset = 0, Limit = MaxLimit });
-            foreach (var card in flashcards.Items)
-            {
-                card.ArchivedAt = DateTime.UtcNow;
-                await _flashcardRepository.UpdateAsync(card);
-            }
+            // Update collection statistics after archiving
+            await _collectionRepository.UpdateCollectionStatistics(id);
             return true;
         }
 
