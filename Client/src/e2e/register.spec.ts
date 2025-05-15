@@ -70,11 +70,14 @@ test.describe('Register', () => {
     // Now try to register again with the same email in a new context
     const newContext = await browser.newContext({ storageState: undefined });
     const newPage = await newContext.newPage();
-    registerPage = new RegisterPage(newPage);
+    const newRegisterPage = new RegisterPage(newPage);
 
-    await registerPage.goto();
-    await registerPage.register(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
-    await registerPage.expectErrorMessage('Request failed with status code 400');
+    await newRegisterPage.goto();
+    await newRegisterPage.register(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
+
+    // Verify we're still on the register page and see the error
+    await expect(newPage.url()).toContain('/register');
+    await newRegisterPage.expectErrorMessage('Email already exists');
 
     await context.close();
     await newContext.close();
