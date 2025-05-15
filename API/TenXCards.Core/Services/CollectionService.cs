@@ -24,10 +24,36 @@ namespace TenXCards.Core.Services
         public async Task<CollectionsResponse> GetAllAsync(CollectionsQueryParams queryParams, Guid userId)
         {
             var (items, total) = await _collectionRepository.GetAllAsync(queryParams, userId);
+            var collectionsWithFlashcards = new List<CollectionResponseDto>();
+
+            foreach (var collection in items)
+            {
+                // Get all flashcards for this collection (both active and archived)
+                var allFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+                { 
+                    CollectionId = collection.Id,
+                    UserId = userId,
+                    Offset = 0,
+                    Limit = MaxLimit,
+                    IncludeArchived = true
+                });
+
+                // Split flashcards into active and archived
+                var activeFlashcards = allFlashcards.Items.Where(f => f.ArchivedAt == null).ToList();
+                var archivedFlashcards = allFlashcards.Items.Where(f => f.ArchivedAt != null).ToList();
+
+                // Update collection's flashcards list to only include active ones
+                collection.Flashcards = activeFlashcards;
+
+                collectionsWithFlashcards.Add(MapToResponseDtoWithArchivedFlashcards(
+                    collection, 
+                    archivedFlashcards.Select(MapFlashcardToDto).ToList()
+                ));
+            }
             
             return new CollectionsResponse
             {
-                Collections = items.Select(MapToResponseDto),
+                Collections = collectionsWithFlashcards,
                 Limit = queryParams.Limit,
                 Offset = queryParams.Offset,
                 TotalCount = total
@@ -79,15 +105,24 @@ namespace TenXCards.Core.Services
             var collection = await _collectionRepository.GetByIdAsync(id, userId);
             if (collection == null) return null;
 
-            var archivedFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+            // Get all flashcards for this collection (both active and archived)
+            var allFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
             { 
                 CollectionId = id,
-                Archived = true,
+                UserId = userId,
                 Offset = 0,
-                Limit = MaxLimit 
+                Limit = MaxLimit,
+                IncludeArchived = true
             });
 
-            return MapToResponseDtoWithArchivedFlashcards(collection, archivedFlashcards.Items.Select(MapFlashcardToDto).ToList());
+            // Split flashcards into active and archived
+            var activeFlashcards = allFlashcards.Items.Where(f => f.ArchivedAt == null).ToList();
+            var archivedFlashcards = allFlashcards.Items.Where(f => f.ArchivedAt != null).ToList();
+
+            // Update collection's flashcards list to only include active ones
+            collection.Flashcards = activeFlashcards;
+
+            return MapToResponseDtoWithArchivedFlashcards(collection, archivedFlashcards.Select(MapFlashcardToDto).ToList());
         }
 
         public async Task<CollectionResponseDto?> UpdateAsync(Guid id, UpdateCollectionDto updateDto, Guid userId)
@@ -193,17 +228,6 @@ namespace TenXCards.Core.Services
 
         private static CollectionResponseDto MapToResponseDtoWithArchivedFlashcards(Collection collection, List<FlashcardResponseDto> archivedFlashcards)
         {
-            var activeFlashcards = collection.Flashcards
-                .Where(f => f.ArchivedAt == null)
-                .Select(MapFlashcardToDto)
-                .ToList();
-
-            var allArchivedFlashcards = collection.Flashcards
-                .Where(f => f.ArchivedAt != null)
-                .Select(MapFlashcardToDto)
-                .Union(archivedFlashcards)
-                .ToList();
-
             return new CollectionResponseDto
             {
                 Id = collection.Id,
@@ -220,8 +244,8 @@ namespace TenXCards.Core.Services
                 Color = collection.Color,
                 Tags = collection.Tags,
                 Categories = collection.Categories,
-                Flashcards = activeFlashcards,
-                ArchivedFlashcards = allArchivedFlashcards
+                Flashcards = collection.Flashcards.Select(MapFlashcardToDto).ToList(),
+                ArchivedFlashcards = archivedFlashcards
             };
         }
 

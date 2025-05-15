@@ -173,20 +173,34 @@ namespace TenXCards.Core.Services
             var flashcard = await _repository.GetByIdAsync(id);
             if (flashcard == null)
                 return null;
-            flashcard.ArchivedAt = DateTime.UtcNow;
-            await _repository.UpdateAsync(flashcard);
 
-            // Check if all flashcards in the collection are archived
+            // Set archive timestamp
+            flashcard.ArchivedAt = DateTime.UtcNow;
+            var updatedFlashcard = await _repository.UpdateAsync(flashcard);
+
+            // Get the collection and update its statistics
             if (flashcard.CollectionId != Guid.Empty)
             {
-                var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams { CollectionId = flashcard.CollectionId, Offset = 0, Limit = int.MaxValue });
-                if (allInCollection.Items.All(f => f.ArchivedAt != null))
+                var collection = await _collectionRepository.GetByIdAsync(flashcard.CollectionId, flashcard.UserId);
+                if (collection != null)
                 {
-                    // Archive the collection if all flashcards are archived
-                    await _collectionService.ArchiveAsync(flashcard.CollectionId, flashcard.UserId);
+                    // Check if all flashcards in the collection are archived
+                    var allInCollection = await _repository.GetAllAsync(new FlashcardsQueryParams 
+                    { 
+                        CollectionId = flashcard.CollectionId, 
+                        Offset = 0, 
+                        Limit = int.MaxValue 
+                    });
+
+                    if (allInCollection.Items.All(f => f.ArchivedAt != null))
+                    {
+                        // Archive the collection if all flashcards are archived
+                        await _collectionService.ArchiveAsync(flashcard.CollectionId, flashcard.UserId);
+                    }
                 }
             }
-            return MapToResponseDto(flashcard);
+
+            return MapToResponseDto(updatedFlashcard);
         }
 
         public async Task<FlashcardResponseDto?> UnarchiveAsync(Guid id)

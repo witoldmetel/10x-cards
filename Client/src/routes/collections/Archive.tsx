@@ -17,8 +17,7 @@ export default function Archive() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCardsQuery, setSearchCardsQuery] = useState('');
   
-  const { data, isLoading } = useCollections({ 
-    archived: true,
+  const { data, isLoading } = useCollections({
     searchQuery
   });
   
@@ -57,6 +56,11 @@ export default function Archive() {
     );
   }
 
+  const allArchivedCollections = data?.collections.filter(collection => collection.archivedAt).map(collection => ({
+    ...collection,
+    archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date'
+  })) || [];
+
   const allArchivedFlashcards = data?.collections.flatMap(collection => 
     collection.archivedFlashcards.map(flashcard => ({
       ...flashcard,
@@ -74,7 +78,7 @@ export default function Archive() {
     : allArchivedFlashcards;
 
 
-  if (!data || data.totalCount === 0 && allArchivedFlashcards.length === 0) {
+  if (allArchivedCollections.length === 0 && allArchivedFlashcards.length === 0) {
     return (
       <div>
         <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate('/dashboard')}>
@@ -113,12 +117,13 @@ export default function Archive() {
                   className='pl-9 w-full sm:w-64 bg-white'
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
+                  disabled={allArchivedCollections.length === 0}
                 />
               </div>
             </div>
           </div>
 
-          {data.collections.length === 0 && searchQuery ? (
+          {allArchivedCollections.length === 0 && searchQuery ? (
             <div className='text-center py-12'>
               <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4'>
                 <Search className='h-8 w-8 text-muted-foreground' />
@@ -128,7 +133,7 @@ export default function Archive() {
             </div>
           ) : (
             <div className='space-y-6'>
-              {data.collections.map(collection => (
+              {allArchivedCollections.length > 0 ? allArchivedCollections.map(collection => (
                 <Card key={collection.id}>
                   <CardHeader>
                     <CardTitle>{collection.name}</CardTitle>
@@ -170,7 +175,13 @@ export default function Archive() {
                     </Button>
                   </CardFooter>
                 </Card>
-              ))}
+              )) : (
+                <div className='flex flex-col items-center justify-center my-24'>
+                <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
+                <h2 className='text-2xl font-semibold mb-2'>No archived collections</h2>
+                <p className='text-neutral-600 mb-6 text-center max-w-md'>Collections that you archive will appear here.</p>
+              </div>
+              )}
             </div>
           )}
         </TabsContent>

@@ -70,7 +70,7 @@ export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
 
   if (isEditing) {
     return (
-      <div className='space-y-4'>
+      <div className='space-y-4 mt-4'>
         <div>
           <h3 className='font-medium mb-1'>Question:</h3>
           <Textarea name='front' value={editedValues.front} onChange={handleChange} rows={2} />
