@@ -28,16 +28,16 @@ export default defineConfig(({ mode }) => {
             'react-vendor': ['react', 'react-dom'],
             'ui-vendor': [
               '@radix-ui/react-avatar',
-              '@radix-ui/react-dialog',
+              '@radix-ui/react-dialog', 
               '@radix-ui/react-dropdown-menu',
               '@radix-ui/react-label',
               '@radix-ui/react-progress',
               '@radix-ui/react-scroll-area',
+              '@radix-ui/react-select',
               '@radix-ui/react-separator',
               '@radix-ui/react-slot',
               '@radix-ui/react-tabs',
-              '@radix-ui/react-toast',
-              '@radix-ui/react-tooltip'
+              '@radix-ui/react-tooltip',
             ],
             'form-vendor': ['@hookform/resolvers', 'react-hook-form', 'zod'],
             'query-vendor': ['@tanstack/react-query']

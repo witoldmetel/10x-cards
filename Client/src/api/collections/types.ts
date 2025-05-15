@@ -10,6 +10,8 @@ export interface CollectionResponse {
   dueCards: number;
   flashcards: Flashcard[];
   id: string;
+  lastStudied: string | null;
+  masteryLevel: number;
   name: string;
   tags: string[];
   totalCards: number;
@@ -35,7 +37,7 @@ export interface UpdateCollection {
 export interface CollectionsQueryParams {
   offset?: number;
   limit?: number;
-  searchPhrase?: string;
+  searchQuery?: string;
   archived?: boolean;
 }
 

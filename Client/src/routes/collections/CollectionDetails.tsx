@@ -41,9 +41,13 @@ export default function CollectionDetails() {
   });
 
   const collectionFlashcards =
-    collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.Approved) || [];
+    collection?.flashcards.filter(
+      collection => collection.reviewStatus === ReviewStatus.Approved && !collection.archivedAt,
+    ) || [];
   const pendingReviewCount =
-    collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.New)?.length || 0;
+    collection?.flashcards.filter(
+      collection => collection.reviewStatus === ReviewStatus.ToCorrect && !collection.archivedAt,
+    )?.length || 0;
 
   const startStudySession = () => {
     setIsStudying(true);
@@ -54,6 +58,7 @@ export default function CollectionDetails() {
       incorrect: 0,
       total: collectionFlashcards?.length || 0,
     });
+    toast.success('Study session started');
   };
 
   const handleShowAnswer = () => {
@@ -62,52 +67,58 @@ export default function CollectionDetails() {
 
   const handleArchiveCollection = async () => {
     if (!collectionId) return;
-    await archiveCollectionMutation.mutateAsync(collectionId);
-    navigate('/dashboard');
+    try {
+      await archiveCollectionMutation.mutateAsync(collectionId);
+      toast.success('Collection archived successfully');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to archive collection');
+    }
   };
 
   const handleDeleteCollection = async () => {
     if (!collectionId) return;
-    await deleteCollectionMutation.mutateAsync(collectionId);
+
+    setIsDeleteModalOpen(false);
+
     navigate('/dashboard');
+
+    try {
+      await deleteCollectionMutation.mutateAsync(collectionId);
+      toast.success('Collection deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete collection');
+    }
   };
 
   const handleGradeCard = (grade: number) => {
     // Update study stats
     if (grade >= 3) {
       setStudyStats(prev => ({ ...prev, correct: prev.correct + 1 }));
+      toast.success('Card marked as correct');
     } else {
       setStudyStats(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      toast.error('Card marked as incorrect');
     }
-
-    // In a real app, this would update the flashcard's spaced repetition data
-    // const card = collectionFlashcards?.[currentCardIndex];
-    // updateFlashcard(card.id, {
-    //   lastReviewed: new Date(),
-    //   repetitions: grade >= 3 ? card.repetitions + 1 : 0,
-    //   // Additional SR-2 algorithm updates would go here
-    // });
 
     if (currentCardIndex < collectionFlashcards?.length - 1) {
       // Move to next card
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
+      toast.info('Next card loaded');
     } else {
       // End of study session
       const { correct, total } = studyStats;
-
-      // Update the collection's mastery percentage
-      // if (id) {
-      //   updateStudyProgress(id, correct, total);
-      // }
 
       // Show completion screen
       setIsStudying(false);
       setShowAnswer(false);
       setCurrentCardIndex(0);
 
-      // Show success message
-      toast.success(`Study session completed! You got ${correct} out of ${total} cards correct.`);
+      // Show success message with detailed stats
+      toast.success(
+        `Study session completed! You got ${correct} out of ${total} cards correct (${Math.round((correct / total) * 100)}% accuracy)`,
+      );
     }
   };
 
@@ -117,6 +128,7 @@ export default function CollectionDetails() {
 
   const handleAddCards = () => {
     navigate(`/flashcards/create?collectionId=${collectionId}`);
+    toast.info('Redirecting to manual card creation');
   };
 
   if (isCollectionLoading) {
@@ -140,8 +152,8 @@ export default function CollectionDetails() {
 
   return (
     <div>
-      <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate('/dashboard')}>
-        <ArrowLeft size={16} className='mr-2' /> Back to Dashboard
+      <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate(-1)}>
+        <ArrowLeft size={16} className='mr-2' /> Go Back
       </Button>
 
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6'>
@@ -194,18 +206,14 @@ export default function CollectionDetails() {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Last Studied</p>
-              <p className='text-2xl font-medium'>
-              Never
-              </p>
+              <p className='text-2xl font-medium'>Never</p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
                 <p className='text-2xl font-medium'>{0}%</p>
                 <div className='w-full max-w-[100px] bg-muted rounded-full h-2'>
-                  <div
-                    className='bg-primary rounded-full h-2'
-                    style={{ width: `${0}%` }}></div>
+                  <div className='bg-primary rounded-full h-2' style={{ width: `${0}%` }}></div>
                 </div>
               </div>
             </div>
@@ -303,38 +311,30 @@ export default function CollectionDetails() {
         <Tabs defaultValue='all'>
           <TabsList className='mb-6'>
             <TabsTrigger value='all'>All Cards</TabsTrigger>
-            {pendingReviewCount > 0 && <TabsTrigger value='pending'>Pending Review ({pendingReviewCount})</TabsTrigger>}
+            <TabsTrigger value='pending' disabled={pendingReviewCount === 0}>
+              Pending Review ({pendingReviewCount})
+            </TabsTrigger>
+            {collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt)
+              .length > 0 && (
+              <TabsTrigger value='rejected'>
+                Rejected (
+                {
+                  collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt)
+                    .length
+                }
+                )
+              </TabsTrigger>
+            )}
+            {collection.archivedFlashcards.length > 0 && (
+              <TabsTrigger value='archived'>Archived ({collection.archivedFlashcards.length})</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value='all'>
             <div className='space-y-4'>
               {collectionFlashcards.length > 0 ? (
-                collectionFlashcards.map(flashcard => (
-                  <Card key={flashcard.id}>
-                    <CardContent className='p-4'>
-                      <div className='mb-2'>
-                        <h3 className='font-medium'>Question:</h3>
-                        <p>{flashcard.front}</p>
-                      </div>
-                      <div>
-                        <h3 className='font-medium'>Answer:</h3>
-                        <p>{flashcard.back}</p>
-                      </div>
-                      <FlashcardActions flashcard={flashcard} />
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <p className='text-muted-foreground text-center py-4'>No cards in this collection yet.</p>
-              )}
-            </div>
-          </TabsContent>
-
-          {pendingReviewCount > 0 && (
-            <TabsContent value='pending'>
-              <div className='space-y-4'>
-                {collection?.flashcards
-                  .filter(collection => collection.reviewStatus === ReviewStatus.New)
+                collection.flashcards
+                  .filter(flashcard => flashcard.reviewStatus === ReviewStatus.Approved && !flashcard.archivedAt)
                   .map(flashcard => (
                     <Card key={flashcard.id}>
                       <CardContent className='p-4'>
@@ -346,16 +346,87 @@ export default function CollectionDetails() {
                           <h3 className='font-medium'>Answer:</h3>
                           <p>{flashcard.back}</p>
                         </div>
-                        <div className='mt-3 text-xs inline-block px-2 py-1 bg-amber-100 text-amber-800 rounded'>
-                          Needs review
-                        </div>
                         <FlashcardActions flashcard={flashcard} />
                       </CardContent>
                     </Card>
-                  ))}
-              </div>
-            </TabsContent>
-          )}
+                  ))
+              ) : (
+                <p className='text-muted-foreground text-center py-4'>No cards in this collection yet.</p>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value='pending'>
+            <div className='space-y-4'>
+              {collection?.flashcards
+                .filter(collection => collection.reviewStatus === ReviewStatus.ToCorrect && !collection.archivedAt)
+                .map(flashcard => (
+                  <Card key={flashcard.id}>
+                    <CardContent className='p-4'>
+                      <div className='mb-2'>
+                        <h3 className='font-medium'>Question:</h3>
+                        <p>{flashcard.front}</p>
+                      </div>
+                      <div>
+                        <h3 className='font-medium'>Answer:</h3>
+                        <p>{flashcard.back}</p>
+                      </div>
+                      <div className='mt-3 text-xs inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded'>
+                        Needs correction
+                      </div>
+                      <FlashcardActions flashcard={flashcard} />
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value='rejected'>
+            <div className='space-y-4'>
+              {collection.flashcards
+                .filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt)
+                .map(flashcard => (
+                  <Card key={flashcard.id}>
+                    <CardContent className='p-4'>
+                      <div className='mb-2'>
+                        <h3 className='font-medium'>Question:</h3>
+                        <p>{flashcard.front}</p>
+                      </div>
+                      <div>
+                        <h3 className='font-medium'>Answer:</h3>
+                        <p>{flashcard.back}</p>
+                      </div>
+                      <div className='mt-3 text-xs inline-block px-2 py-1 bg-destructive text-destructive-foreground rounded'>
+                        Rejected
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value='archived'>
+            <div className='space-y-4'>
+              {collection.archivedFlashcards.map(flashcard => (
+                <Card key={flashcard.id}>
+                  <CardContent className='p-4'>
+                    <div className='mb-2'>
+                      <h3 className='font-medium'>Question:</h3>
+                      <p>{flashcard.front}</p>
+                    </div>
+                    <div>
+                      <h3 className='font-medium'>Answer:</h3>
+                      <p>{flashcard.back}</p>
+                    </div>
+                    <div className='mt-3 text-xs inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded'>
+                      Archived
+                    </div>
+                    <FlashcardActions flashcard={flashcard} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
         </Tabs>
       )}
 

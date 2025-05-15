@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, AlertCircle, Edit, Check, X, HelpCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Check, X, HelpCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useCollections } from '@/api/collections/queries';
-import { useGenerateFlashcardsAI } from '@/api/flashcard/mutations';
-import { useCreateFlashcard } from '@/api/flashcard/mutations';
+import { useGenerateFlashcardsAI, useUpdateFlashcard } from '@/api/flashcard/mutations';
 import type { GenerateFlashcardsRequest } from '@/api/flashcard/types';
-import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
+import { ReviewStatus } from '@/api/flashcard/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +27,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const aiGenerateSchema = z
   .object({
@@ -55,7 +56,7 @@ export default function AIGenerate() {
   const { data } = useCollections();
   const generateAI = useGenerateFlashcardsAI();
   const createCollectionMutation = useCreateCollection();
-  const createFlashcardMutation = useCreateFlashcard();
+  const updateFlashcardMutation = useUpdateFlashcard();
 
   const [error, setError] = useState<string | null>(null);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[]>([]);
@@ -63,9 +64,6 @@ export default function AIGenerate() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [generationStep, setGenerationStep] = useState<'idle' | 'uploading' | 'processing' | 'reviewing'>('idle');
-  const [editingCard, setEditingCard] = useState<string | null>(null);
-  const [editedQuestion, setEditedQuestion] = useState('');
-  const [editedAnswer, setEditedAnswer] = useState('');
   const [activeTab, setActiveTab] = useState<'generate' | 'review'>('generate');
 
   const form = useForm<AIGenerateFormValues>({
@@ -97,14 +95,15 @@ export default function AIGenerate() {
     setTargetCollectionId(null);
     setGenerationStep('uploading');
 
-    try {
-      let collectionId = data.selectedCollectionId;
+    let collectionId = data.selectedCollectionId;
 
+    try {
       if (collectionId === 'new' && data.collectionName) {
         const newCollection = await createCollectionMutation.mutateAsync({
           name: data.collectionName,
           color: '#' + Math.floor(Math.random() * 16777215).toString(16),
         });
+
         collectionId = newCollection.id;
       }
 
@@ -113,30 +112,36 @@ export default function AIGenerate() {
         count: data.count,
       };
 
-      const response = await generateAI.mutateAsync({
-        collectionId,
-        payload,
-        onProgress: progress => {
-          setProgressPercentage(progress);
-          if (progress === 100) {
-            setGenerationStep('processing');
-            toast.success('Upload complete! Processing your flashcards...');
-          }
-        },
-      });
+      try {
+        const response = await generateAI.mutateAsync({
+          collectionId,
+          payload,
+          onProgress: progress => {
+            setProgressPercentage(progress);
+            if (progress === 100) {
+              setGenerationStep('processing');
+              toast.success('Upload complete! Processing your flashcards...');
+            }
+          },
+        });
 
-      setGeneratedCards(response);
-      setGenerationStep('reviewing');
-      setProgressPercentage(0);
-      setTargetCollectionId(collectionId);
-      toast.success('Flashcards generated successfully! You can now review and edit them.');
-      form.setValue('selectedCollectionId', 'new');
-      form.setValue('sourceText', '');
-      form.setValue('collectionName', '');
-      setActiveTab('review');
+        setGeneratedCards(response);
+        setGenerationStep('reviewing');
+        setProgressPercentage(0);
+        setTargetCollectionId(collectionId);
+        toast.success('Flashcards generated successfully! You can now review and edit them.');
+        form.setValue('selectedCollectionId', 'new');
+        form.setValue('sourceText', '');
+        form.setValue('collectionName', '');
+        setActiveTab('review');
+      } catch (error) {
+        console.error('Generation error:', error);
+        toast.warning('Failed to generate flashcards. You can try generating them again or create them manually.');
+        navigate(`/collections/${collectionId}`);
+      }
     } catch (error) {
-      console.error('Generation error:', error);
-      toast.error('Failed to generate flashcards. Please try again.');
+      console.error('Collection creation error:', error);
+      toast.error('Failed to create collection. Please try again.');
       setGenerationStep('idle');
       setProgressPercentage(0);
     } finally {
@@ -146,11 +151,8 @@ export default function AIGenerate() {
 
   const saveCollection = async () => {
     try {
-      // Filter only accepted flashcards
-      const acceptedFlashcards = generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved);
-
-      if (acceptedFlashcards.length === 0) {
-        toast.error('Please accept at least one flashcard');
+      if (generatedCards.length === 0) {
+        toast.error('Please accept or correct at least one flashcard');
         return;
       }
 
@@ -159,27 +161,36 @@ export default function AIGenerate() {
         return;
       }
 
-      const savePromises = generatedCards.map(card => {
-        const createPayload = {
-          collectionId: targetCollectionId,
-          flashcard: {
-            front: card.front,
-            back: card.back,
-            creationSource: FlashcardCreationSource.AI,
-            reviewStatus: ReviewStatus.Approved,
-          },
-        };
+      // Disable the save button to prevent multiple clicks
+      setIsGenerating(true);
 
-        return createFlashcardMutation.mutateAsync(createPayload);
-      });
+      try {
+        // Save cards one by one to prevent race conditions
+        for (const card of generatedCards) {
+          const updatePayload = {
+            id: card.id,
+            flashcard: {
+              front: card.front,
+              back: card.back,
+              reviewStatus: card.reviewStatus,
+            },
+          };
 
-      await Promise.all(savePromises);
+          await updateFlashcardMutation.mutateAsync(updatePayload);
+        }
 
-      toast.success('Collection saved successfully! Review your cards before studying.');
-      navigate('/flashcards/pending-review');
+        toast.success('Collection saved successfully!');
+        navigate(`/collections/${targetCollectionId}`);
+      } catch (error) {
+        console.error('Failed to save flashcards:', error);
+        toast.error('Failed to save some flashcards. Please try again.');
+      } finally {
+        setIsGenerating(false);
+      }
     } catch (error) {
-      console.error('Failed to save collection', error);
+      console.error('Failed to save collection:', error);
       toast.error('Failed to save collection. Please try again.');
+      setIsGenerating(false);
     }
   };
 
@@ -190,6 +201,19 @@ export default function AIGenerate() {
           ? {
               ...card,
               reviewStatus: ReviewStatus.Approved,
+            }
+          : card,
+      ),
+    );
+  };
+
+  const handleCorrectCard = (id: string) => {
+    setGeneratedCards(prev =>
+      prev.map(card =>
+        card.id === id
+          ? {
+              ...card,
+              reviewStatus: ReviewStatus.ToCorrect,
             }
           : card,
       ),
@@ -207,32 +231,6 @@ export default function AIGenerate() {
           : card,
       ),
     );
-  };
-
-  const startEditing = (card: Flashcard) => {
-    setEditingCard(card.id);
-    setEditedQuestion(card.front);
-    setEditedAnswer(card.back);
-  };
-
-  const saveEditing = () => {
-    if (!editingCard) return;
-
-    setGeneratedCards(prev =>
-      prev.map(card =>
-        card.id === editingCard ? { ...card, question: editedQuestion, answer: editedAnswer, accepted: true } : card,
-      ),
-    );
-
-    setEditingCard(null);
-    setEditedQuestion('');
-    setEditedAnswer('');
-  };
-
-  const cancelEditing = () => {
-    setEditingCard(null);
-    setEditedQuestion('');
-    setEditedAnswer('');
   };
 
   const howItWorksContent = (
@@ -309,9 +307,20 @@ export default function AIGenerate() {
           <TabsTrigger value='generate' disabled={isGenerating && generationStep !== 'idle'} data-value='generate'>
             Generate
           </TabsTrigger>
-          <TabsTrigger value='review' disabled={generationStep !== 'reviewing'} data-value='review'>
-            Review & Edit
-          </TabsTrigger>
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <span className='inline-flex'>
+                  <TabsTrigger value='review' disabled={generationStep !== 'reviewing'} data-value='review'>
+                    Review & Edit
+                  </TabsTrigger>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generate flashcards first</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </TabsList>
 
         <TabsContent value='generate'>
@@ -324,24 +333,31 @@ export default function AIGenerate() {
                 <CardContent className='space-y-4'>
                   <div className='grid md:grid-cols-2 gap-4'>
                     <div className='mb-4'>
-                      <label htmlFor='collection-select' className='block text-sm font-medium text-neutral-700 mb-1'>
-                        Select Collection
-                      </label>
-                      <select
-                        id='collection-select'
-                        className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
-                        value={selectedCollectionId || 'new'}
-                        onChange={e => {
-                          const value = e.target.value;
-                          form.setValue('selectedCollectionId', value);
-                        }}>
-                        <option value='new'>Create New Collection</option>
-                        {data?.collections.map(collection => (
-                          <option key={collection.id} value={collection.id}>
-                            {collection.name}
-                          </option>
-                        ))}
-                      </select>
+                      <FormField
+                        control={form.control}
+                        name='selectedCollectionId'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select Collection</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Select visibility' />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value='new'>Create New Collection</SelectItem>
+                                {data?.collections.map(collection => (
+                                  <SelectItem key={collection.id} value={collection.id}>
+                                    {collection.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     {selectedCollectionId === 'new' && (
@@ -455,13 +471,20 @@ export default function AIGenerate() {
                       className={`relative ${
                         flashcard.reviewStatus === ReviewStatus.Approved
                           ? 'border-2 border-primary bg-primary/5'
-                          : flashcard.reviewStatus === ReviewStatus.Rejected
-                            ? 'border-2 border-destructive bg-destructive/5 opacity-50'
-                            : 'border'
+                          : flashcard.reviewStatus === ReviewStatus.ToCorrect
+                            ? 'border-2 border-secondary bg-secondary/5'
+                            : flashcard.reviewStatus === ReviewStatus.Rejected
+                              ? 'border-2 border-destructive bg-destructive/5 opacity-50'
+                              : 'border-2 border-yellow-500 bg-yellow-50'
                       }`}>
                       {flashcard.reviewStatus === ReviewStatus.Approved && (
                         <div className='absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-medium'>
                           Accepted
+                        </div>
+                      )}
+                      {flashcard.reviewStatus === ReviewStatus.ToCorrect && (
+                        <div className='absolute top-2 right-2 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs font-medium'>
+                          To Correct
                         </div>
                       )}
                       {flashcard.reviewStatus === ReviewStatus.Rejected && (
@@ -469,87 +492,63 @@ export default function AIGenerate() {
                           Rejected
                         </div>
                       )}
+                      {flashcard.reviewStatus === ReviewStatus.New && (
+                        <div className='absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-xs font-medium'>
+                          Needs Review
+                        </div>
+                      )}
                       <CardContent className='pt-6'>
-                        {editingCard === flashcard.id ? (
-                          <div className='space-y-4'>
-                            <div>
-                              <FormLabel className='block mb-2'>Question</FormLabel>
-                              <Textarea
-                                value={editedQuestion}
-                                onChange={e => setEditedQuestion(e.target.value)}
-                                rows={2}
-                                className='w-full'
-                              />
-                            </div>
-                            <div>
-                              <FormLabel className='block mb-2'>Answer</FormLabel>
-                              <Textarea
-                                value={editedAnswer}
-                                onChange={e => setEditedAnswer(e.target.value)}
-                                rows={3}
-                                className='w-full'
-                              />
-                            </div>
-                            <div className='flex justify-end gap-2'>
-                              <Button type='button' variant='outline' size='sm' onClick={cancelEditing}>
-                                Cancel
-                              </Button>
-                              <Button type='button' size='sm' onClick={saveEditing}>
-                                Save Changes
-                              </Button>
-                            </div>
+                        <div className='mb-4'>
+                          <p className='font-medium text-sm text-muted-foreground'>Question:</p>
+                          <p className='mt-1 text-lg'>{flashcard.front}</p>
+                        </div>
+                        <div className='mb-6'>
+                          <p className='font-medium text-sm text-muted-foreground'>Answer:</p>
+                          <p className='mt-1 text-lg'>{flashcard.back}</p>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                          <div className='flex gap-2'>
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant={flashcard.reviewStatus === ReviewStatus.Approved ? 'default' : 'outline'}
+                              className={`${
+                                flashcard.reviewStatus === ReviewStatus.Approved
+                                  ? 'bg-primary hover:bg-primary/90'
+                                  : 'hover:border-primary hover:text-primary'
+                              }`}
+                              onClick={() => handleKeepCard(flashcard.id)}>
+                              <Check size={16} className='mr-1' />
+                              Keep
+                            </Button>
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant={flashcard.reviewStatus === ReviewStatus.ToCorrect ? 'secondary' : 'outline'}
+                              className={`${
+                                flashcard.reviewStatus === ReviewStatus.ToCorrect
+                                  ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground'
+                                  : 'hover:border-secondary hover:text-secondary-foreground'
+                              }`}
+                              onClick={() => handleCorrectCard(flashcard.id)}>
+                              <Pencil size={16} className='mr-1' />
+                              Correct
+                            </Button>
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant={flashcard.reviewStatus === ReviewStatus.Rejected ? 'destructive' : 'outline'}
+                              className={`${
+                                flashcard.reviewStatus === ReviewStatus.Rejected
+                                  ? 'bg-destructive hover:bg-destructive/90'
+                                  : 'hover:border-destructive hover:text-destructive'
+                              }`}
+                              onClick={() => handleRemoveCard(flashcard.id)}>
+                              <X size={16} className='mr-1' />
+                              Remove
+                            </Button>
                           </div>
-                        ) : (
-                          <>
-                            <div className='mb-4'>
-                              <p className='font-medium text-sm text-muted-foreground'>Question:</p>
-                              <p className='mt-1 text-lg'>{flashcard.front}</p>
-                            </div>
-                            <div className='mb-6'>
-                              <p className='font-medium text-sm text-muted-foreground'>Answer:</p>
-                              <p className='mt-1 text-lg'>{flashcard.back}</p>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                              <div className='flex gap-2'>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  variant={flashcard.reviewStatus === ReviewStatus.Approved ? 'default' : 'outline'}
-                                  className={`${
-                                    flashcard.reviewStatus === ReviewStatus.Approved
-                                      ? 'bg-primary hover:bg-primary/90'
-                                      : 'hover:border-primary hover:text-primary'
-                                  }`}
-                                  onClick={() => handleKeepCard(flashcard.id)}>
-                                  <Check size={16} className='mr-1' />
-                                  Keep
-                                </Button>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  variant={flashcard.reviewStatus === ReviewStatus.Rejected ? 'destructive' : 'outline'}
-                                  className={`${
-                                    flashcard.reviewStatus === ReviewStatus.Rejected
-                                      ? 'bg-destructive hover:bg-destructive/90'
-                                      : 'hover:border-destructive hover:text-destructive'
-                                  }`}
-                                  onClick={() => handleRemoveCard(flashcard.id)}>
-                                  <X size={16} className='mr-1' />
-                                  Remove
-                                </Button>
-                              </div>
-                              <Button
-                                type='button'
-                                variant='outline'
-                                size='sm'
-                                className='hover:bg-muted'
-                                onClick={() => startEditing(flashcard)}>
-                                <Edit size={16} className='mr-1' />
-                                Edit
-                              </Button>
-                            </div>
-                          </>
-                        )}
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
@@ -559,8 +558,9 @@ export default function AIGenerate() {
 
             <div className='flex justify-between items-center gap-4'>
               <p className='text-sm text-muted-foreground'>
-                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved).length} of{' '}
-                {generatedCards.length} cards selected
+                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved).length} approved,{' '}
+                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.ToCorrect).length} to correct,{' '}
+                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.New).length} need review
               </p>
               <div className='flex gap-4'>
                 <Button type='button' variant='outline' onClick={() => navigate('/dashboard')}>
@@ -569,7 +569,14 @@ export default function AIGenerate() {
                 <Button
                   type='button'
                   onClick={saveCollection}
-                  disabled={isGenerating || !generatedCards.some(card => card.reviewStatus === ReviewStatus.Approved)}>
+                  disabled={
+                    isGenerating ||
+                    generatedCards.some(card => card.reviewStatus === ReviewStatus.New) ||
+                    !generatedCards.some(
+                      card =>
+                        card.reviewStatus === ReviewStatus.Approved || card.reviewStatus === ReviewStatus.ToCorrect,
+                    )
+                  }>
                   {isGenerating ? 'Saving...' : 'Save Collection'}
                 </Button>
               </div>

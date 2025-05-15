@@ -3,22 +3,29 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Trash2, Archive, Check, X } from 'lucide-react';
+import { Edit, Trash2, Archive, Check, X, ArchiveRestore } from 'lucide-react';
 import { toast } from 'sonner';
 import { Flashcard } from '@/api/flashcard/types';
-import { useArchiveFlashcard, useDeleteFlashcard, useUpdateFlashcard } from '@/api/flashcard/mutations';
+import {
+  useArchiveFlashcard,
+  useDeleteFlashcard,
+  useUpdateFlashcard,
+  useUnarchiveFlashcard,
+} from '@/api/flashcard/mutations';
+import { ReviewStatus } from '@/api/flashcard/types';
 
 interface FlashcardActionsProps {
   flashcard: Flashcard;
-  onDelete?: () => void;
 }
 
-export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps) {
+export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
   const updateFlashcardMutation = useUpdateFlashcard();
   const archiveFlashcardMutation = useArchiveFlashcard();
+  const unarchiveFlashcardMutation = useUnarchiveFlashcard();
   const deleteFlashcardMutation = useDeleteFlashcard();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editedValues, setEditedValues] = useState({
     front: flashcard.front,
     back: flashcard.back,
@@ -36,16 +43,19 @@ export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps)
     });
   };
 
-  const handleSave = () => {
-    updateFlashcardMutation.mutate({
+  const handleSave = async () => {
+    await updateFlashcardMutation.mutateAsync({
       id: flashcard.id,
       flashcard: {
         front: editedValues.front,
         back: editedValues.back,
+        reviewStatus:
+          flashcard.reviewStatus === ReviewStatus.ToCorrect ? ReviewStatus.Approved : flashcard.reviewStatus,
       },
     });
     setIsEditing(false);
-    toast.success('Flashcard updated');
+
+    toast.success('Card corrected and approved');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -54,11 +64,9 @@ export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps)
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this flashcard?')) {
-      await deleteFlashcardMutation.mutateAsync(flashcard.id);
-      toast.success('Flashcard deleted');
-      if (onDelete) onDelete();
-    }
+    await deleteFlashcardMutation.mutateAsync(flashcard.id);
+    setIsDeleteModalOpen(false);
+    toast.success('Flashcard deleted');
   };
 
   const handleArchive = async () => {
@@ -66,9 +74,14 @@ export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps)
     toast.success('Flashcard archived');
   };
 
+  const handleUnarchive = async () => {
+    await unarchiveFlashcardMutation.mutateAsync(flashcard.id);
+    toast.success('Flashcard unarchived');
+  };
+
   if (isEditing) {
     return (
-      <div className='space-y-4'>
+      <div className='space-y-4 mt-4'>
         <div>
           <h3 className='font-medium mb-1'>Question:</h3>
           <Textarea name='front' value={editedValues.front} onChange={handleChange} rows={2} />
@@ -90,16 +103,46 @@ export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps)
   }
 
   return (
-    <div className='flex justify-end gap-2 mt-2'>
-      <Button size='sm' variant='outline' onClick={handleEdit} className='h-8 w-8 p-0' title='Edit'>
-        <Edit size={16} />
-      </Button>
-      <Button size='sm' variant='outline' onClick={handleArchive} className='h-8 w-8 p-0' title='Archive'>
-        <Archive size={16} />
-      </Button>
-      <Button size='sm' variant='outline' onClick={handleDelete} className='h-8 w-8 p-0' title='Delete'>
-        <Trash2 size={16} />
-      </Button>
-    </div>
+    <>
+      <div className='flex justify-end gap-2 mt-2'>
+        <Button size='sm' variant='outline' onClick={handleEdit} className='h-8 w-8 p-0' title='Edit'>
+          <Edit size={16} />
+        </Button>
+        {flashcard.archivedAt ? (
+          <Button size='sm' variant='outline' onClick={handleUnarchive} className='h-8 w-8 p-0' title='Unarchive'>
+            <ArchiveRestore size={16} />
+          </Button>
+        ) : (
+          <Button size='sm' variant='outline' onClick={handleArchive} className='h-8 w-8 p-0' title='Archive'>
+            <Archive size={16} />
+          </Button>
+        )}
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={() => setIsDeleteModalOpen(true)}
+          className='h-8 w-8 p-0'
+          title='Delete'>
+          <Trash2 size={16} />
+        </Button>
+      </div>
+
+      {isDeleteModalOpen && (
+        <div className='fixed inset-0 bg-neutral-900/50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-white dark:bg-neutral-900 rounded-lg max-w-md w-full p-6 shadow-lg'>
+            <h3 className='text-xl font-semibold mb-4'>Delete Flashcard</h3>
+            <p className='mb-6'>Are you sure you want to delete this flashcard? This action cannot be undone.</p>
+            <div className='flex justify-end gap-3'>
+              <Button variant='outline' onClick={() => setIsDeleteModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant='destructive' onClick={handleDelete}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

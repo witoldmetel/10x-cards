@@ -1,71 +1,64 @@
-import { AlertCircle, ArrowRight, Plus, Search } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Plus, Search } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCollections } from '@/api/collections/queries';
 import { Link } from 'react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TagBadge } from '@/components/ui/tag-badge';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { debounce } from 'lodash';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CollectionCard } from '@/components/collections/CollectionCard/CollectionCard';
+import { Statistics } from '@/components/collections/Statistics/Statistics';
+
+export type CollectionCardProps = CollectionResponse & {
+  cardCount: number;
+  lastStudied: string;
+  dueCards: number;
+  masteryLevel: number;
+};
 
 export default function Dashboard() {
-  const { data, isLoading } = useCollections({ archived: false });
-
+  const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const collections = data?.collections.map(collection => ({
-    id: collection.id,
-    name: collection.name,
-    description: collection.description,
-    cardCount: collection.flashcards.length,
-    lastStudied: 'Never',
-    dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
-      .length,
-    masteryLevel:  0,
-    categories: collection.categories || [],
-    tags: collection.tags || [],
-  }));
+  const { data, isLoading } = useCollections({
+    archived: false,
+    ...(searchQuery ? { searchQuery } : {}),
+  });
 
-  // function timeAgo(date: Date) {
-  //   const now = new Date();
-  //   const diffInDays = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+  const debouncedSetSearchQuery = debounce((value: string) => {
+    setSearchQuery(value.trim());
+  }, 1000);
 
-  //   if (diffInDays === 0) return 'Today';
-  //   if (diffInDays === 1) return 'Yesterday';
-  //   if (diffInDays < 7) return `${diffInDays} days ago`;
-  //   return new Date(date).toLocaleDateString();
-  // }
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
 
-  // Calculate statistics from real data
-  const statistics = {
-    totalCards: data?.collections.reduce((acc, collection) => acc + collection.flashcards.length, 0) || 0,
-    totalCollections: data?.collections.length || 0,
-    cardsToReview:
-      data?.collections.reduce( 
-        (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
-        0,
-      ) || 0,
-    cardsLearned:
-      data?.collections.reduce(
-        (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length,
-        0,
-      ) || 0,
-    masteryLevel: calculateOverallMastery(data?.collections || []),
-    streak: 0, // This would require a proper streak tracking system
+    setInputValue(value);
+    debouncedSetSearchQuery(value);
   };
 
-  function calculateOverallMastery(collections: CollectionResponse[]) {
-    if (collections.length === 0) return 0;
+  useEffect(() => {
+    return () => {
+      debouncedSetSearchQuery.cancel();
+    };
+  }, []);
 
-    // @todo: Implement mastery calculation
-    // const totalMastery = collections.reduce((sum, collection) => sum + (collection.masteryPercentage || 0), 0);
-    const totalMastery = 0;
-
-    return Math.round(totalMastery / collections.length);
-  }
+  const collections = useMemo(
+    () =>
+      data?.collections.map(collection => ({
+        ...collection,
+        cardCount: collection.flashcards.length,
+        lastStudied: 'Never',
+        dueCards: collection.flashcards.filter(
+          f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
+        ).length,
+        masteryLevel: 0,
+      })) as CollectionCardProps[],
+    [data?.collections],
+  );
 
   // Keep the mock recent activity for now
   const recentActivity = [
@@ -101,74 +94,7 @@ export default function Dashboard() {
       </div>
 
       {/* Statistics Cards */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardDescription>Cards to Review</CardDescription>
-            <CardTitle className='text-3xl'>{statistics.cardsToReview}</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <Link
-              to='/flashcards/pending-review'
-              className='text-sm text-primary hover:underline flex items-center gap-1'>
-              Review now <ArrowRight size={14} />
-            </Link>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardDescription>Total Flashcards</CardDescription>
-            <CardTitle className='text-3xl'>{statistics.totalCards}</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <p className='text-sm text-muted-foreground'>{statistics.cardsLearned} learned</p>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <div className='flex items-center gap-2'>
-              <CardDescription>Mastery Level</CardDescription>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <AlertCircle size={14} className="text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>This feature is in progress</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <CardTitle className='text-3xl'>{statistics.masteryLevel}%</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <div className='w-full bg-muted rounded-full h-2 mt-2'>
-              <div className='bg-primary rounded-full h-2' style={{ width: `${statistics.masteryLevel}%` }}></div>
-            </div>
-          </CardFooter>
-        </Card>
-        <Card>
-          <CardHeader className='pb-2'>
-            <div className='flex items-center gap-2'>
-              <CardDescription>Current Streak</CardDescription>
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <AlertCircle size={14} className="text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>This feature is in progress</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <CardTitle className='text-3xl'>{statistics.streak} days</CardTitle>
-          </CardHeader>
-          <CardFooter>
-            <p className='text-sm text-muted-foreground'>Keep it going!</p>
-          </CardFooter>
-        </Card>
-      </div>
+      <Statistics />
 
       <Tabs defaultValue='collections'>
         <TabsList className='mb-6'>
@@ -176,8 +102,10 @@ export default function Dashboard() {
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <span className="inline-flex">
-                <TabsTrigger value='activity' disabled>Recent Activity</TabsTrigger>
+                <span className='inline-flex'>
+                  <TabsTrigger value='activity' disabled>
+                    Recent Activity
+                  </TabsTrigger>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -194,9 +122,10 @@ export default function Dashboard() {
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
               <Input
                 placeholder='Search collections...'
-                className='pl-9'
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                className='pl-9 bg-white'
+                value={inputValue}
+                onChange={handleSearchInputChange}
+                disabled={collections?.length === 0 && !inputValue}
               />
             </div>
           </div>
@@ -206,7 +135,7 @@ export default function Dashboard() {
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {collections?.map(collection => (
                 <div key={collection.id}>
-                  <CollectionCard collection={collection} />
+                  <CollectionCard {...collection} />
                 </div>
               ))}
               <Link to='/flashcards/options' className='block'>
@@ -296,7 +225,7 @@ export default function Dashboard() {
       </Tabs>
 
       {/* Cards Pending Review Section */}
-      {statistics.cardsToReview > 0 && (
+      {collections && collections.reduce((acc, collection) => acc + collection.dueCards, 0) > 0 && (
         <div className='mt-8'>
           <div className='flex justify-between items-center mb-4'>
             <h2 className='text-xl font-bold'>Cards Pending Review</h2>
@@ -310,7 +239,10 @@ export default function Dashboard() {
             <CardContent className='p-6'>
               <div className='flex flex-col sm:flex-row justify-between items-center'>
                 <div>
-                  <p className='text-lg font-medium mb-1'>You have {statistics.cardsToReview} cards due for review</p>
+                  <p className='text-lg font-medium mb-1'>
+                    You have {collections.reduce((acc, collection) => acc + collection.dueCards, 0)} cards due for
+                    review
+                  </p>
                   <p className='text-muted-foreground'>Keeping up with reviews improves long-term memory retention</p>
                 </div>
                 <Link to='/flashcards/pending-review' className='mt-4 sm:mt-0'>
@@ -326,66 +258,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-const CollectionCard = ({ collection }: { collection: {
-  id: string;
-  name: string;
-  description: string | null;
-  cardCount: number;
-  lastStudied: string;
-  dueCards: number;
-  masteryLevel: number;
-  categories: string[];
-  tags: string[];
-} }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{collection.name}</CardTitle>
-        <CardDescription>{collection.description}</CardDescription>
-        {/* Display categories and tags */}
-        <div className='flex flex-wrap gap-2 mt-2'>
-          {collection.categories &&
-            collection.categories.length > 0 &&
-            collection.categories?.map(category => (
-              <TagBadge key={`category-${category}`} text={category} variant='category' />
-            ))}
-          {collection.tags &&
-            collection.tags.length > 0 &&
-            collection.tags?.map(tag => <TagBadge key={`tag-${tag}`} text={tag} variant='tag' />)}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className='grid grid-cols-2 gap-2 text-sm'>
-          <div>
-            <p className='text-muted-foreground'>Total Cards</p>
-            <p className='font-medium'>{collection.cardCount}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Due Cards</p>
-            <p className='font-medium'>{collection.dueCards}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Last Studied</p>
-            <p className='font-medium'>{collection.lastStudied}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Mastery</p>
-            <p className='font-medium'>{collection.masteryLevel}%</p>
-          </div>
-        </div>
-        <div className='w-full bg-muted rounded-full h-1.5 mt-4'>
-          <div className='bg-primary rounded-full h-1.5' style={{ width: `${collection.masteryLevel}%` }}></div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Link to={`/collections/${collection.id}`} className='w-full'>
-          <Button variant='outline' className='w-full justify-between'>
-            <span>{collection.dueCards > 0 ? 'Review Cards' : 'View Collection'}</span>
-            <ArrowRight size={16} />
-          </Button>
-        </Link>
-      </CardFooter>
-    </Card>
-  );
-};

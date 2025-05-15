@@ -1,11 +1,15 @@
-import {  useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard, archiveFlashcard } from './api';
-import type {
-  CreateFlashcardDTO,
-  Flashcard,
-  UpdateFlashcardDTO,
-  GenerateFlashcardsRequest,
-} from './types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  createFlashcard,
+  deleteFlashcard,
+  generateFlashcards,
+  updateFlashcard,
+  archiveFlashcard,
+  unarchiveFlashcard,
+} from './api';
+import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsRequest } from './types';
+
+import { UseMutationOptions } from '@tanstack/react-query';
 
 type ErrorResponse = {
   message: string;
@@ -86,5 +90,18 @@ export const useArchiveFlashcard = () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', archivedFlashcard.collectionId] });
     },
+  });
+};
+
+export const useUnarchiveFlashcard = (options?: UseMutationOptions<Flashcard, Error, string>) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: unarchiveFlashcard,
+    onSuccess: (unarchiveFlashcard: Flashcard) => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards', unarchiveFlashcard.collectionId] });
+    },
+    ...options,
   });
 };

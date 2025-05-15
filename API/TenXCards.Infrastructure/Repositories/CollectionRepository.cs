@@ -39,6 +39,13 @@ namespace TenXCards.Infrastructure.Repositories
                     : query.Where(c => c.ArchivedAt == null);
             }
 
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchQuery))
+            {
+                var searchQuery = queryParams.SearchQuery.ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(searchQuery) || 
+                                        (c.Description != null && c.Description.ToLower().Contains(searchQuery)));
+            }
+
             var total = await query.CountAsync();
 
             var items = await query
@@ -175,25 +182,31 @@ namespace TenXCards.Infrastructure.Repositories
 
         public async Task UpdateCollectionStatistics(Guid collectionId)
         {
-            var collection = await _context.Collections.FindAsync(collectionId);
+            var collection = await _context.Collections
+                .Include(c => c.Flashcards)
+                .FirstOrDefaultAsync(c => c.Id == collectionId);
+
             if (collection == null) return;
 
-            var stats = await _context.Flashcards
-                .Where(f => f.CollectionId == collectionId && f.ArchivedAt == null)
-                .GroupBy(f => 1)
-                .Select(g => new
-                {
-                    TotalCards = g.Count(),
-                    DueCards = g.Count(f => f.Sm2DueDate <= DateTime.UtcNow)
-                })
-                .FirstOrDefaultAsync();
+            var now = DateTime.UtcNow;
 
-            if (stats != null)
-            {
-                collection.TotalCards = stats.TotalCards;
-                collection.DueCards = stats.DueCards;
-                await _context.SaveChangesAsync();
-            }
+            // Calculate total cards (including archived)
+            collection.TotalCards = collection.Flashcards.Count;
+
+            // Calculate due cards (non-archived cards that are either new or due for review)
+            collection.DueCards = collection.Flashcards.Count(f => 
+                f.ArchivedAt == null && 
+                (f.ReviewStatus == ReviewStatus.New || 
+                (f.Sm2DueDate.HasValue && f.Sm2DueDate.Value <= now)));
+
+            // Calculate last studied time
+            collection.LastStudied = collection.Flashcards
+                .Where(f => f.ReviewedAt != null)
+                .Max(f => f.ReviewedAt);
+
+            collection.MasteryLevel = 0;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

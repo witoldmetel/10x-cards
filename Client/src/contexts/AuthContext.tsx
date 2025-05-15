@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         try {
           const storedUser = localStorage.getItem('user');
           const userData = storedUser ? JSON.parse(storedUser) : null;
-          
+
           if (userData?.userId) {
             const freshUserData = await getUserById(userData.userId);
             setUser(freshUserData);
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!data.token) {
       throw new Error('Token is required');
     }
-    
+
     if (!data.user.userId) {
       throw new Error('User ID is required');
     }
@@ -82,9 +82,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     queryClient.clear();
-    
+
     navigate('/login');
   };
 

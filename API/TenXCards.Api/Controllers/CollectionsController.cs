@@ -29,18 +29,21 @@ namespace TenXCards.API.Controllers
         /// <param name="offset">Number of items to skip</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="archived">Filter by archived status (optional)</param>
+        /// <param name="searchQuery">Search query (optional)</param>
         [HttpGet]
         [ProducesResponseType(typeof(PaginatedResponse<CollectionResponseDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<PaginatedResponse<CollectionResponseDto>>> GetAll(
             [FromQuery] int offset = 0,
             [FromQuery] int limit = 10,
-            [FromQuery] bool? archived = null)
+            [FromQuery] bool? archived = null,
+            [FromQuery] string? searchQuery = null)
         {
             var queryParams = new CollectionsQueryParams
             {
                 Offset = offset,
                 Limit = limit,
-                Archived = archived
+                Archived = archived,
+                SearchQuery = searchQuery
             };
 
             var userId = _userContextService.GetUserId();

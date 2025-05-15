@@ -10,7 +10,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <Toaster richColors position="bottom-right" />
+          <Toaster richColors position='bottom-right' />
           {routes}
         </AuthProvider>
       </BrowserRouter>

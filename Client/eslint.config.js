@@ -23,6 +23,7 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
     ignores: ['dist', 'playwright.config.ts', 'vitest.config.ts'],
   },

@@ -17,6 +17,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { TagBadge } from '@/components/ui/tag-badge';
 import { useState } from 'react';
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 // --- SCHEMA DEFINITION ---
 const flashcardSchema = z.object({
@@ -81,6 +83,8 @@ function isExistingCollectionForm(data: FormValues): data is z.infer<typeof exis
 export default function ManualGenerate() {
   const navigate = useNavigate();
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const predefinedCollectionId = searchParams.get('collectionId');
   const { data, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
   const { mutateAsync: createCollection, isPending: isCreatingCollection } = useCreateCollection();
   const { mutateAsync: createFlashcard, isPending: isCreatingFlashcard } = useCreateFlashcard();
@@ -93,10 +97,10 @@ export default function ManualGenerate() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: location.state?.collectionId
+    defaultValues: predefinedCollectionId
       ? {
           flashcards: [{ front: '', back: '' }],
-          selectedCollectionId: location.state.collectionId,
+          selectedCollectionId: predefinedCollectionId,
         }
       : {
           collection: { name: '', description: '', color: PRESET_COLORS[9], categories: [], tags: [] },
@@ -118,7 +122,6 @@ export default function ManualGenerate() {
     let targetCollectionId: string | null = null;
 
     if (isNewCollectionForm(data) && user?.userId) {
-      console.log(data.collection.categories);
       // Create new collection
       const payload: CreateCollection = {
         name: data.collection.name,
@@ -131,8 +134,10 @@ export default function ManualGenerate() {
         const collection = await createCollection(payload);
         targetCollectionId = collection.id;
         fetchCollections();
+        toast.success('Collection created successfully');
       } catch (e) {
         form.setError('collection.name', { message: 'Failed to create collection' });
+        toast.error('Failed to create collection');
         return;
       }
       if (!targetCollectionId) return;
@@ -140,12 +145,15 @@ export default function ManualGenerate() {
       targetCollectionId = data.selectedCollectionId;
     } else {
       form.setError('selectedCollectionId', { message: 'Invalid collection selection' });
+      toast.error('Invalid collection selection');
       return;
     }
 
     // Create flashcards
     const flashcardCreationErrors: Record<number, { front?: string }> = {};
     let hasFlashcardErrors = false;
+    let successCount = 0;
+
     for (let i = 0; i < data.flashcards.length; i++) {
       const card = data.flashcards[i];
       try {
@@ -158,19 +166,26 @@ export default function ManualGenerate() {
             reviewStatus: ReviewStatus.Approved,
           },
         });
+        successCount++;
       } catch (e) {
         console.error('Error creating flashcard:', e);
         flashcardCreationErrors[i] = { front: 'Failed to create flashcard' };
         hasFlashcardErrors = true;
       }
     }
+
     if (hasFlashcardErrors) {
       Object.entries(flashcardCreationErrors).forEach(([idx, err]) => {
         form.setError(`flashcards.${idx}.front` as keyof FormValues, { message: err.front });
       });
+      toast.error(`Failed to create ${Object.keys(flashcardCreationErrors).length} flashcards`);
+      if (successCount > 0) {
+        toast.success(`Successfully created ${successCount} flashcards`);
+      }
       return;
     }
 
+    toast.success(`Successfully created ${data.flashcards.length} flashcards`);
     navigate(`/collections/${targetCollectionId}`);
   };
 
@@ -178,22 +193,30 @@ export default function ManualGenerate() {
     if (categoryInput.trim() && !categories.includes(categoryInput.trim())) {
       setCategories([...categories, categoryInput.trim()]);
       setCategoryInput('');
+      toast.success(`Category "${categoryInput.trim()}" added`);
+    } else if (categories.includes(categoryInput.trim())) {
+      toast.error(`Category "${categoryInput.trim()}" already exists`);
     }
   };
 
   const handleRemoveCategory = (category: string) => {
     setCategories(categories.filter(c => c !== category));
+    toast.success(`Category "${category}" removed`);
   };
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
       setTags([...tags, tagInput.trim()]);
       setTagInput('');
+      toast.success(`Tag "${tagInput.trim()}" added`);
+    } else if (tags.includes(tagInput.trim())) {
+      toast.error(`Tag "${tagInput.trim()}" already exists`);
     }
   };
 
   const handleRemoveTag = (tag: string) => {
     setTags(tags.filter(t => t !== tag));
+    toast.success(`Tag "${tag}" removed`);
   };
 
   return (
@@ -217,36 +240,50 @@ export default function ManualGenerate() {
             </CardHeader>
             <CardContent>
               <div className='mb-4'>
-                <label htmlFor='collection-select' className='block text-sm font-medium text-neutral-700 mb-1'>
-                  Select Collection
-                </label>
-                <select
-                  id='collection-select'
-                  className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
-                  value={selectedCollectionId || 'new'}
-                  onChange={e => {
-                    const value = e.target.value;
-
-                    if (value === 'new') {
-                      form.reset({
-                        collection: { name: '', description: '', color: PRESET_COLORS[9], categories: [], tags: [] },
-                        flashcards: [{ front: '', back: '' }],
-                        selectedCollectionId: null,
-                      });
-                    } else {
-                      form.reset({
-                        flashcards: [{ front: '', back: '' }],
-                        selectedCollectionId: value,
-                      });
-                    }
-                  }}>
-                  <option value='new'>Create New Collection</option>
-                  {data?.collections.map(collection => (
-                    <option key={collection.id} value={collection.id}>
-                      {collection.name}
-                    </option>
-                  ))}
-                </select>
+                <FormField
+                  name='selectedCollectionId'
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Select Collection</FormLabel>
+                      <Select
+                        value={selectedCollectionId || 'new'}
+                        disabled={!!predefinedCollectionId}
+                        onValueChange={value => {
+                          if (value === 'new') {
+                            form.reset({
+                              collection: {
+                                name: '',
+                                description: '',
+                                color: PRESET_COLORS[9],
+                                categories: [],
+                                tags: [],
+                              },
+                              flashcards: [{ front: '', back: '' }],
+                              selectedCollectionId: null,
+                            });
+                          } else {
+                            form.reset({
+                              flashcards: [{ front: '', back: '' }],
+                              selectedCollectionId: value,
+                            });
+                          }
+                        }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select collection' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='new'>Create New Collection</SelectItem>
+                          {data?.collections.map(collection => (
+                            <SelectItem key={collection.id} value={collection.id}>
+                              {collection.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {isNew && (
@@ -341,7 +378,7 @@ export default function ManualGenerate() {
                           }
                         }}
                       />
-                      <Button type='button' onClick={handleAddCategory}>
+                      <Button type='button' onClick={handleAddCategory} disabled={!categoryInput.trim()}>
                         Add
                       </Button>
                     </div>
@@ -379,7 +416,7 @@ export default function ManualGenerate() {
                           }
                         }}
                       />
-                      <Button type='button' onClick={handleAddTag}>
+                      <Button type='button' onClick={handleAddTag} disabled={!tagInput.trim()}>
                         Add
                       </Button>
                     </div>
@@ -469,13 +506,15 @@ export default function ManualGenerate() {
           )}
 
           <div className='flex justify-end gap-4'>
-            <Button type='button' variant='outline' onClick={() => navigate('/dashboard')}>
+            <Button type='button' variant='outline' onClick={() => navigate(-1)}>
               Cancel
             </Button>
             <Button type='submit' disabled={isLoadingCollections || isCreatingCollection || isCreatingFlashcard}>
               {isLoadingCollections || isCreatingCollection || isCreatingFlashcard
                 ? 'Creating...'
-                : 'Create Collection'}
+                : selectedCollectionId !== null
+                  ? 'Add Flashcards'
+                  : 'Create Collection'}
             </Button>
           </div>
         </form>

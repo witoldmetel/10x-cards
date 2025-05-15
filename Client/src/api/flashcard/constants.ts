@@ -3,4 +3,5 @@ export const FLASHCARD_API_ROUTES = {
   BATCH_UPDATE: '/flashcards/batch',
   ARCHIVED: '/flashcards/archived',
   ARCHIVED_STATISTICS: '/flashcards/archived/statistics',
+  GENERATE: '/flashcards/generate',
 } as const;

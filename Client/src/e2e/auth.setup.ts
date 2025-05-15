@@ -17,7 +17,7 @@ setup('setup test user', async ({ page }) => {
   console.log('Registering new user...');
   const registerPage = new RegisterPage(page);
   await registerPage.goto();
-  
+
   console.log('Current URL before registration:', page.url());
   await registerPage.submitRegistration(TEST_USER_NAME, TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_PASSWORD);
   console.log('User registered successfully');

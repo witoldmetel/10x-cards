@@ -2,10 +2,6 @@
   "name": "10x-cards",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "Client",
-    "API/TenXCards.API"
-  ],
   "scripts": {
     "client": "cd Client && npm run dev",
     "server": "docker compose up",

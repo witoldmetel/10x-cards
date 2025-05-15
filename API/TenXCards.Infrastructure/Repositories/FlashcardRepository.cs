@@ -42,11 +42,20 @@ namespace TenXCards.Infrastructure.Repositories
                 query = query.Where(f => f.CollectionId == queryParams.CollectionId);
             }
 
-            if (queryParams.Archived.HasValue)
+            // Handle archived status
+            if (!queryParams.IncludeArchived)
             {
-                query = queryParams.Archived.Value
-                    ? query.Where(f => f.ArchivedAt != null)
-                    : query.Where(f => f.ArchivedAt == null);
+                if (queryParams.Archived.HasValue)
+                {
+                    query = queryParams.Archived.Value
+                        ? query.Where(f => f.ArchivedAt != null)
+                        : query.Where(f => f.ArchivedAt == null);
+                }
+                else
+                {
+                    // Default to non-archived if not specified
+                    query = query.Where(f => f.ArchivedAt == null);
+                }
             }
 
             query = ApplyFilters(query, queryParams);
@@ -76,23 +85,29 @@ namespace TenXCards.Infrastructure.Repositories
         {
             flashcard.CreatedAt = DateTime.UtcNow;
             
-            // Set default review status based on creation source
-            if (flashcard.CreationSource == FlashcardCreationSource.Manual)
+            // Only set default review status if not provided
+            if (flashcard.ReviewStatus == ReviewStatus.New && flashcard.CreationSource == FlashcardCreationSource.Manual)
             {
                 flashcard.ReviewStatus = ReviewStatus.Approved;
             }
-            else
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                flashcard.ReviewStatus = ReviewStatus.New;
+                _context.Flashcards.Add(flashcard);
+                await _context.SaveChangesAsync();
+
+                // Update collection statistics
+                await UpdateCollectionStatistics(flashcard.CollectionId);
+
+                await transaction.CommitAsync();
+                return flashcard;
             }
-
-            _context.Flashcards.Add(flashcard);
-            await _context.SaveChangesAsync();
-
-            // Update collection statistics
-            await UpdateCollectionStatistics(flashcard.CollectionId);
-
-            return flashcard;
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<Flashcard?> UpdateAsync(Flashcard flashcard)
