@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, AlertCircle, Edit, Check, X, HelpCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Edit, Check, X, HelpCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -64,10 +64,9 @@ export default function AIGenerate() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [generationStep, setGenerationStep] = useState<'idle' | 'uploading' | 'processing' | 'reviewing'>('idle');
-  const [editingCard, setEditingCard] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'generate' | 'review'>('generate');
   const [editedQuestion, setEditedQuestion] = useState('');
   const [editedAnswer, setEditedAnswer] = useState('');
-  const [activeTab, setActiveTab] = useState<'generate' | 'review'>('generate');
 
   const form = useForm<AIGenerateFormValues>({
     resolver: zodResolver(aiGenerateSchema),
@@ -145,13 +144,17 @@ export default function AIGenerate() {
     }
   };
 
+
+
   const saveCollection = async () => {
     try {
-      // Filter only accepted flashcards
-      const acceptedFlashcards = generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved);
+      // Filter cards that are either approved or corrected
+      const acceptedFlashcards = generatedCards.filter(
+        card => card.reviewStatus === ReviewStatus.Approved || card.reviewStatus === ReviewStatus.ToCorrect,
+      );
 
       if (acceptedFlashcards.length === 0) {
-        toast.error('Please accept at least one flashcard');
+        toast.error('Please accept or correct at least one flashcard');
         return;
       }
 
@@ -160,7 +163,7 @@ export default function AIGenerate() {
         return;
       }
 
-      const savePromises = generatedCards.map(card => {
+      const savePromises = acceptedFlashcards.map(card => {
         const createPayload = {
           collectionId: targetCollectionId,
           flashcard: {
@@ -197,6 +200,19 @@ export default function AIGenerate() {
     );
   };
 
+    const handleCorrectCard = (id: string) => {
+    setGeneratedCards(prev =>
+      prev.map(card =>
+        card.id === id
+          ? {
+              ...card,
+              reviewStatus: ReviewStatus.ToCorrect,
+            }
+          : card,
+      ),
+    );
+  };
+
   const handleRemoveCard = (id: string) => {
     setGeneratedCards(prev =>
       prev.map(card =>
@@ -208,32 +224,6 @@ export default function AIGenerate() {
           : card,
       ),
     );
-  };
-
-  const startEditing = (card: Flashcard) => {
-    setEditingCard(card.id);
-    setEditedQuestion(card.front);
-    setEditedAnswer(card.back);
-  };
-
-  const saveEditing = () => {
-    if (!editingCard) return;
-
-    setGeneratedCards(prev =>
-      prev.map(card =>
-        card.id === editingCard ? { ...card, question: editedQuestion, answer: editedAnswer, accepted: true } : card,
-      ),
-    );
-
-    setEditingCard(null);
-    setEditedQuestion('');
-    setEditedAnswer('');
-  };
-
-  const cancelEditing = () => {
-    setEditingCard(null);
-    setEditedQuestion('');
-    setEditedAnswer('');
   };
 
   const howItWorksContent = (
@@ -460,16 +450,23 @@ export default function AIGenerate() {
                   {generatedCards.map(flashcard => (
                     <Card
                       key={flashcard.id}
-                      className={`relative ${
-                        flashcard.reviewStatus === ReviewStatus.Approved
-                          ? 'border-2 border-primary bg-primary/5'
-                          : flashcard.reviewStatus === ReviewStatus.Rejected
-                            ? 'border-2 border-destructive bg-destructive/5 opacity-50'
-                            : 'border'
-                      }`}>
+                        className={`relative ${
+                          flashcard.reviewStatus === ReviewStatus.Approved
+                            ? 'border-2 border-primary bg-primary/5'
+                            : flashcard.reviewStatus === ReviewStatus.ToCorrect
+                              ? 'border-2 border-secondary bg-secondary/5'
+                            : flashcard.reviewStatus === ReviewStatus.Rejected
+                              ? 'border-2 border-destructive bg-destructive/5 opacity-50'
+                              : 'border'
+                        }`}>
                       {flashcard.reviewStatus === ReviewStatus.Approved && (
                         <div className='absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-medium'>
                           Accepted
+                        </div>
+                      )}
+                      {flashcard.reviewStatus === ReviewStatus.ToCorrect && (
+                        <div className='absolute top-2 right-2 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs font-medium'>
+                          To Correct
                         </div>
                       )}
                       {flashcard.reviewStatus === ReviewStatus.Rejected && (
@@ -478,37 +475,6 @@ export default function AIGenerate() {
                         </div>
                       )}
                       <CardContent className='pt-6'>
-                        {editingCard === flashcard.id ? (
-                          <div className='space-y-4'>
-                            <div>
-                              <FormLabel className='block mb-2'>Question</FormLabel>
-                              <Textarea
-                                value={editedQuestion}
-                                onChange={e => setEditedQuestion(e.target.value)}
-                                rows={2}
-                                className='w-full'
-                              />
-                            </div>
-                            <div>
-                              <FormLabel className='block mb-2'>Answer</FormLabel>
-                              <Textarea
-                                value={editedAnswer}
-                                onChange={e => setEditedAnswer(e.target.value)}
-                                rows={3}
-                                className='w-full'
-                              />
-                            </div>
-                            <div className='flex justify-end gap-2'>
-                              <Button type='button' variant='outline' size='sm' onClick={cancelEditing}>
-                                Cancel
-                              </Button>
-                              <Button type='button' size='sm' onClick={saveEditing}>
-                                Save Changes
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
                             <div className='mb-4'>
                               <p className='font-medium text-sm text-muted-foreground'>Question:</p>
                               <p className='mt-1 text-lg'>{flashcard.front}</p>
@@ -535,6 +501,19 @@ export default function AIGenerate() {
                                 <Button
                                   type='button'
                                   size='sm'
+                                  variant={flashcard.reviewStatus === ReviewStatus.ToCorrect ? 'secondary' : 'outline'}
+                                  className={`${
+                                    flashcard.reviewStatus === ReviewStatus.ToCorrect
+                                      ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground'
+                                      : 'hover:border-secondary hover:text-secondary-foreground'
+                                  }`}
+                                  onClick={() => handleCorrectCard(flashcard.id)}>
+                                  <Pencil size={16} className='mr-1' />
+                                  Correct
+                                </Button>
+                                <Button
+                                  type='button'
+                                  size='sm'
                                   variant={flashcard.reviewStatus === ReviewStatus.Rejected ? 'destructive' : 'outline'}
                                   className={`${
                                     flashcard.reviewStatus === ReviewStatus.Rejected
@@ -546,18 +525,7 @@ export default function AIGenerate() {
                                   Remove
                                 </Button>
                               </div>
-                              <Button
-                                type='button'
-                                variant='outline'
-                                size='sm'
-                                className='hover:bg-muted'
-                                onClick={() => startEditing(flashcard)}>
-                                <Edit size={16} className='mr-1' />
-                                Edit
-                              </Button>
                             </div>
-                          </>
-                        )}
                       </CardContent>
                     </Card>
                   ))}

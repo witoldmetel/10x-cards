@@ -74,10 +74,14 @@ export default function CollectionDetails() {
 
   const handleDeleteCollection = async () => {
     if (!collectionId) return;
+    
+    setIsDeleteModalOpen(false);
+
+    navigate('/dashboard');
+    
     try {
       await deleteCollectionMutation.mutateAsync(collectionId);
       toast.success('Collection deleted successfully');
-      navigate('/dashboard');
     } catch (error) {
       toast.error('Failed to delete collection');
     }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCollection, useCollections } from '@/api/collections/queries';
+import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
 
 export default function PendingReview() {
   const navigate = useNavigate();
@@ -27,23 +28,25 @@ export default function PendingReview() {
     const groupedByCollection: Record<string, any> = {};
     let total = 0;
 
-    collection?.flashcards.forEach(card => {
-      if (!groupedByCollection[card.collectionId]) {
-        const collection = collections?.collections.find(c => c.id === card.collectionId);
-        groupedByCollection[card.collectionId] = {
-          collectionId: card.collectionId,
-          collectionName: collection?.name || 'Unknown Collection',
-          cards: [],
-          count: 0,
-          lastStudied: 'Never',
-          masteryPercentage: 0,
-        };
-      }
+    collection?.flashcards
+      .filter(card => card.creationSource === FlashcardCreationSource.AI && card.reviewStatus === ReviewStatus.ToCorrect)
+      .forEach(card => {
+        if (!groupedByCollection[card.collectionId]) {
+          const collection = collections?.collections.find(c => c.id === card.collectionId);
+          groupedByCollection[card.collectionId] = {
+            collectionId: card.collectionId,
+            collectionName: collection?.name || 'Unknown Collection',
+            cards: [],
+            count: 0,
+            lastStudied: 'Never',
+            masteryPercentage: 0,
+          };
+        }
 
-      groupedByCollection[card.collectionId].cards.push(card);
-      groupedByCollection[card.collectionId].count += 1;
-      total += 1;
-    });
+        groupedByCollection[card.collectionId].cards.push(card);
+        groupedByCollection[card.collectionId].count += 1;
+        total += 1;
+      });
 
     setPendingByCollection(groupedByCollection);
     setTotalPendingCards(total);
@@ -195,8 +198,8 @@ export default function PendingReview() {
         <h1 className='text-3xl font-bold'>Cards Pending Review</h1>
         <p className='text-muted-foreground'>
           {totalPendingCards > 0
-            ? `You have ${totalPendingCards} AI-generated cards pending review.`
-            : "You don't have any AI-generated cards pending review."}
+            ? `You have ${totalPendingCards} AI-generated cards that need correction.`
+            : "You don't have any AI-generated cards that need correction."}
         </p>
       </div>
 
@@ -208,8 +211,7 @@ export default function PendingReview() {
               <div>
                 <h2 className='text-2xl font-bold mb-2'>Review AI-Generated Cards</h2>
                 <p className='opacity-90 max-w-md'>
-                  AI-generated cards need to be reviewed before they're added to your learning queue. Review and approve
-                  cards that are accurate and helpful.
+                  Some AI-generated cards need correction. Review and improve these cards before adding them to your learning queue.
                 </p>
               </div>
               <Button
@@ -230,12 +232,12 @@ export default function PendingReview() {
               <Card key={collection.collectionId}>
                 <CardHeader>
                   <CardTitle>{collection.collectionName}</CardTitle>
-                  <CardDescription>Created with AI</CardDescription>
+                  <CardDescription>AI-Generated Cards Needing Correction</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className='text-center'>
                     <span className='text-3xl font-bold'>{collection.count}</span>
-                    <p className='text-muted-foreground'>Cards pending review</p>
+                    <p className='text-muted-foreground'>Cards to correct</p>
                   </div>
                 </CardContent>
                 <CardFooter>
@@ -273,7 +275,7 @@ export default function PendingReview() {
               </svg>
               <h3 className='text-xl font-medium mt-2'>No Cards to Review</h3>
             </div>
-            <p className='mb-6'>You don't have any AI-generated cards that need review.</p>
+            <p className='mb-6'>You don't have any AI-generated cards that need correction.</p>
             <Button onClick={() => navigate('/flashcards/generate')}>Generate New AI Cards</Button>
           </CardContent>
         </Card>
