@@ -33,7 +33,7 @@ const passwordSchema = z
     currentPassword: z.string().min(8, 'Password must be at least 8 characters.'),
     newPassword: z
       .string()
-      .min(12, 'Password must be at least 12 characters.')
+      .min(8, 'Password must be at least 8 characters.')
       .regex(/[0-9]/, 'Password must contain at least one number.')
       .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character.'),
     confirmPassword: z.string(),
@@ -56,7 +56,11 @@ export default function Settings() {
   const { user, onLogout } = useAuth();
   const updateUserMutation = useUpdateUser(user?.userId || '');
   const deleteUserMutation = useDeleteUser(user?.userId || '');
-  const updatePasswordMutation = useUpdatePassword(user?.userId || '');
+  const updatePasswordMutation = useUpdatePassword(user?.userId || '', {
+    onSuccess: () => {
+      passwordForm.reset();
+    },
+  });
 
   const [isUpdatingApiKeys, setIsUpdatingApiKeys] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -265,7 +269,7 @@ export default function Settings() {
                           <Input type='password' {...field} />
                         </FormControl>
                         <FormDescription>
-                          Password must be at least 12 characters and include a number and special character.
+                          Password must be at least 8 characters and include a number and special character.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

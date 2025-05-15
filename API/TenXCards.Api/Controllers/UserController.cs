@@ -174,10 +174,10 @@ namespace TenXCards.API.Controllers
         /// </summary>
         [HttpPut("{id:guid}/password")]
         [Authorize]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(UserLoginResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult> UpdatePassword([FromRoute] Guid id, [FromBody] UpdatePasswordRequest request)
+        public async Task<ActionResult<UserLoginResponse>> UpdatePassword([FromRoute] Guid id, [FromBody] UpdatePasswordRequest request)
         {
             try
             {
@@ -187,8 +187,8 @@ namespace TenXCards.API.Controllers
                     return Forbid();
                 }
 
-                await _userService.UpdatePasswordAsync(id, request);
-                return NoContent();
+                var response = await _userService.UpdatePasswordAsync(id, request);
+                return Ok(response);
             }
             catch (UnauthorizedAccessException)
             {

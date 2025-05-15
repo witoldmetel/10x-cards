@@ -15,6 +15,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRegister } from '@/api/user/mutations';
+import { AxiosError } from 'axios';
+import { AuthResponse } from '@/api/user/types';
+
 
 const registerSchema = z
   .object({
@@ -33,7 +36,24 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function Register() {
   const [error, setError] = useState<string | null>(null);
   const { onLogin } = useAuth();
-  const registerMutation = useRegister();
+  const registerMutation = useRegister({
+    onSuccess: (data: AuthResponse) => {
+      onLogin(data);
+    },
+    onError: (error: unknown) => {
+      if (error instanceof AxiosError) {
+        const axiosError = error as AxiosError<{detail: string}>;
+
+        if (axiosError.response?.data && 'detail' in axiosError.response.data) {
+          setError(axiosError.response.data.detail);
+        } else {
+          setError(axiosError.message || 'Failed to create account');
+        }
+      } else {
+        setError('Failed to create account');
+      }
+    }
+  });
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -46,25 +66,11 @@ export default function Register() {
   });
 
   const onSubmit = async (formData: RegisterFormData) => {
-    try {
-      const data = await registerMutation.mutateAsync({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (!data.user?.userId || !data.token) {
-        throw new Error('Invalid response from server');
-      }
-
-      onLogin(data);
-    } catch (error) {
-      if (error instanceof Error && 'detail' in error) {
-        setError(error.detail as string);
-      } else {
-        setError(error instanceof Error ? error.message : 'Failed to create account');
-      }
-    }
+    await registerMutation.mutateAsync({
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+    });
   };
 
   return (

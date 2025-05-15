@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useLogin } from '@/api/user/mutations';
+import { AxiosError } from 'axios';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -19,7 +20,24 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const { onLogin } = useAuth();
-  const loginMutation = useLogin();
+  const loginMutation = useLogin({
+    onSuccess: (data) => {
+      onLogin(data);
+    },
+    onError: (error: unknown) => {
+      if (error instanceof AxiosError) {
+        const axiosError = error as AxiosError<{detail: string}>;
+
+        if (axiosError.response?.data && 'detail' in axiosError.response.data) {
+          setError(axiosError.response.data.detail);
+        } else {
+          setError(axiosError.message || 'Failed to sign in');
+        }
+      } else {
+        setError('Failed to sign in');
+      }
+    }
+  });
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -30,17 +48,7 @@ export default function Login() {
   });
 
   const onSubmit = async (formData: LoginFormData) => {
-    try {
-      const data = await loginMutation.mutateAsync(formData);
-      
-      onLogin(data);
-    } catch (error) {
-      if (error instanceof Error && 'detail' in error) {
-        setError(error.detail as string);
-      } else {
-        setError(error instanceof Error ? error.message : 'Failed to sign in');
-      }
-    }
+    await loginMutation.mutateAsync(formData);
   };
 
   return (

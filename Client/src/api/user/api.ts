@@ -36,6 +36,8 @@ export const deleteUser = async (id: string): Promise<void> => {
   await instance.delete(USER_API_ROUTES.PROFILE_BY_ID(id));
 };
 
-export const updatePassword = async (id: string, data: UpdatePasswordRequest): Promise<void> => {
-  await instance.put(USER_API_ROUTES.PASSWORD_UPDATE(id), data);
+export const updatePassword = async (id: string, data: UpdatePasswordRequest): Promise<AuthResponse> => {
+  const { data: response } = await instance.put<AuthResponse>(USER_API_ROUTES.PASSWORD_UPDATE(id), data);
+  
+  return response;
 };

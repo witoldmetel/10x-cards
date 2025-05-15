@@ -166,7 +166,7 @@ public class UserService : IUserService
         return _passwordHashService.VerifyPassword(password, user.Password);
     }
 
-    public async Task UpdatePasswordAsync(Guid id, UpdatePasswordRequest request)
+    public async Task<UserLoginResponse> UpdatePasswordAsync(Guid id, UpdatePasswordRequest request)
     {
         var user = await _userRepository.GetByIdAsync(id) ?? throw new Exception("User not found");
 
@@ -177,5 +177,20 @@ public class UserService : IUserService
 
         user.Password = _passwordHashService.HashPassword(request.NewPassword);
         await _userRepository.UpdateAsync(user);
+
+        var token = _jwtTokenService.GenerateToken(user);
+        
+        return new UserLoginResponse
+        {
+            User = new UserDto
+            {
+                UserId = user.UserId,
+                Name = user.Name,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt,
+                ApiModelKey = user.ApiModelKey
+            },
+            Token = token
+        };
     }
 } 
