@@ -54,6 +54,7 @@ export default function CollectionDetails() {
       incorrect: 0,
       total: collectionFlashcards?.length || 0,
     });
+    toast.success('Study session started');
   };
 
   const handleShowAnswer = () => {
@@ -62,52 +63,52 @@ export default function CollectionDetails() {
 
   const handleArchiveCollection = async () => {
     if (!collectionId) return;
-    await archiveCollectionMutation.mutateAsync(collectionId);
-    navigate('/dashboard');
+    try {
+      await archiveCollectionMutation.mutateAsync(collectionId);
+      toast.success('Collection archived successfully');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to archive collection');
+    }
   };
 
   const handleDeleteCollection = async () => {
     if (!collectionId) return;
-    await deleteCollectionMutation.mutateAsync(collectionId);
-    navigate('/dashboard');
+    try {
+      await deleteCollectionMutation.mutateAsync(collectionId);
+      toast.success('Collection deleted successfully');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error('Failed to delete collection');
+    }
   };
 
   const handleGradeCard = (grade: number) => {
     // Update study stats
     if (grade >= 3) {
       setStudyStats(prev => ({ ...prev, correct: prev.correct + 1 }));
+      toast.success('Card marked as correct');
     } else {
       setStudyStats(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      toast.error('Card marked as incorrect');
     }
-
-    // In a real app, this would update the flashcard's spaced repetition data
-    // const card = collectionFlashcards?.[currentCardIndex];
-    // updateFlashcard(card.id, {
-    //   lastReviewed: new Date(),
-    //   repetitions: grade >= 3 ? card.repetitions + 1 : 0,
-    //   // Additional SR-2 algorithm updates would go here
-    // });
 
     if (currentCardIndex < collectionFlashcards?.length - 1) {
       // Move to next card
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
+      toast.info('Next card loaded');
     } else {
       // End of study session
       const { correct, total } = studyStats;
-
-      // Update the collection's mastery percentage
-      // if (id) {
-      //   updateStudyProgress(id, correct, total);
-      // }
 
       // Show completion screen
       setIsStudying(false);
       setShowAnswer(false);
       setCurrentCardIndex(0);
 
-      // Show success message
-      toast.success(`Study session completed! You got ${correct} out of ${total} cards correct.`);
+      // Show success message with detailed stats
+      toast.success(`Study session completed! You got ${correct} out of ${total} cards correct (${Math.round((correct/total) * 100)}% accuracy)`);
     }
   };
 
@@ -117,6 +118,7 @@ export default function CollectionDetails() {
 
   const handleAddCards = () => {
     navigate(`/flashcards/create?collectionId=${collectionId}`);
+    toast.info('Redirecting to card creation');
   };
 
   if (isCollectionLoading) {

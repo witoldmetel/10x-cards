@@ -8,16 +8,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useUnarchiveCollection } from '@/api/collections/mutations';
 import { TagBadge } from '@/components/ui/tag-badge';
+import { toast } from 'sonner';
 
 export default function Archive() {
   const navigate = useNavigate();
   const { data, isLoading } = useCollections();
-  const unarchiveCollectionMutation = useUnarchiveCollection();
+  const unarchiveCollectionMutation = useUnarchiveCollection({
+    onSuccess: () => {
+      toast.success('Collection restored successfully');
+      navigate('/dashboard');
+    },
+    onError: () => {
+      toast.error('Failed to restore collection');
+    }
+  });
 
   const handleUnarchive = async (collectionId: string) => {
-    await unarchiveCollectionMutation.mutateAsync(collectionId);
-
-    navigate('/dashboard');
+    unarchiveCollectionMutation.mutate(collectionId);
   };
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,7 +66,7 @@ export default function Archive() {
             <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
             <Input
               placeholder='Search archives...'
-              className='pl-9 w-full sm:w-64'
+              className='pl-9 w-full sm:w-64 bg-white'
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />

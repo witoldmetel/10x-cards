@@ -65,13 +65,17 @@ export function useArchiveCollection() {
   });
 }
 
-export function useUnarchiveCollection() {
+export function useUnarchiveCollection({onSuccess, onError}: {onSuccess: () => void, onError: () => void}) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => unarchiveCollection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      onSuccess();
+    },
+    onError: () => {
+      onError();
     },
   });
 }

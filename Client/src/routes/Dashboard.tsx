@@ -4,12 +4,19 @@ import { Button } from '@/components/ui/button';
 import { useCollections } from '@/api/collections/queries';
 import { Link } from 'react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TagBadge } from '@/components/ui/tag-badge';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CollectionCard } from '@/components/collections/CollectionCard/CollectionCard';
+
+export type CollectionCardProps = CollectionResponse &{
+  cardCount: number,
+  lastStudied: string,
+  dueCards: number,
+  masteryLevel: number,
+} 
 
 export default function Dashboard() {
   const { data, isLoading } = useCollections({ archived: false });
@@ -17,17 +24,13 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const collections = data?.collections.map(collection => ({
-    id: collection.id,
-    name: collection.name,
-    description: collection.description,
+    ...collection,
     cardCount: collection.flashcards.length,
     lastStudied: 'Never',
     dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
       .length,
     masteryLevel: 0,
-    categories: collection.categories || [],
-    tags: collection.tags || [],
-  }));
+  })) as CollectionCardProps[];
 
   // function timeAgo(date: Date) {
   //   const now = new Date();
@@ -208,7 +211,7 @@ export default function Dashboard() {
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {collections?.map(collection => (
                 <div key={collection.id}>
-                  <CollectionCard collection={collection} />
+                  <CollectionCard {...collection} />
                 </div>
               ))}
               <Link to='/flashcards/options' className='block'>
@@ -329,69 +332,3 @@ export default function Dashboard() {
   );
 }
 
-const CollectionCard = ({
-  collection,
-}: {
-  collection: {
-    id: string;
-    name: string;
-    description: string | null;
-    cardCount: number;
-    lastStudied: string;
-    dueCards: number;
-    masteryLevel: number;
-    categories: string[];
-    tags: string[];
-  };
-}) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{collection.name}</CardTitle>
-        <CardDescription>{collection.description}</CardDescription>
-        {/* Display categories and tags */}
-        <div className='flex flex-wrap gap-2 mt-2'>
-          {collection.categories &&
-            collection.categories.length > 0 &&
-            collection.categories?.map(category => (
-              <TagBadge key={`category-${category}`} text={category} variant='category' />
-            ))}
-          {collection.tags &&
-            collection.tags.length > 0 &&
-            collection.tags?.map(tag => <TagBadge key={`tag-${tag}`} text={tag} variant='tag' />)}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className='grid grid-cols-2 gap-2 text-sm'>
-          <div>
-            <p className='text-muted-foreground'>Total Cards</p>
-            <p className='font-medium'>{collection.cardCount}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Due Cards</p>
-            <p className='font-medium'>{collection.dueCards}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Last Studied</p>
-            <p className='font-medium'>{collection.lastStudied}</p>
-          </div>
-          <div>
-            <p className='text-muted-foreground'>Mastery</p>
-            <p className='font-medium'>{collection.masteryLevel}%</p>
-          </div>
-        </div>
-        <div className='w-full bg-muted rounded-full h-1.5 mt-4'>
-          <div className='bg-primary rounded-full h-1.5' style={{ width: `${collection.masteryLevel}%` }}></div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Link to={`/collections/${collection.id}`} className='w-full'>
-          <Button variant='outline' className='w-full justify-between'>
-            <span>{collection.dueCards > 0 ? 'Review Cards' : 'View Collection'}</span>
-            <ArrowRight size={16} />
-          </Button>
-        </Link>
-      </CardFooter>
-    </Card>
-  );
-};
