@@ -1,16 +1,29 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { login, register, updateUser, deleteUser, updatePassword } from './api';
-import type { LoginCredentials, RegisterCredentials, UpdateUserRequest, User, UpdatePasswordRequest, AuthResponse } from './types';
+import type {
+  LoginCredentials,
+  RegisterCredentials,
+  UpdateUserRequest,
+  User,
+  UpdatePasswordRequest,
+  AuthResponse,
+} from './types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
-export const useLogin = ({onSuccess, onError}: {onSuccess?: (data: AuthResponse) => void, onError?: (error: unknown) => void }) => {
+export const useLogin = ({
+  onSuccess,
+  onError,
+}: {
+  onSuccess?: (data: AuthResponse) => void;
+  onError?: (error: unknown) => void;
+}) => {
   return useMutation({
     mutationFn: (credentials: LoginCredentials) => login(credentials),
-    onSuccess: (data) => {
+    onSuccess: data => {
       onSuccess?.(data);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to login', error);
       toast.error('Failed to login. Please try again.');
       onError?.(error);
@@ -18,13 +31,19 @@ export const useLogin = ({onSuccess, onError}: {onSuccess?: (data: AuthResponse)
   });
 };
 
-export const useRegister = ({onSuccess, onError}: {onSuccess?: (data: AuthResponse) => void, onError?: (error: unknown) => void }) => {
+export const useRegister = ({
+  onSuccess,
+  onError,
+}: {
+  onSuccess?: (data: AuthResponse) => void;
+  onError?: (error: unknown) => void;
+}) => {
   return useMutation({
     mutationFn: (credentials: RegisterCredentials) => register(credentials),
-    onSuccess: (data) => {
+    onSuccess: data => {
       onSuccess?.(data);
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to create account', error);
       toast.error('Failed to create account. Please try again.');
       onError?.(error);
@@ -44,7 +63,7 @@ export const useUpdateUser = (userId: string) => {
 
       toast.success('Profile updated successfully!');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update profile', error);
       toast.error('Failed to update profile. Please try again.');
     },
@@ -57,26 +76,26 @@ export const useDeleteUser = (userId: string) => {
     onSuccess: () => {
       toast.success('Account deleted successfully');
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to delete account', error);
       toast.error('Failed to delete account. Please try again.');
     },
   });
 };
 
-export const useUpdatePassword = (userId: string, {onSuccess}: {onSuccess?: () => void}) => {
+export const useUpdatePassword = (userId: string, { onSuccess }: { onSuccess?: () => void }) => {
   const queryClient = useQueryClient();
   const { onLogin } = useAuth();
 
   return useMutation({
     mutationFn: (data: UpdatePasswordRequest) => updatePassword(userId, data),
-    onSuccess: (data) => {
+    onSuccess: data => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       onLogin(data);
       toast.success('Password updated successfully');
       onSuccess?.();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to update password', error);
       toast.error('Failed to update password. Please try again.');
     },

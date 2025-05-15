@@ -58,25 +58,25 @@ export class LoginPage {
     // Wait for inputs to be ready
     await this.emailInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.passwordInput.waitFor({ state: 'visible', timeout: 10000 });
-    
+
     // Clear inputs before filling
     await this.emailInput.clear();
     await this.passwordInput.clear();
-    
+
     // Fill inputs
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
-    
+
     // Ensure inputs have correct values
     await expect(this.emailInput).toHaveValue(email);
     await expect(this.passwordInput).toHaveValue(password);
-    
+
     // Wait for the response with a more specific matcher and longer timeout
     const responsePromise = this.page.waitForResponse(
       response => {
         return response.url().includes('/api/users/login') && response.request().method() === 'POST';
       },
-      { timeout: 60000 }
+      { timeout: 60000 },
     );
 
     // Click the submit button
@@ -85,11 +85,11 @@ export class LoginPage {
     try {
       const response = await responsePromise;
       const responseData = await response.json();
-      
+
       if (!response.ok()) {
         throw new Error(`Login failed: ${responseData.message || 'Unknown error'}`);
       }
-      
+
       // After successful login, we should be redirected to dashboard
       await this.page.waitForURL('/dashboard', { timeout: 10000 });
     } catch (error) {
@@ -116,4 +116,4 @@ export class LoginPage {
       await expect(this.errorMessage).toContainText(message, { timeout: 10000 });
     }
   }
-} 
+}

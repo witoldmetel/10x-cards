@@ -21,12 +21,12 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const { onLogin } = useAuth();
   const loginMutation = useLogin({
-    onSuccess: (data) => {
+    onSuccess: data => {
       onLogin(data);
     },
     onError: (error: unknown) => {
       if (error instanceof AxiosError) {
-        const axiosError = error as AxiosError<{detail: string}>;
+        const axiosError = error as AxiosError<{ detail: string }>;
 
         if (axiosError.response?.data && 'detail' in axiosError.response.data) {
           setError(axiosError.response.data.detail);
@@ -36,7 +36,7 @@ export default function Login() {
       } else {
         setError('Failed to sign in');
       }
-    }
+    },
   });
 
   const form = useForm<LoginFormData>({
@@ -52,22 +52,22 @@ export default function Login() {
   };
 
   return (
-    <div className="w-full">
-      <h1 className="text-2xl font-bold mb-6">Welcome Back</h1>
+    <div className='w-full'>
+      <h1 className='text-2xl font-bold mb-6'>Welcome Back</h1>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="login-form">
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4' data-testid='login-form'>
           <FormField
             control={form.control}
-            name="email"
+            name='email'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="your@email.com"
-                    type="email"
-                    autoComplete="email"
-                    data-testid="email-input"
+                    placeholder='your@email.com'
+                    type='email'
+                    autoComplete='email'
+                    data-testid='email-input'
                     {...field}
                   />
                 </FormControl>
@@ -77,10 +77,10 @@ export default function Login() {
           />
           <FormField
             control={form.control}
-            name="password"
+            name='password'
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center justify-between">
+                <div className='flex items-center justify-between'>
                   <FormLabel>Password</FormLabel>
                   {/* <Link
                     to="/forgot-password"
@@ -91,10 +91,10 @@ export default function Login() {
                 </div>
                 <FormControl>
                   <Input
-                    placeholder="••••••••"
-                    type="password"
-                    autoComplete="current-password"
-                    data-testid="password-input"
+                    placeholder='••••••••'
+                    type='password'
+                    autoComplete='current-password'
+                    data-testid='password-input'
                     {...field}
                   />
                 </FormControl>
@@ -102,20 +102,19 @@ export default function Login() {
               </FormItem>
             )}
           />
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loginMutation.isPending}
-            data-testid="login-submit"
-          >
-            {loginMutation.isPending ? "Signing in..." : "Sign in"}
+          <Button type='submit' className='w-full' disabled={loginMutation.isPending} data-testid='login-submit'>
+            {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
           </Button>
-          {error && <div className="text-red-500 text-sm" data-testid="login-error">{error}</div>}
+          {error && (
+            <div className='text-red-500 text-sm' data-testid='login-error'>
+              {error}
+            </div>
+          )}
         </form>
       </Form>
-      <div className="mt-6 text-center text-sm">
-        Don't have an account?{" "}
-        <Link to="/register" className="text-primary hover:underline" data-testid="register-link">
+      <div className='mt-6 text-center text-sm'>
+        Don't have an account?{' '}
+        <Link to='/register' className='text-primary hover:underline' data-testid='register-link'>
           Sign up
         </Link>
       </div>

@@ -215,7 +215,7 @@ export function EditCollectionDialog({ open, onOpenChange, collection }: EditCol
                       }
                     }}
                   />
-                  <Button type='button' onClick={handleAddCategory}>
+                  <Button type='button' onClick={handleAddCategory} disabled={!categoryInput.trim()}>
                     Add
                   </Button>
                 </div>
@@ -253,7 +253,7 @@ export function EditCollectionDialog({ open, onOpenChange, collection }: EditCol
                       }
                     }}
                   />
-                  <Button type='button' onClick={handleAddTag}>
+                  <Button type='button' onClick={handleAddTag} disabled={!tagInput.trim()}>
                     Add
                   </Button>
                 </div>

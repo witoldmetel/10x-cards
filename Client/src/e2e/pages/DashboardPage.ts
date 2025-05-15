@@ -33,17 +33,14 @@ export class DashboardPage {
 
     // Get the appropriate logout button
     const logoutButton = device === 'mobile' ? this.mobileLogoutButton : this.desktopLogoutButton;
-    
+
     // Wait for the button to be visible
     await expect(logoutButton).toBeVisible({ timeout: 10000 });
-    
+
     // Click the button and wait for navigation
-    await Promise.all([
-      this.page.waitForLoadState('networkidle'),
-      logoutButton.click()
-    ]);
-    
+    await Promise.all([this.page.waitForLoadState('networkidle'), logoutButton.click()]);
+
     // Verify we're logged out by checking URL (we get redirected to /login)
     await expect(this.page).toHaveURL('/login', { timeout: 10000 });
   }
-} 
+}

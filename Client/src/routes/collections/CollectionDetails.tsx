@@ -194,18 +194,14 @@ export default function CollectionDetails() {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Last Studied</p>
-              <p className='text-2xl font-medium'>
-              Never
-              </p>
+              <p className='text-2xl font-medium'>Never</p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
                 <p className='text-2xl font-medium'>{0}%</p>
                 <div className='w-full max-w-[100px] bg-muted rounded-full h-2'>
-                  <div
-                    className='bg-primary rounded-full h-2'
-                    style={{ width: `${0}%` }}></div>
+                  <div className='bg-primary rounded-full h-2' style={{ width: `${0}%` }}></div>
                 </div>
               </div>
             </div>

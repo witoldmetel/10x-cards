@@ -14,8 +14,7 @@
 // } from "@/components/ui/form";
 // import { Input } from "@/components/ui/input";
 
-import { Navigate } from "react-router";
-
+import { Navigate } from 'react-router';
 
 // const resetPasswordSchema = z
 //   .object({
@@ -150,4 +149,4 @@ export default function ResetPasswordPage() {
   //     </Form>
   //   </div>
   // );
-};
+}

@@ -107,8 +107,6 @@ export default function Settings() {
   const onApiSubmit = async () => {
     try {
       setIsUpdatingApiKeys(true);
-      // In a real app, this would update API keys via API
-      console.log('Updating API keys');
 
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -145,8 +143,10 @@ export default function Settings() {
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <TabsTrigger value='api' disabled>API Keys</TabsTrigger>
+                <span className='inline-flex'>
+                  <TabsTrigger value='api' disabled>
+                    API Keys
+                  </TabsTrigger>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -218,16 +218,15 @@ export default function Settings() {
                   <DialogHeader>
                     <DialogTitle>Are you absolutely sure?</DialogTitle>
                     <DialogDescription>
-                      This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                      This action cannot be undone. This will permanently delete your account and remove your data from
+                      our servers.
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
-                    <Button variant='outline' onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button 
-                      variant='destructive' 
-                      onClick={handleDeleteAccount}
-                      disabled={deleteUserMutation.isPending}
-                    >
+                    <Button variant='outline' onClick={() => setIsDeleteDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button variant='destructive' onClick={handleDeleteAccount} disabled={deleteUserMutation.isPending}>
                       {deleteUserMutation.isPending ? 'Deleting...' : 'Delete Account'}
                     </Button>
                   </DialogFooter>

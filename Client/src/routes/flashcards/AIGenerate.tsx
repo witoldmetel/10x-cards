@@ -28,6 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const aiGenerateSchema = z
   .object({
@@ -324,24 +325,31 @@ export default function AIGenerate() {
                 <CardContent className='space-y-4'>
                   <div className='grid md:grid-cols-2 gap-4'>
                     <div className='mb-4'>
-                      <label htmlFor='collection-select' className='block text-sm font-medium text-neutral-700 mb-1'>
-                        Select Collection
-                      </label>
-                      <select
-                        id='collection-select'
-                        className='w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-300 focus:border-primary-500 focus:outline-none transition-all duration-200'
-                        value={selectedCollectionId || 'new'}
-                        onChange={e => {
-                          const value = e.target.value;
-                          form.setValue('selectedCollectionId', value);
-                        }}>
-                        <option value='new'>Create New Collection</option>
-                        {data?.collections.map(collection => (
-                          <option key={collection.id} value={collection.id}>
-                            {collection.name}
-                          </option>
-                        ))}
-                      </select>
+                      <FormField
+                        control={form.control}
+                        name='selectedCollectionId'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select Collection</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Select visibility' />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value='new'>Create New Collection</SelectItem>
+                                {data?.collections.map(collection => (
+                                  <SelectItem key={collection.id} value={collection.id}>
+                                    {collection.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     {selectedCollectionId === 'new' && (

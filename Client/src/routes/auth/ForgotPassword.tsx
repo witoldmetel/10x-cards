@@ -14,8 +14,7 @@
 // import { Input } from "@/components/ui/input";
 // import { useState } from "react";
 
-import { Navigate } from "react-router";
-
+import { Navigate } from 'react-router';
 
 // const forgotPasswordSchema = z.object({
 //   email: z.string().email("Please enter a valid email address."),
@@ -23,7 +22,7 @@ import { Navigate } from "react-router";
 
 // type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-export default function ForgotPasswordPage()  {
+export default function ForgotPasswordPage() {
   // TODO: Implement forgot password
   // const { forgotPassword } = useAuth()
   // const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,4 +108,4 @@ export default function ForgotPasswordPage()  {
   //     </div>
   //   </div>
   // );
-};
+}

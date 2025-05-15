@@ -20,10 +20,12 @@ export default function LandingPage() {
             ) : (
               <>
                 <Link to='/login'>
-                  <Button variant='ghost' data-testid="signin-button">Sign in</Button>
+                  <Button variant='ghost' data-testid='signin-button'>
+                    Sign in
+                  </Button>
                 </Link>
                 <Link to='/register'>
-                  <Button data-testid="signup-button">Sign up</Button>
+                  <Button data-testid='signup-button'>Sign up</Button>
                 </Link>
               </>
             )}
@@ -153,6 +155,64 @@ export default function LandingPage() {
                 <p className='text-muted-foreground'>
                   Organize your flashcards into custom collections with tags and categories for better organization and
                   focused study sessions.
+                </p>
+              </div>
+              <div className='bg-background rounded-lg p-6 shadow-sm border'>
+                <div className='h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4'>
+                  <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                    <path
+                      d='M12 12C14.2091 12 16 10.2091 16 8C16 5.79086 14.2091 4 12 4C9.79086 4 8 5.79086 8 8C8 10.2091 9.79086 12 12 12Z'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                    />
+                    <path
+                      d='M18 20C18 16.6863 15.3137 14 12 14C8.68629 14 6 16.6863 6 20'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                    />
+                  </svg>
+                </div>
+                <h3 className='text-xl font-semibold mb-2'>Personalized Learning</h3>
+                <p className='text-muted-foreground'>
+                  Adapt to your learning style with personalized algorithms that adjust to your strengths, weaknesses,
+                  and study patterns.
+                </p>
+              </div>
+              <div className='bg-background rounded-lg p-6 shadow-sm border'>
+                <div className='h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4'>
+                  <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                    <path
+                      d='M9 18L15 12L9 6'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
+                  </svg>
+                </div>
+                <h3 className='text-xl font-semibold mb-2'>Progress Tracking</h3>
+                <p className='text-muted-foreground'>
+                  Monitor your learning journey with detailed analytics, visualize your memory retention, and identify
+                  areas for improvement.
+                </p>
+              </div>
+              <div className='bg-background rounded-lg p-6 shadow-sm border'>
+                <div className='h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4'>
+                  <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                    <path
+                      d='M20 16L12 8L4 16'
+                      stroke='currentColor'
+                      strokeWidth='2'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
+                  </svg>
+                </div>
+                <h3 className='text-xl font-semibold mb-2'>Cloud Sync</h3>
+                <p className='text-muted-foreground'>
+                  Access your flashcards across all devices with seamless cloud synchronization, never losing your
+                  progress or collections.
                 </p>
               </div>
             </div>

@@ -24,7 +24,7 @@ export default function Dashboard() {
     lastStudied: 'Never',
     dueCards: collection.flashcards.filter(f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New)
       .length,
-    masteryLevel:  0,
+    masteryLevel: 0,
     categories: collection.categories || [],
     tags: collection.tags || [],
   }));
@@ -44,7 +44,7 @@ export default function Dashboard() {
     totalCards: data?.collections.reduce((acc, collection) => acc + collection.flashcards.length, 0) || 0,
     totalCollections: data?.collections.length || 0,
     cardsToReview:
-      data?.collections.reduce( 
+      data?.collections.reduce(
         (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
         0,
       ) || 0,
@@ -131,7 +131,7 @@ export default function Dashboard() {
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <AlertCircle size={14} className="text-muted-foreground" />
+                    <AlertCircle size={14} className='text-muted-foreground' />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>This feature is in progress</p>
@@ -154,7 +154,7 @@ export default function Dashboard() {
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <AlertCircle size={14} className="text-muted-foreground" />
+                    <AlertCircle size={14} className='text-muted-foreground' />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>This feature is in progress</p>
@@ -176,8 +176,10 @@ export default function Dashboard() {
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <span className="inline-flex">
-                <TabsTrigger value='activity' disabled>Recent Activity</TabsTrigger>
+                <span className='inline-flex'>
+                  <TabsTrigger value='activity' disabled>
+                    Recent Activity
+                  </TabsTrigger>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -194,7 +196,7 @@ export default function Dashboard() {
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
               <Input
                 placeholder='Search collections...'
-                className='pl-9'
+                className='pl-9 bg-white'
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
@@ -327,17 +329,21 @@ export default function Dashboard() {
   );
 }
 
-const CollectionCard = ({ collection }: { collection: {
-  id: string;
-  name: string;
-  description: string | null;
-  cardCount: number;
-  lastStudied: string;
-  dueCards: number;
-  masteryLevel: number;
-  categories: string[];
-  tags: string[];
-} }) => {
+const CollectionCard = ({
+  collection,
+}: {
+  collection: {
+    id: string;
+    name: string;
+    description: string | null;
+    cardCount: number;
+    lastStudied: string;
+    dueCards: number;
+    masteryLevel: number;
+    categories: string[];
+    tags: string[];
+  };
+}) => {
   return (
     <Card>
       <CardHeader>

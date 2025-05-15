@@ -56,7 +56,7 @@ export class RegisterPage {
       console.log('Registration response:', {
         status: response.status(),
         ok: response.ok(),
-        data: responseData
+        data: responseData,
       });
 
       if (!response.ok()) {
@@ -73,8 +73,8 @@ export class RegisterPage {
       await Promise.all([
         this.page.waitForNavigation({ timeout: 30000 }),
         this.page.waitForURL(/.*\/dashboard/, { timeout: 30000 }),
-        this.page.waitForLoadState('networkidle', { timeout: 30000 })
-      ]).catch(async (error) => {
+        this.page.waitForLoadState('networkidle', { timeout: 30000 }),
+      ]).catch(async error => {
         console.log('Current URL:', this.page.url());
         console.log('Navigation error:', error);
         throw error;
@@ -83,7 +83,7 @@ export class RegisterPage {
       // Additional check to ensure we're actually on the dashboard
       const currentUrl = this.page.url();
       console.log('Final URL after registration:', currentUrl);
-      
+
       if (!currentUrl.includes('/dashboard')) {
         throw new Error(`Failed to redirect to dashboard. Current URL: ${currentUrl}`);
       }

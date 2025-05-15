@@ -84,7 +84,7 @@ export default function DashboardLayout() {
               variant='ghost'
               className='w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
               onClick={onLogout}
-              data-testid="mobile-logout-button">
+              data-testid='mobile-logout-button'>
               <LogOut size={18} className='mr-3' />
               Log out
             </Button>
@@ -126,7 +126,7 @@ export default function DashboardLayout() {
               variant='ghost'
               className='w-full justify-start mt-2 text-destructive hover:text-destructive hover:bg-destructive/10'
               onClick={onLogout}
-              data-testid="desktop-logout-button">
+              data-testid='desktop-logout-button'>
               <LogOut size={18} className='mr-3' />
               Log out
             </Button>
