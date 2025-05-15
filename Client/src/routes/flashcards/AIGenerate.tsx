@@ -150,6 +150,16 @@ export default function AIGenerate() {
 
   const saveCollection = async () => {
     try {
+      // Check if all cards have a status selected
+      const cardsWithoutStatus = generatedCards.filter(
+        card => card.reviewStatus === ReviewStatus.New
+      );
+
+      if (cardsWithoutStatus.length > 0) {
+        toast.error(`Please make a decision for all cards. ${cardsWithoutStatus.length} cards still need your review.`);
+        return;
+      }
+
       // Filter cards that are either approved or corrected
       const acceptedFlashcards = generatedCards.filter(
         card => card.reviewStatus === ReviewStatus.Approved || card.reviewStatus === ReviewStatus.ToCorrect,
@@ -181,8 +191,8 @@ export default function AIGenerate() {
 
       await Promise.all(savePromises);
 
-      toast.success('Collection saved successfully! Review your cards before studying.');
-      navigate('/flashcards/pending-review');
+      toast.success('Collection saved successfully!');
+      navigate(`/collections/${targetCollectionId}`);
     } catch (error) {
       console.error('Failed to save collection', error);
       toast.error('Failed to save collection. Please try again.');
@@ -452,15 +462,15 @@ export default function AIGenerate() {
                   {generatedCards.map(flashcard => (
                     <Card
                       key={flashcard.id}
-                        className={`relative ${
-                          flashcard.reviewStatus === ReviewStatus.Approved
-                            ? 'border-2 border-primary bg-primary/5'
-                            : flashcard.reviewStatus === ReviewStatus.ToCorrect
-                              ? 'border-2 border-secondary bg-secondary/5'
+                      className={`relative ${
+                        flashcard.reviewStatus === ReviewStatus.Approved
+                          ? 'border-2 border-primary bg-primary/5'
+                          : flashcard.reviewStatus === ReviewStatus.ToCorrect
+                            ? 'border-2 border-secondary bg-secondary/5'
                             : flashcard.reviewStatus === ReviewStatus.Rejected
                               ? 'border-2 border-destructive bg-destructive/5 opacity-50'
-                              : 'border'
-                        }`}>
+                              : 'border-2 border-yellow-500 bg-yellow-50'
+                      }`}>
                       {flashcard.reviewStatus === ReviewStatus.Approved && (
                         <div className='absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs font-medium'>
                           Accepted
@@ -474,6 +484,11 @@ export default function AIGenerate() {
                       {flashcard.reviewStatus === ReviewStatus.Rejected && (
                         <div className='absolute top-2 right-2 bg-destructive text-destructive-foreground px-2 py-1 rounded-md text-xs font-medium'>
                           Rejected
+                        </div>
+                      )}
+                      {flashcard.reviewStatus === ReviewStatus.New && (
+                        <div className='absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-xs font-medium'>
+                          Needs Review
                         </div>
                       )}
                       <CardContent className='pt-6'>
@@ -537,8 +552,9 @@ export default function AIGenerate() {
 
             <div className='flex justify-between items-center gap-4'>
               <p className='text-sm text-muted-foreground'>
-                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved).length} of{' '}
-                {generatedCards.length} cards selected
+                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.Approved).length} approved,{' '}
+                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.ToCorrect).length} to correct,{' '}
+                {generatedCards.filter(card => card.reviewStatus === ReviewStatus.New).length} need review
               </p>
               <div className='flex gap-4'>
                 <Button type='button' variant='outline' onClick={() => navigate('/dashboard')}>
@@ -547,7 +563,13 @@ export default function AIGenerate() {
                 <Button
                   type='button'
                   onClick={saveCollection}
-                  disabled={isGenerating || !generatedCards.some(card => card.reviewStatus === ReviewStatus.Approved)}>
+                  disabled={
+                    isGenerating ||
+                    generatedCards.some(card => card.reviewStatus === ReviewStatus.New) ||
+                    !generatedCards.some(
+                      card => card.reviewStatus === ReviewStatus.Approved || card.reviewStatus === ReviewStatus.ToCorrect,
+                    )
+                  }>
                   {isGenerating ? 'Saving...' : 'Save Collection'}
                 </Button>
               </div>
