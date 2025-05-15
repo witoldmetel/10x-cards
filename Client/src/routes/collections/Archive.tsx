@@ -32,11 +32,19 @@ export default function Archive() {
 
   if (!data || data.totalCount === 0) {
     return (
-      <div className='flex flex-col items-center justify-center py-12'>
+      <div>
+          <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate('/dashboard')}>
+        <ArrowLeft size={16} className='mr-2' /> Back to Dashboard
+      </Button>
+
+
+      <div className='h-[calc(100vh-200px)] flex flex-col items-center justify-center'>
         <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
         <h2 className='text-2xl font-semibold mb-2'>No archived collections</h2>
         <p className='text-neutral-600 mb-6 text-center max-w-md'>Collections that you archive will appear here.</p>
       </div>
+      </div>
+
     );
   }
 

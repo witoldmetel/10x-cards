@@ -74,12 +74,12 @@ export default function Login() {
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel>Password</FormLabel>
-                  <Link
+                  {/* <Link
                     to="/forgot-password"
-                    className="text-xs text-primary hover:underline"
+                    className="text-xs text-primary hover:underline pointer-events-none opacity-50"
                   >
                     Forgot password?
-                  </Link>
+                  </Link> */}
                 </div>
                 <FormControl>
                   <Input

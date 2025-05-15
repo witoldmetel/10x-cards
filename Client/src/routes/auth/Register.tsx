@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   Form,
@@ -45,12 +45,6 @@ export default function Register() {
     },
   });
 
-  // Debug: Log when component mounts and form state
-  useEffect(() => {
-    console.log('Register component mounted');
-    console.log('Initial form state:', form.formState);
-  }, []);
-
   const onSubmit = async (formData: RegisterFormData) => {
     try {
       const data = await registerMutation.mutateAsync({
@@ -72,9 +66,6 @@ export default function Register() {
       }
     }
   };
-
-  // Debug: Log render
-  console.log('Register component rendering');
 
   return (
     <div className="w-full">

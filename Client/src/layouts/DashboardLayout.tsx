@@ -118,8 +118,8 @@ export default function DashboardLayout() {
                 <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
               </Avatar>
               <div className='flex-1 overflow-hidden'>
-                <p className='text-sm font-medium truncate'>{user?.name}</p>
-                <p className='text-xs text-muted-foreground truncate'>{user?.email}</p>
+                <p className='text-sm font-medium truncate'>{user?.name || 'User'}</p>
+                <p className='text-xs text-muted-foreground truncate'>{user?.email || 'user@example.com'}</p>
               </div>
             </div>
             <Button
