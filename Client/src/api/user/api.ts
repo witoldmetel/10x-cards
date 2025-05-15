@@ -1,6 +1,6 @@
 import { instance } from '@/lib/axios';
 import { USER_API_ROUTES } from './constants';
-import type { AuthResponse, LoginCredentials, RegisterCredentials, User, UpdateUserRequest } from './types';
+import type { AuthResponse, LoginCredentials, RegisterCredentials, User, UpdateUserRequest, UpdatePasswordRequest } from './types';
 
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   const { data } = await instance.post(USER_API_ROUTES.LOGIN, credentials);
@@ -34,4 +34,10 @@ export const updateUser = async (id: string, userData: UpdateUserRequest): Promi
 
 export const deleteUser = async (id: string): Promise<void> => {
   await instance.delete(USER_API_ROUTES.PROFILE_BY_ID(id));
+};
+
+export const updatePassword = async (id: string, data: UpdatePasswordRequest): Promise<AuthResponse> => {
+  const { data: response } = await instance.put<AuthResponse>(USER_API_ROUTES.PASSWORD_UPDATE(id), data);
+  
+  return response;
 };

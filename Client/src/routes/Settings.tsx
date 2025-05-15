@@ -12,6 +12,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUpdateUser, useDeleteUser, useUpdatePassword } from '@/api/user/mutations';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -23,7 +33,7 @@ const passwordSchema = z
     currentPassword: z.string().min(8, 'Password must be at least 8 characters.'),
     newPassword: z
       .string()
-      .min(12, 'Password must be at least 12 characters.')
+      .min(8, 'Password must be at least 8 characters.')
       .regex(/[0-9]/, 'Password must contain at least one number.')
       .regex(/[^a-zA-Z0-9]/, 'Password must contain at least one special character.'),
     confirmPassword: z.string(),
@@ -43,11 +53,17 @@ type ApiFormValues = z.infer<typeof apiSchema>;
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, onLogout } = useAuth();
+  const updateUserMutation = useUpdateUser(user?.userId || '');
+  const deleteUserMutation = useDeleteUser(user?.userId || '');
+  const updatePasswordMutation = useUpdatePassword(user?.userId || '', {
+    onSuccess: () => {
+      passwordForm.reset();
+    },
+  });
 
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isUpdatingApiKeys, setIsUpdatingApiKeys] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -74,40 +90,18 @@ export default function Settings() {
   });
 
   const onProfileSubmit = async (data: ProfileFormValues) => {
-    try {
-      setIsUpdatingProfile(true);
-      // In a real app, this would update user profile via API
-      console.log('Updating profile:', data);
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast.success('Profile updated successfully!');
-    } catch (error) {
-      console.error('Failed to update profile', error);
-      toast.error('Failed to update profile. Please try again.');
-    } finally {
-      setIsUpdatingProfile(false);
-    }
+    await updateUserMutation.mutateAsync({
+      name: data.name,
+      email: data.email,
+      apiModelKey: user?.apiModelKey,
+    });
   };
 
-  const onPasswordSubmit = async () => {
-    try {
-      setIsUpdatingPassword(true);
-      // In a real app, this would update password via API
-      console.log('Updating password');
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast.success('Password updated successfully!');
-      passwordForm.reset();
-    } catch (error) {
-      console.error('Failed to update password', error);
-      toast.error('Failed to update password. Please try again.');
-    } finally {
-      setIsUpdatingPassword(false);
-    }
+  const onPasswordSubmit = async (data: PasswordFormValues) => {
+    await updatePasswordMutation.mutateAsync({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
   };
 
   const onApiSubmit = async () => {
@@ -126,6 +120,12 @@ export default function Settings() {
     } finally {
       setIsUpdatingApiKeys(false);
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    await deleteUserMutation.mutateAsync();
+
+    onLogout();
   };
 
   return (
@@ -192,8 +192,8 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                  <Button type='submit' disabled={isUpdatingProfile}>
-                    {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
+                  <Button type='submit' disabled={updateUserMutation.isPending}>
+                    {updateUserMutation.isPending ? 'Updating...' : 'Update Profile'}
                   </Button>
                 </form>
               </Form>
@@ -210,7 +210,29 @@ export default function Settings() {
                 This action cannot be undone. Once you delete your account, all your data will be permanently removed
                 from our systems.
               </div>
-              <Button variant='destructive'>Delete Account</Button>
+              <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant='destructive'>Delete Account</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant='outline' onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                    <Button 
+                      variant='destructive' 
+                      onClick={handleDeleteAccount}
+                      disabled={deleteUserMutation.isPending}
+                    >
+                      {deleteUserMutation.isPending ? 'Deleting...' : 'Delete Account'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </TabsContent>
@@ -247,7 +269,7 @@ export default function Settings() {
                           <Input type='password' {...field} />
                         </FormControl>
                         <FormDescription>
-                          Password must be at least 12 characters and include a number and special character.
+                          Password must be at least 8 characters and include a number and special character.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -266,8 +288,8 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                  <Button type='submit' disabled={isUpdatingPassword}>
-                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  <Button type='submit' disabled={updatePasswordMutation.isPending}>
+                    {updatePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
                   </Button>
                 </form>
               </Form>
