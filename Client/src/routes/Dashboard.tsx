@@ -5,7 +5,7 @@ import { useCollections } from '@/api/collections/queries';
 import { Link } from 'react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
@@ -29,27 +29,22 @@ export default function Dashboard() {
     ...(searchQuery ? { searchQuery } : {})
   });
 
-  // Create a debounced version of setSearchQuery
-  const debouncedSetSearchQuery = useCallback(
-    debounce((value: string) => {
-      setSearchQuery(value.trim());
-    }, 300),
-    []
-  );
+  const debouncedSetSearchQuery = debounce((value: string) => {
+    setSearchQuery(value.trim());
+  }, 1000);
 
-  // Handle input change
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    
     setInputValue(value);
     debouncedSetSearchQuery(value);
   };
 
-  // Cleanup debounce on unmount
   useEffect(() => {
     return () => {
       debouncedSetSearchQuery.cancel();
     };
-  }, [debouncedSetSearchQuery]);
+  }, []);
 
   const collections = useMemo(() => 
     data?.collections.map(collection => ({
@@ -97,7 +92,7 @@ export default function Dashboard() {
       </div>
 
       {/* Statistics Cards */}
-      {data?.collections && <Statistics collections={data.collections} />}
+      <Statistics />
 
       <Tabs defaultValue='collections'>
         <TabsList className='mb-6'>

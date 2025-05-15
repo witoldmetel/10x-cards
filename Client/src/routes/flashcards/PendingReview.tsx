@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, Check, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, Edit2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCollection, useCollections } from '@/api/collections/queries';
 import { FlashcardCreationSource, ReviewStatus } from '@/api/flashcard/types';
+import { useUpdateFlashcard } from '@/api/flashcard/mutations';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function PendingReview() {
   const navigate = useNavigate();
@@ -15,9 +17,15 @@ export default function PendingReview() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [reviewingCollection, setReviewingCollection] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedValues, setEditedValues] = useState({
+    front: '',
+    back: ''
+  });
 
   const { data: collections } = useCollections({ archived: false });
   const { data: collection } = useCollection(collectionId || '');
+  const updateFlashcardMutation = useUpdateFlashcard();
 
   // Group flashcards by collection
   const [pendingByCollection, setPendingByCollection] = useState<Record<string, any>>({});
@@ -66,36 +74,44 @@ export default function PendingReview() {
     setCurrentCardIndex(0);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!reviewingCollection) return;
 
-    // const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
+    const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
 
-    // updateFlashcardMutation.mutate({
-    //   id: currentCard.id,
-    //   flashcard: {
-    //     status: 'learning',
-    //   },
-    // });
+    try {
+      await updateFlashcardMutation.mutateAsync({
+        id: currentCard.id,
+        flashcard: {
+          reviewStatus: ReviewStatus.Approved
+        }
+      });
 
-    toast.success('Card approved and added to learning');
-
-    moveToNextCard();
+      toast.success('Card approved and added to learning');
+      moveToNextCard();
+    } catch (error) {
+      toast.error('Failed to approve card');
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!reviewingCollection) return;
 
-    // const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
+    const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
 
-    // Instead of deleting, mark it for status change without adding a notes field
-    // updateFlashcard(currentCard.id, {
-    //   status: 'learning',
-    // });
+    try {
+      await updateFlashcardMutation.mutateAsync({
+        id: currentCard.id,
+        flashcard: {
+          reviewStatus: ReviewStatus.Rejected
+        }
+      });
 
-    toast.error('Card needs improvement but added to learning');
-
-    moveToNextCard();
+      toast.error('Card rejected');
+      moveToNextCard();
+    } catch (error) {
+      toast.error('Failed to reject card');
+    }
   };
 
   const moveToNextCard = () => {
@@ -118,6 +134,64 @@ export default function PendingReview() {
 
       toast.success('Finished reviewing this collection!');
     }
+  };
+
+  const handleEdit = () => {
+    if (!reviewingCollection) return;
+    
+    const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
+    setEditedValues({
+      front: currentCard.front,
+      back: currentCard.back
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!reviewingCollection) return;
+
+    const currentCard = pendingByCollection[reviewingCollection].cards[currentCardIndex];
+
+    try {
+      await updateFlashcardMutation.mutateAsync({
+        id: currentCard.id,
+        flashcard: {
+          front: editedValues.front,
+          back: editedValues.back
+        }
+      });
+
+      // Update the card in local state to reflect changes
+      setPendingByCollection(prev => ({
+        ...prev,
+        [reviewingCollection]: {
+          ...prev[reviewingCollection],
+          cards: prev[reviewingCollection].cards.map((card: typeof currentCard) =>
+            card.id === currentCard.id
+              ? { ...card, front: editedValues.front, back: editedValues.back }
+              : card
+          )
+        }
+      }));
+
+      setIsEditing(false);
+      toast.success('Card updated successfully');
+    } catch (error) {
+      toast.error('Failed to update card');
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedValues({
+      front: '',
+      back: ''
+    });
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditedValues(prev => ({ ...prev, [name]: value }));
   };
 
   if (isLoading) {
@@ -151,7 +225,17 @@ export default function PendingReview() {
             <CardTitle>Question</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-lg'>{currentCard.front}</p>
+            {isEditing ? (
+              <Textarea
+                name="front"
+                value={editedValues.front}
+                onChange={handleChange}
+                placeholder="Enter question..."
+                className="min-h-[100px]"
+              />
+            ) : (
+              <p className='text-lg'>{currentCard.front}</p>
+            )}
           </CardContent>
         </Card>
 
@@ -160,20 +244,48 @@ export default function PendingReview() {
             <CardTitle>Answer</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-lg'>{currentCard.back}</p>
+            {isEditing ? (
+              <Textarea
+                name="back"
+                value={editedValues.back}
+                onChange={handleChange}
+                placeholder="Enter answer..."
+                className="min-h-[100px]"
+              />
+            ) : (
+              <p className='text-lg'>{currentCard.back}</p>
+            )}
           </CardContent>
         </Card>
 
         <div className='flex justify-between'>
-          <Button
-            variant='outline'
-            className='flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground'
-            onClick={handleReject}>
-            <X size={16} /> Reject Card
-          </Button>
-          <Button className='flex items-center gap-2' onClick={handleApprove}>
-            <Check size={16} /> Approve Card
-          </Button>
+          {isEditing ? (
+            <>
+              <Button variant='outline' onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className='flex items-center gap-2'>
+                <Save size={16} /> Save Changes
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant='outline'
+                className='flex items-center gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground'
+                onClick={handleReject}>
+                <X size={16} /> Reject Card
+              </Button>
+              <div className='flex gap-2'>
+                <Button variant='outline' className='flex items-center gap-2' onClick={handleEdit}>
+                  <Edit2 size={16} /> Edit Card
+                </Button>
+                <Button className='flex items-center gap-2' onClick={handleApprove}>
+                  <Check size={16} /> Approve Card
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );

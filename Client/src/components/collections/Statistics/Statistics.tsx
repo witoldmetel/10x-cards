@@ -1,28 +1,30 @@
-import { AlertCircle, ArrowRight } from 'lucide-react';
+import { AlertCircle, ArrowRight, Archive } from 'lucide-react';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
+import { useCollections } from '@/api/collections/queries';
 
-interface StatisticsProps {
-  collections: CollectionResponse[];
-}
+export function Statistics() {
+  const { data, isLoading } = useCollections();
 
-export function Statistics({ collections }: StatisticsProps) {
+  if (isLoading || !data?.collections) {
+    return null;
+  }
+
+  const collections = data.collections;
+
   const statistics = {
-    totalCards: collections.reduce((acc, collection) => acc + collection.flashcards.length, 0) || 0,
-    totalCollections: collections.length || 0,
-    cardsToReview:
-      collections.reduce(
-        (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
-        0,
-      ) || 0,
-    cardsLearned:
-      collections.reduce(
-        (acc, collection) => acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length,
-        0,
-      ) || 0,
+    totalCards: collections.reduce((acc: number, collection: CollectionResponse) => 
+      acc + collection.flashcards.length + collection.archivedFlashcards.length, 0),
+    totalCollections: collections.length,
+    cardsToReview: collections.reduce((acc: number, collection: CollectionResponse) => 
+      acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length, 0),
+    cardsLearned: collections.reduce((acc: number, collection: CollectionResponse) => 
+      acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length, 0),
+    archivedCards: collections.reduce((acc: number, collection: CollectionResponse) => 
+      acc + collection.archivedFlashcards.length, 0),
     masteryLevel: calculateOverallMastery(collections),
     streak: 0,
   };
@@ -38,7 +40,7 @@ export function Statistics({ collections }: StatisticsProps) {
   }
 
   return (
-    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
+    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8'>
       <Card>
         <CardHeader className='pb-2'>
           <CardDescription>Cards to Review</CardDescription>
@@ -57,6 +59,17 @@ export function Statistics({ collections }: StatisticsProps) {
         </CardHeader>
         <CardFooter>
           <p className='text-sm text-muted-foreground'>{statistics.cardsLearned} learned</p>
+        </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader className='pb-2'>
+          <CardDescription>Archived Cards</CardDescription>
+          <CardTitle className='text-3xl'>{statistics.archivedCards}</CardTitle>
+        </CardHeader>
+        <CardFooter>
+          <Link to='/collections/archive' className='text-sm text-primary hover:underline flex items-center gap-1'>
+            View archive <Archive size={14} />
+          </Link>
         </CardFooter>
       </Card>
       <Card>
