@@ -128,6 +128,31 @@ namespace TenXCards.Core.Services
 
         public async Task<bool> DeleteAsync(Guid id, Guid userId)
         {
+            // Get all active flashcards
+            var activeFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+            { 
+                CollectionId = id, 
+                Offset = 0, 
+                Limit = MaxLimit
+            });
+
+            // Get all archived flashcards
+            var archivedFlashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+            { 
+                CollectionId = id, 
+                Archived = true,
+                Offset = 0, 
+                Limit = MaxLimit
+            });
+
+            // Delete all flashcards
+            var allFlashcards = activeFlashcards.Items.Union(archivedFlashcards.Items);
+            foreach (var card in allFlashcards)
+            {
+                await _flashcardRepository.DeleteAsync(card.Id);
+            }
+
+            // Delete the collection
             return await _collectionRepository.DeleteAsync(id, userId);
         }
 
@@ -168,6 +193,17 @@ namespace TenXCards.Core.Services
 
         private static CollectionResponseDto MapToResponseDtoWithArchivedFlashcards(Collection collection, List<FlashcardResponseDto> archivedFlashcards)
         {
+            var activeFlashcards = collection.Flashcards
+                .Where(f => f.ArchivedAt == null)
+                .Select(MapFlashcardToDto)
+                .ToList();
+
+            var allArchivedFlashcards = collection.Flashcards
+                .Where(f => f.ArchivedAt != null)
+                .Select(MapFlashcardToDto)
+                .Union(archivedFlashcards)
+                .ToList();
+
             return new CollectionResponseDto
             {
                 Id = collection.Id,
@@ -184,8 +220,8 @@ namespace TenXCards.Core.Services
                 Color = collection.Color,
                 Tags = collection.Tags,
                 Categories = collection.Categories,
-                Flashcards = collection.Flashcards.Select(MapFlashcardToDto).ToList(),
-                ArchivedFlashcards = archivedFlashcards
+                Flashcards = activeFlashcards,
+                ArchivedFlashcards = allArchivedFlashcards
             };
         }
 

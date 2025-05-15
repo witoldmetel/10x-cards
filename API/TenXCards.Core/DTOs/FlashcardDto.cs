@@ -114,6 +114,9 @@ public record FlashcardsQueryParams
     [SwaggerSchema(Description = "Filter by archived status")]
     public bool? Archived { get; init; }
 
+    [SwaggerSchema(Description = "Include both archived and non-archived flashcards")]
+    public bool IncludeArchived { get; init; }
+
     [SwaggerSchema(Description = "Filter by collection ID")]
     public Guid? CollectionId { get; init; }
 

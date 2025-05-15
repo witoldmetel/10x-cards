@@ -42,7 +42,7 @@ namespace TenXCards.Infrastructure.Repositories
                 query = query.Where(f => f.CollectionId == queryParams.CollectionId);
             }
 
-            if (queryParams.Archived.HasValue)
+            if (!queryParams.IncludeArchived && queryParams.Archived.HasValue)
             {
                 query = queryParams.Archived.Value
                     ? query.Where(f => f.ArchivedAt != null)
