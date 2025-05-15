@@ -19,9 +19,12 @@ export type CollectionCardProps = CollectionResponse & {
 };
 
 export default function Dashboard() {
-  const { data, isLoading } = useCollections({ archived: false });
-
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { data, isLoading } = useCollections({ 
+    archived: false,
+    searchQuery 
+  });
 
   const collections = data?.collections.map(collection => ({
     ...collection,
@@ -202,6 +205,7 @@ export default function Dashboard() {
                 className='pl-9 bg-white'
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                disabled={collections?.length === 0 && !searchQuery}
               />
             </div>
           </div>

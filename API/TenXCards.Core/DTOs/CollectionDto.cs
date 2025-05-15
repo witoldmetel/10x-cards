@@ -117,6 +117,9 @@ public record CollectionsQueryParams
 
     [SwaggerSchema(Description = "Filter by archived status")]
     public bool? Archived { get; init; }
+
+    [SwaggerSchema(Description = "Search query to filter collections by name or description")]
+    public string? SearchQuery { get; init; }
 }
 
 [SwaggerSchema(Title = "Paginated Collections Response")]

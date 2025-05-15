@@ -12,7 +12,13 @@ import { toast } from 'sonner';
 
 export default function Archive() {
   const navigate = useNavigate();
-  const { data, isLoading } = useCollections();
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const { data, isLoading } = useCollections({ 
+    archived: true,
+    searchQuery
+  });
+  
   const unarchiveCollectionMutation = useUnarchiveCollection({
     onSuccess: () => {
       toast.success('Collection restored successfully');
@@ -26,8 +32,6 @@ export default function Archive() {
   const handleUnarchive = async (collectionId: string) => {
     unarchiveCollectionMutation.mutate(collectionId);
   };
-
-  const [searchQuery, setSearchQuery] = useState('');
 
   if (isLoading) {
     return (

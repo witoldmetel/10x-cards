@@ -39,6 +39,13 @@ namespace TenXCards.Infrastructure.Repositories
                     : query.Where(c => c.ArchivedAt == null);
             }
 
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchQuery))
+            {
+                var searchQuery = queryParams.SearchQuery.ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(searchQuery) || 
+                                        (c.Description != null && c.Description.ToLower().Contains(searchQuery)));
+            }
+
             var total = await query.CountAsync();
 
             var items = await query
@@ -139,14 +146,11 @@ namespace TenXCards.Infrastructure.Repositories
 
             if (collection == null) return false;
 
+            var activeFlashcards = collection.Flashcards.Count(f => f.ArchivedAt == null);
+            if (activeFlashcards > 0) return false;
+
             var now = DateTime.UtcNow;
             collection.ArchivedAt = now;
-
-            // Archive all flashcards in the collection
-            foreach (var flashcard in collection.Flashcards)
-            {
-                flashcard.ArchivedAt = now;
-            }
 
             await _context.SaveChangesAsync();
             return true;
@@ -181,12 +185,16 @@ namespace TenXCards.Infrastructure.Repositories
 
             if (collection == null) return;
 
+            var now = DateTime.UtcNow;
+
             // Calculate total cards (including archived)
             collection.TotalCards = collection.Flashcards.Count;
 
-            // Calculate due cards (only non-archived cards)
-            collection.DueCards = collection.Flashcards
-                .Count(f => f.ArchivedAt == null && f.ReviewStatus == ReviewStatus.New);
+            // Calculate due cards (non-archived cards that are either new or due for review)
+            collection.DueCards = collection.Flashcards.Count(f => 
+                f.ArchivedAt == null && 
+                (f.ReviewStatus == ReviewStatus.New || 
+                (f.Sm2DueDate.HasValue && f.Sm2DueDate.Value <= now)));
 
             // Calculate last studied time
             collection.LastStudied = collection.Flashcards

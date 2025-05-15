@@ -37,7 +37,7 @@ export interface UpdateCollection {
 export interface CollectionsQueryParams {
   offset?: number;
   limit?: number;
-  searchPhrase?: string;
+  searchQuery?: string;
   archived?: boolean;
 }
 

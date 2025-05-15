@@ -41,9 +41,13 @@ export default function CollectionDetails() {
   });
 
   const collectionFlashcards =
-    collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.Approved) || [];
+    collection?.flashcards.filter(
+      collection => collection.reviewStatus === ReviewStatus.Approved && !collection.archivedAt
+    ) || [];
   const pendingReviewCount =
-    collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.ToCorrect)?.length || 0;
+    collection?.flashcards.filter(
+      collection => collection.reviewStatus === ReviewStatus.ToCorrect && !collection.archivedAt
+    )?.length || 0;
 
   const startStudySession = () => {
     setIsStudying(true);
@@ -310,9 +314,9 @@ export default function CollectionDetails() {
             <TabsTrigger value='pending' disabled={pendingReviewCount === 0}>
               Pending Review ({pendingReviewCount})
             </TabsTrigger>
-            {collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected).length > 0 && (
+            {collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt).length > 0 && (
               <TabsTrigger value='rejected'>
-                Rejected ({collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected).length})
+                Rejected ({collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt).length})
               </TabsTrigger>
             )}
           </TabsList>
@@ -320,21 +324,23 @@ export default function CollectionDetails() {
           <TabsContent value='all'>
             <div className='space-y-4'>
               {collectionFlashcards.length > 0 ? (
-                collectionFlashcards.map(flashcard => (
-                  <Card key={flashcard.id}>
-                    <CardContent className='p-4'>
-                      <div className='mb-2'>
-                        <h3 className='font-medium'>Question:</h3>
-                        <p>{flashcard.front}</p>
-                      </div>
-                      <div>
-                        <h3 className='font-medium'>Answer:</h3>
-                        <p>{flashcard.back}</p>
-                      </div>
-                      <FlashcardActions flashcard={flashcard} />
-                    </CardContent>
-                  </Card>
-                ))
+                collection.flashcards
+                  .filter(flashcard => flashcard.reviewStatus === ReviewStatus.Approved && !flashcard.archivedAt)
+                  .map(flashcard => (
+                    <Card key={flashcard.id}>
+                      <CardContent className='p-4'>
+                        <div className='mb-2'>
+                          <h3 className='font-medium'>Question:</h3>
+                          <p>{flashcard.front}</p>
+                        </div>
+                        <div>
+                          <h3 className='font-medium'>Answer:</h3>
+                          <p>{flashcard.back}</p>
+                        </div>
+                        <FlashcardActions flashcard={flashcard} />
+                      </CardContent>
+                    </Card>
+                  ))
               ) : (
                 <p className='text-muted-foreground text-center py-4'>No cards in this collection yet.</p>
               )}
@@ -344,7 +350,7 @@ export default function CollectionDetails() {
           <TabsContent value='pending'>
             <div className='space-y-4'>
               {collection?.flashcards
-                .filter(collection => collection.reviewStatus === ReviewStatus.ToCorrect)
+                .filter(collection => collection.reviewStatus === ReviewStatus.ToCorrect && !collection.archivedAt)
                 .map(flashcard => (
                   <Card key={flashcard.id}>
                     <CardContent className='p-4'>
@@ -369,7 +375,7 @@ export default function CollectionDetails() {
           <TabsContent value='rejected'>
             <div className='space-y-4'>
               {collection.flashcards
-                .filter(card => card.reviewStatus === ReviewStatus.Rejected)
+                .filter(card => card.reviewStatus === ReviewStatus.Rejected && !card.archivedAt)
                 .map(flashcard => (
                   <Card key={flashcard.id}>
                     <CardContent className='p-4'>

@@ -19,6 +19,7 @@ export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
   const deleteFlashcardMutation = useDeleteFlashcard();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editedValues, setEditedValues] = useState({
     front: flashcard.front,
     back: flashcard.back,
@@ -57,11 +58,9 @@ export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this flashcard?')) {
-      await deleteFlashcardMutation.mutateAsync(flashcard.id);
-
-      toast.success('Flashcard deleted');
-    }
+    await deleteFlashcardMutation.mutateAsync(flashcard.id);
+    setIsDeleteModalOpen(false);
+    toast.success('Flashcard deleted');
   };
 
   const handleArchive = async () => {
@@ -93,16 +92,35 @@ export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
   }
 
   return (
-    <div className='flex justify-end gap-2 mt-2'>
-      <Button size='sm' variant='outline' onClick={handleEdit} className='h-8 w-8 p-0' title='Edit'>
-        <Edit size={16} />
-      </Button>
-      <Button size='sm' variant='outline' onClick={handleArchive} className='h-8 w-8 p-0' title='Archive'>
-        <Archive size={16} />
-      </Button>
-      <Button size='sm' variant='outline' onClick={handleDelete} className='h-8 w-8 p-0' title='Delete'>
-        <Trash2 size={16} />
-      </Button>
-    </div>
+    <>
+      <div className='flex justify-end gap-2 mt-2'>
+        <Button size='sm' variant='outline' onClick={handleEdit} className='h-8 w-8 p-0' title='Edit'>
+          <Edit size={16} />
+        </Button>
+        <Button size='sm' variant='outline' onClick={handleArchive} className='h-8 w-8 p-0' title='Archive'>
+          <Archive size={16} />
+        </Button>
+        <Button size='sm' variant='outline' onClick={() => setIsDeleteModalOpen(true)} className='h-8 w-8 p-0' title='Delete'>
+          <Trash2 size={16} />
+        </Button>
+      </div>
+
+      {isDeleteModalOpen && (
+        <div className='fixed inset-0 bg-neutral-900/50 flex items-center justify-center z-50 p-4'>
+          <div className='bg-white dark:bg-neutral-900 rounded-lg max-w-md w-full p-6 shadow-lg'>
+            <h3 className='text-xl font-semibold mb-4'>Delete Flashcard</h3>
+            <p className='mb-6'>Are you sure you want to delete this flashcard? This action cannot be undone.</p>
+            <div className='flex justify-end gap-3'>
+              <Button variant='outline' onClick={() => setIsDeleteModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant='destructive' onClick={handleDelete}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

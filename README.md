@@ -139,8 +139,11 @@ docker-compose stop db
 docker-compose down -v
 
 # Create a new migration
-cd API/TenXCards.API
-dotnet ef migrations add MigrationName -p ../TenXCards.Infrastructure/TenXCards.Infrastructure.csproj
+cd API/TenXCards.Infrastructure
+dotnet ef migrations add MigrationName
+
+# Start only the database
+docker-compose up db -d
 
 # Apply pending migrations
 dotnet ef database update
