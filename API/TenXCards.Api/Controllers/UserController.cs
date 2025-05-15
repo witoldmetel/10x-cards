@@ -170,6 +170,56 @@ namespace TenXCards.API.Controllers
         }
 
         /// <summary>
+        /// Update user password
+        /// </summary>
+        [HttpPut("{id:guid}/password")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult> UpdatePassword([FromRoute] Guid id, [FromBody] UpdatePasswordRequest request)
+        {
+            try
+            {
+                var currentUserId = _userContextService.GetUserId();
+                if (currentUserId != id)
+                {
+                    return Forbid();
+                }
+
+                await _userService.UpdatePasswordAsync(id, request);
+                return NoContent();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Detail = "User is not authenticated",
+                    Status = StatusCodes.Status401Unauthorized
+                });
+            }
+            catch (Exception ex) when (ex.Message == "User not found")
+            {
+                return NotFound(new ProblemDetails
+                {
+                    Title = "User not found",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Password update failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status400BadRequest
+                });
+            }
+        }
+
+        /// <summary>
         /// Delete user account
         /// </summary>
         [HttpDelete("{id:guid}")]

@@ -28,3 +28,8 @@ export type UpdateUserRequest ={
   email: string;
   apiModelKey?: string;
 }
+
+export type UpdatePasswordRequest ={
+  currentPassword: string;
+  newPassword: string;
+}

@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useUpdateUser, useDeleteUser } from '@/api/user/mutations';
+import { useUpdateUser, useDeleteUser, useUpdatePassword } from '@/api/user/mutations';
 import {
   Dialog,
   DialogContent,
@@ -56,8 +56,8 @@ export default function Settings() {
   const { user, onLogout } = useAuth();
   const updateUserMutation = useUpdateUser(user?.userId || '');
   const deleteUserMutation = useDeleteUser(user?.userId || '');
+  const updatePasswordMutation = useUpdatePassword(user?.userId || '');
 
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isUpdatingApiKeys, setIsUpdatingApiKeys] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -93,23 +93,11 @@ export default function Settings() {
     });
   };
 
-  const onPasswordSubmit = async () => {
-    try {
-      setIsUpdatingPassword(true);
-      // In a real app, this would update password via API
-      console.log('Updating password');
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast.success('Password updated successfully!');
-      passwordForm.reset();
-    } catch (error) {
-      console.error('Failed to update password', error);
-      toast.error('Failed to update password. Please try again.');
-    } finally {
-      setIsUpdatingPassword(false);
-    }
+  const onPasswordSubmit = async (data: PasswordFormValues) => {
+    await updatePasswordMutation.mutateAsync({
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
+    });
   };
 
   const onApiSubmit = async () => {
@@ -132,6 +120,7 @@ export default function Settings() {
 
   const handleDeleteAccount = async () => {
     await deleteUserMutation.mutateAsync();
+
     onLogout();
   };
 
@@ -295,8 +284,8 @@ export default function Settings() {
                       </FormItem>
                     )}
                   />
-                  <Button type='submit' disabled={isUpdatingPassword}>
-                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  <Button type='submit' disabled={updatePasswordMutation.isPending}>
+                    {updatePasswordMutation.isPending ? 'Updating...' : 'Update Password'}
                   </Button>
                 </form>
               </Form>

@@ -5,6 +5,7 @@ using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
 using TenXCards.Core.Repositories;
 using TenXCards.Core.Services;
+using BC = BCrypt.Net.BCrypt;
 
 namespace TenXCards.Infrastructure.Services;
 
@@ -163,5 +164,18 @@ public class UserService : IUserService
         }
 
         return _passwordHashService.VerifyPassword(password, user.Password);
+    }
+
+    public async Task UpdatePasswordAsync(Guid id, UpdatePasswordRequest request)
+    {
+        var user = await _userRepository.GetByIdAsync(id) ?? throw new Exception("User not found");
+
+        if (!_passwordHashService.VerifyPassword(request.CurrentPassword, user.Password))
+        {
+            throw new UnauthorizedAccessException("Current password is incorrect");
+        }
+
+        user.Password = _passwordHashService.HashPassword(request.NewPassword);
+        await _userRepository.UpdateAsync(user);
     }
 } 
