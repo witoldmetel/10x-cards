@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, AlertCircle, Edit, Check, X, HelpCircle, Pencil } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Check, X, HelpCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,8 +65,6 @@ export default function AIGenerate() {
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [generationStep, setGenerationStep] = useState<'idle' | 'uploading' | 'processing' | 'reviewing'>('idle');
   const [activeTab, setActiveTab] = useState<'generate' | 'review'>('generate');
-  const [editedQuestion, setEditedQuestion] = useState('');
-  const [editedAnswer, setEditedAnswer] = useState('');
 
   const form = useForm<AIGenerateFormValues>({
     resolver: zodResolver(aiGenerateSchema),
@@ -97,9 +95,9 @@ export default function AIGenerate() {
     setTargetCollectionId(null);
     setGenerationStep('uploading');
 
-    try {
-      let collectionId = data.selectedCollectionId;
+    let collectionId = data.selectedCollectionId;
 
+    try {
       if (collectionId === 'new' && data.collectionName) {
         const newCollection = await createCollectionMutation.mutateAsync({
           name: data.collectionName,
@@ -113,38 +111,42 @@ export default function AIGenerate() {
         count: data.count,
       };
 
-      const response = await generateAI.mutateAsync({
-        collectionId,
-        payload,
-        onProgress: progress => {
-          setProgressPercentage(progress);
-          if (progress === 100) {
-            setGenerationStep('processing');
-            toast.success('Upload complete! Processing your flashcards...');
-          }
-        },
-      });
+      try {
+        const response = await generateAI.mutateAsync({
+          collectionId,
+          payload,
+          onProgress: progress => {
+            setProgressPercentage(progress);
+            if (progress === 100) {
+              setGenerationStep('processing');
+              toast.success('Upload complete! Processing your flashcards...');
+            }
+          },
+        });
 
-      setGeneratedCards(response);
-      setGenerationStep('reviewing');
-      setProgressPercentage(0);
-      setTargetCollectionId(collectionId);
-      toast.success('Flashcards generated successfully! You can now review and edit them.');
-      form.setValue('selectedCollectionId', 'new');
-      form.setValue('sourceText', '');
-      form.setValue('collectionName', '');
-      setActiveTab('review');
+        setGeneratedCards(response);
+        setGenerationStep('reviewing');
+        setProgressPercentage(0);
+        setTargetCollectionId(collectionId);
+        toast.success('Flashcards generated successfully! You can now review and edit them.');
+        form.setValue('selectedCollectionId', 'new');
+        form.setValue('sourceText', '');
+        form.setValue('collectionName', '');
+        setActiveTab('review');
+      } catch (error) {
+        console.error('Generation error:', error);
+        toast.warning('Failed to generate flashcards. You can try generating them again or create them manually.');
+        navigate(`/collections/${collectionId}`);
+      }
     } catch (error) {
-      console.error('Generation error:', error);
-      toast.error('Failed to generate flashcards. Please try again.');
+      console.error('Collection creation error:', error);
+      toast.error('Failed to create collection. Please try again.');
       setGenerationStep('idle');
       setProgressPercentage(0);
     } finally {
       setIsGenerating(false);
     }
   };
-
-
 
   const saveCollection = async () => {
     try {
@@ -170,7 +172,7 @@ export default function AIGenerate() {
             front: card.front,
             back: card.back,
             creationSource: FlashcardCreationSource.AI,
-            reviewStatus: ReviewStatus.Approved,
+            reviewStatus: card.reviewStatus,
           },
         };
 

@@ -16,6 +16,9 @@ export function useCreateCollection() {
           totalCount: oldData.totalCount + 1,
         };
       });
+
+      queryClient.invalidateQueries({ queryKey: ['collections', newCollection.id] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
     },
   });
 }
