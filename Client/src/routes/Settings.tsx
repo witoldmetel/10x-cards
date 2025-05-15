@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { z } from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -142,7 +142,18 @@ export default function Settings() {
         <TabsList>
           <TabsTrigger value='profile'>Profile</TabsTrigger>
           <TabsTrigger value='security'>Security</TabsTrigger>
-          <TabsTrigger value='api'>API Keys</TabsTrigger>
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <TabsTrigger value='api' disabled>API Keys</TabsTrigger>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This feature is coming soon!</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </TabsList>
 
         <TabsContent value='profile'>
@@ -263,7 +274,8 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card className='mt-6'>
+          {/* @todo: Add login sessions */}
+          {/* <Card className='mt-6'>
             <CardHeader>
               <CardTitle>Login Sessions</CardTitle>
               <CardDescription>Manage your active login sessions.</CardDescription>
@@ -302,7 +314,7 @@ export default function Settings() {
                 Log out from all other sessions
               </Button>
             </CardContent>
-          </Card>
+          </Card> */}
         </TabsContent>
 
         <TabsContent value='api'>

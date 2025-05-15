@@ -1,4 +1,4 @@
-import { ArrowRight, Plus, Search } from 'lucide-react';
+import { AlertCircle, ArrowRight, Plus, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCollections } from '@/api/collections/queries';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function Dashboard() {
   const { data, isLoading } = useCollections({ archived: false });
@@ -53,7 +54,7 @@ export default function Dashboard() {
         0,
       ) || 0,
     masteryLevel: calculateOverallMastery(data?.collections || []),
-    streak: 7, // This would require a proper streak tracking system
+    streak: 0, // This would require a proper streak tracking system
   };
 
   function calculateOverallMastery(collections: CollectionResponse[]) {
@@ -125,18 +126,42 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className='pb-2'>
-            <CardDescription>Mastery Level</CardDescription>
+            <div className='flex items-center gap-2'>
+              <CardDescription>Mastery Level</CardDescription>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertCircle size={14} className="text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>This feature is in progress</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <CardTitle className='text-3xl'>{statistics.masteryLevel}%</CardTitle>
           </CardHeader>
           <CardFooter>
-            <div className='w-full bg-muted rounded-full h-2'>
+            <div className='w-full bg-muted rounded-full h-2 mt-2'>
               <div className='bg-primary rounded-full h-2' style={{ width: `${statistics.masteryLevel}%` }}></div>
             </div>
           </CardFooter>
         </Card>
         <Card>
           <CardHeader className='pb-2'>
-            <CardDescription>Current Streak</CardDescription>
+            <div className='flex items-center gap-2'>
+              <CardDescription>Current Streak</CardDescription>
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <AlertCircle size={14} className="text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>This feature is in progress</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <CardTitle className='text-3xl'>{statistics.streak} days</CardTitle>
           </CardHeader>
           <CardFooter>
@@ -148,7 +173,18 @@ export default function Dashboard() {
       <Tabs defaultValue='collections'>
         <TabsList className='mb-6'>
           <TabsTrigger value='collections'>Collections</TabsTrigger>
-          <TabsTrigger value='activity'>Recent Activity</TabsTrigger>
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                <TabsTrigger value='activity' disabled>Recent Activity</TabsTrigger>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This feature is coming soon!</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </TabsList>
 
         <TabsContent value='collections'>
@@ -174,7 +210,7 @@ export default function Dashboard() {
                 </div>
               ))}
               <Link to='/flashcards/options' className='block'>
-                <Card className='border-dashed h-full'>
+                <Card className='border-dashed h-full border-2 hover:border-primary hover:shadow-md transition-all'>
                   <CardContent className='flex flex-col items-center justify-center h-full py-12'>
                     <div className='rounded-full bg-primary/10 p-3 mb-4'>
                       <Plus size={24} className='text-primary' />
@@ -196,11 +232,13 @@ export default function Dashboard() {
               <p className='text-sm text-muted-foreground mb-6'>
                 Try a different search term or create a new collection
               </p>
-              <Link to='/flashcards/create'>
-                <Button className='flex items-center gap-2'>
-                  <Plus size={18} /> Create New Collection
-                </Button>
-              </Link>
+              <div className='flex justify-center'>
+                <Link to='/flashcards/create'>
+                  <Button className='flex items-center gap-2'>
+                    <Plus size={18} /> Create New Collection
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </TabsContent>
