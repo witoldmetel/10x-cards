@@ -165,6 +165,23 @@ jobs:
       runs-on: ubuntu-latest
       
       steps:
+        - name: Check if secrets exist
+          run: |
+            if [ -n "$RENDER_FRONTEND_DEPLOY_HOOK" ]; then
+              echo "Frontend deploy hook is set"
+            else
+              echo "Frontend deploy hook is NOT set"
+            fi
+            
+            if [ -n "$RENDER_BACKEND_DEPLOY_HOOK" ]; then
+              echo "Backend deploy hook is set"
+            else
+              echo "Backend deploy hook is NOT set"
+            fi
+          env:
+            RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+            RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
+
         - name: Deploy Frontend
           env:
             RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
