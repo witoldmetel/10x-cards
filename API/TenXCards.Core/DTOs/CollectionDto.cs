@@ -36,6 +36,12 @@ public record CollectionResponseDto
     [SwaggerSchema(Description = "Number of cards due for review")]
     public int DueCards { get; init; }
 
+    [SwaggerSchema(Description = "Last time any flashcard in the collection was studied")]
+    public DateTime? LastStudied { get; init; }
+
+    [SwaggerSchema(Description = "Percentage representing mastery level of the collection (0-100)")]
+    public double MasteryLevel { get; init; }
+
     [SwaggerSchema(Description = "Color identifier for the collection")]
     public string Color { get; init; } = string.Empty;
 

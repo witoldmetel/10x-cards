@@ -7,13 +7,13 @@ import { Edit, Trash2, Archive, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Flashcard } from '@/api/flashcard/types';
 import { useArchiveFlashcard, useDeleteFlashcard, useUpdateFlashcard } from '@/api/flashcard/mutations';
+import { ReviewStatus } from '@/api/flashcard/types';
 
 interface FlashcardActionsProps {
   flashcard: Flashcard;
-  onDelete?: () => void;
 }
 
-export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps) {
+export function FlashcardActions({ flashcard }: FlashcardActionsProps) {
   const updateFlashcardMutation = useUpdateFlashcard();
   const archiveFlashcardMutation = useArchiveFlashcard();
   const deleteFlashcardMutation = useDeleteFlashcard();
@@ -36,16 +36,19 @@ export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps)
     });
   };
 
-  const handleSave = () => {
-    updateFlashcardMutation.mutate({
+  const handleSave = async () => {
+    await updateFlashcardMutation.mutateAsync({
       id: flashcard.id,
       flashcard: {
         front: editedValues.front,
         back: editedValues.back,
+        reviewStatus:
+          flashcard.reviewStatus === ReviewStatus.ToCorrect ? ReviewStatus.Approved : flashcard.reviewStatus,
       },
     });
     setIsEditing(false);
-    toast.success('Flashcard updated');
+
+    toast.success('Card corrected and approved');
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -56,8 +59,8 @@ export function FlashcardActions({ flashcard, onDelete }: FlashcardActionsProps)
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this flashcard?')) {
       await deleteFlashcardMutation.mutateAsync(flashcard.id);
+
       toast.success('Flashcard deleted');
-      if (onDelete) onDelete();
     }
   };
 

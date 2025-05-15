@@ -20,7 +20,7 @@ export default function Archive() {
     },
     onError: () => {
       toast.error('Failed to restore collection');
-    }
+    },
   });
 
   const handleUnarchive = async (collectionId: string) => {

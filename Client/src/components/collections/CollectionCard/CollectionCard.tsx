@@ -1,4 +1,3 @@
-
 import { ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,20 +6,18 @@ import { TagBadge } from '@/components/ui/tag-badge';
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 import { CollectionCardProps } from '@/routes/Dashboard';
 
-export function CollectionCard({
-  ...collection
-}: CollectionCardProps) {
+export function CollectionCard({ ...collection }: CollectionCardProps) {
   return (
     <Card>
       <CardHeader>
-      <div className='flex items-center gap-3'>
+        <div className='flex items-center gap-3'>
           <CollectionIcon color={collection.color} size='lg' />
           <div>
-          <CardTitle>{collection.name}</CardTitle>
-          <CardDescription>{collection.description}</CardDescription>
+            <CardTitle>{collection.name}</CardTitle>
+            <CardDescription>{collection.description}</CardDescription>
           </div>
         </div>
-  
+
         {/* Display categories and tags */}
         <div className='flex flex-wrap gap-2 mt-2'>
           {collection.categories &&
@@ -66,4 +63,4 @@ export function CollectionCard({
       </CardFooter>
     </Card>
   );
-};
+}

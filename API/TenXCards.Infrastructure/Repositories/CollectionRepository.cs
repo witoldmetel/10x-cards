@@ -175,25 +175,27 @@ namespace TenXCards.Infrastructure.Repositories
 
         public async Task UpdateCollectionStatistics(Guid collectionId)
         {
-            var collection = await _context.Collections.FindAsync(collectionId);
+            var collection = await _context.Collections
+                .Include(c => c.Flashcards)
+                .FirstOrDefaultAsync(c => c.Id == collectionId);
+
             if (collection == null) return;
 
-            var stats = await _context.Flashcards
-                .Where(f => f.CollectionId == collectionId && f.ArchivedAt == null)
-                .GroupBy(f => 1)
-                .Select(g => new
-                {
-                    TotalCards = g.Count(),
-                    DueCards = g.Count(f => f.Sm2DueDate <= DateTime.UtcNow)
-                })
-                .FirstOrDefaultAsync();
+            // Calculate total cards (including archived)
+            collection.TotalCards = collection.Flashcards.Count;
 
-            if (stats != null)
-            {
-                collection.TotalCards = stats.TotalCards;
-                collection.DueCards = stats.DueCards;
-                await _context.SaveChangesAsync();
-            }
+            // Calculate due cards (only non-archived cards)
+            collection.DueCards = collection.Flashcards
+                .Count(f => f.ArchivedAt == null && f.ReviewStatus == ReviewStatus.New);
+
+            // Calculate last studied time
+            collection.LastStudied = collection.Flashcards
+                .Where(f => f.ReviewedAt != null)
+                .Max(f => f.ReviewedAt);
+
+            collection.MasteryLevel = 0;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

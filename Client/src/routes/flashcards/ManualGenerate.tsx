@@ -83,6 +83,8 @@ function isExistingCollectionForm(data: FormValues): data is z.infer<typeof exis
 export default function ManualGenerate() {
   const navigate = useNavigate();
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const predefinedCollectionId = searchParams.get('collectionId');
   const { data, refetch: fetchCollections, isLoading: isLoadingCollections } = useCollections();
   const { mutateAsync: createCollection, isPending: isCreatingCollection } = useCreateCollection();
   const { mutateAsync: createFlashcard, isPending: isCreatingFlashcard } = useCreateFlashcard();
@@ -95,10 +97,10 @@ export default function ManualGenerate() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: location.state?.collectionId
+    defaultValues: predefinedCollectionId
       ? {
           flashcards: [{ front: '', back: '' }],
-          selectedCollectionId: location.state.collectionId,
+          selectedCollectionId: predefinedCollectionId,
         }
       : {
           collection: { name: '', description: '', color: PRESET_COLORS[9], categories: [], tags: [] },
@@ -245,6 +247,7 @@ export default function ManualGenerate() {
                       <FormLabel>Select Collection</FormLabel>
                       <Select
                         value={selectedCollectionId || 'new'}
+                        disabled={!!predefinedCollectionId}
                         onValueChange={value => {
                           if (value === 'new') {
                             form.reset({
@@ -503,15 +506,15 @@ export default function ManualGenerate() {
           )}
 
           <div className='flex justify-end gap-4'>
-            <Button type='button' variant='outline' onClick={() => navigate('/dashboard')}>
+            <Button type='button' variant='outline' onClick={() => navigate(-1)}>
               Cancel
             </Button>
             <Button type='submit' disabled={isLoadingCollections || isCreatingCollection || isCreatingFlashcard}>
               {isLoadingCollections || isCreatingCollection || isCreatingFlashcard
                 ? 'Creating...'
                 : selectedCollectionId !== null
-                ? 'Add Flashcards'
-                : 'Create Collection'}
+                  ? 'Add Flashcards'
+                  : 'Create Collection'}
             </Button>
           </div>
         </form>

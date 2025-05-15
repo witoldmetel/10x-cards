@@ -60,6 +60,12 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasDefaultValue(0)
                         .HasColumnName("due_cards");
 
+                    b.Property<DateTime?>("LastStudied")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("MasteryLevel")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")

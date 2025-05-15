@@ -68,7 +68,7 @@ export function useArchiveCollection() {
   });
 }
 
-export function useUnarchiveCollection({onSuccess, onError}: {onSuccess: () => void, onError: () => void}) {
+export function useUnarchiveCollection({ onSuccess, onError }: { onSuccess: () => void; onError: () => void }) {
   const queryClient = useQueryClient();
 
   return useMutation({

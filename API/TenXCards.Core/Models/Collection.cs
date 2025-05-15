@@ -14,6 +14,8 @@ namespace TenXCards.Core.Models
         public DateTime? ArchivedAt { get; set; }
         public int TotalCards { get; set; }
         public int DueCards { get; set; }
+        public DateTime? LastStudied { get; set; }
+        public double MasteryLevel { get; set; }
         public required string Color { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<string> Categories { get; set; } = new();

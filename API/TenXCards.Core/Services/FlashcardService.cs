@@ -124,6 +124,7 @@ namespace TenXCards.Core.Services
                 CollectionId = collectionId,
                 UserId = userId
             };
+
             var created = await _repository.CreateAsync(flashcard);
             return MapToResponseDto(created);
         }
@@ -262,7 +263,6 @@ namespace TenXCards.Core.Services
             
             if (existingFlashcard != null)
             {
-                _logger.LogInformation("Found existing flashcard for source text hash {Hash}", sourceTextHash);
                 return new List<FlashcardResponseDto> { MapToResponseDto(existingFlashcard) };
             }
 
@@ -296,11 +296,9 @@ namespace TenXCards.Core.Services
                 try 
                 {
                     var parsedResponse = JsonSerializer.Deserialize<FlashcardsResponse>(content, jsonOptions);
-                    _logger.LogInformation("Parsed response: {ParsedResponse}", JsonSerializer.Serialize(parsedResponse, jsonOptions));
 
                     if (parsedResponse?.Flashcards == null || !parsedResponse.Flashcards.Any())
                     {
-                        _logger.LogError("Parsed response has no flashcards. Response: {Response}", content);
                         throw new Exception("Failed to parse flashcards from API response");
                     }
 

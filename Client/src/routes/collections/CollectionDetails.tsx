@@ -43,7 +43,7 @@ export default function CollectionDetails() {
   const collectionFlashcards =
     collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.Approved) || [];
   const pendingReviewCount =
-    collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.New)?.length || 0;
+    collection?.flashcards.filter(collection => collection.reviewStatus === ReviewStatus.ToCorrect)?.length || 0;
 
   const startStudySession = () => {
     setIsStudying(true);
@@ -74,11 +74,11 @@ export default function CollectionDetails() {
 
   const handleDeleteCollection = async () => {
     if (!collectionId) return;
-    
+
     setIsDeleteModalOpen(false);
 
     navigate('/dashboard');
-    
+
     try {
       await deleteCollectionMutation.mutateAsync(collectionId);
       toast.success('Collection deleted successfully');
@@ -112,7 +112,9 @@ export default function CollectionDetails() {
       setCurrentCardIndex(0);
 
       // Show success message with detailed stats
-      toast.success(`Study session completed! You got ${correct} out of ${total} cards correct (${Math.round((correct/total) * 100)}% accuracy)`);
+      toast.success(
+        `Study session completed! You got ${correct} out of ${total} cards correct (${Math.round((correct / total) * 100)}% accuracy)`,
+      );
     }
   };
 
@@ -122,7 +124,7 @@ export default function CollectionDetails() {
 
   const handleAddCards = () => {
     navigate(`/flashcards/create?collectionId=${collectionId}`);
-    toast.info('Redirecting to card creation');
+    toast.info('Redirecting to manual card creation');
   };
 
   if (isCollectionLoading) {
@@ -146,8 +148,8 @@ export default function CollectionDetails() {
 
   return (
     <div>
-      <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate('/dashboard')}>
-        <ArrowLeft size={16} className='mr-2' /> Back to Dashboard
+      <Button variant='ghost' size='sm' className='mb-6' onClick={() => navigate(-1)}>
+        <ArrowLeft size={16} className='mr-2' /> Go Back
       </Button>
 
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6'>
@@ -305,7 +307,14 @@ export default function CollectionDetails() {
         <Tabs defaultValue='all'>
           <TabsList className='mb-6'>
             <TabsTrigger value='all'>All Cards</TabsTrigger>
-            {pendingReviewCount > 0 && <TabsTrigger value='pending'>Pending Review ({pendingReviewCount})</TabsTrigger>}
+            <TabsTrigger value='pending' disabled={pendingReviewCount === 0}>
+              Pending Review ({pendingReviewCount})
+            </TabsTrigger>
+            {collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected).length > 0 && (
+              <TabsTrigger value='rejected'>
+                Rejected ({collection.flashcards.filter(card => card.reviewStatus === ReviewStatus.Rejected).length})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value='all'>
@@ -332,32 +341,54 @@ export default function CollectionDetails() {
             </div>
           </TabsContent>
 
-          {pendingReviewCount > 0 && (
-            <TabsContent value='pending'>
-              <div className='space-y-4'>
-                {collection?.flashcards
-                  .filter(collection => collection.reviewStatus === ReviewStatus.New)
-                  .map(flashcard => (
-                    <Card key={flashcard.id}>
-                      <CardContent className='p-4'>
-                        <div className='mb-2'>
-                          <h3 className='font-medium'>Question:</h3>
-                          <p>{flashcard.front}</p>
-                        </div>
-                        <div>
-                          <h3 className='font-medium'>Answer:</h3>
-                          <p>{flashcard.back}</p>
-                        </div>
-                        <div className='mt-3 text-xs inline-block px-2 py-1 bg-amber-100 text-amber-800 rounded'>
-                          Needs review
-                        </div>
-                        <FlashcardActions flashcard={flashcard} />
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            </TabsContent>
-          )}
+          <TabsContent value='pending'>
+            <div className='space-y-4'>
+              {collection?.flashcards
+                .filter(collection => collection.reviewStatus === ReviewStatus.ToCorrect)
+                .map(flashcard => (
+                  <Card key={flashcard.id}>
+                    <CardContent className='p-4'>
+                      <div className='mb-2'>
+                        <h3 className='font-medium'>Question:</h3>
+                        <p>{flashcard.front}</p>
+                      </div>
+                      <div>
+                        <h3 className='font-medium'>Answer:</h3>
+                        <p>{flashcard.back}</p>
+                      </div>
+                      <div className='mt-3 text-xs inline-block px-2 py-1 bg-secondary text-secondary-foreground rounded'>
+                        Needs correction
+                      </div>
+                      <FlashcardActions flashcard={flashcard} />
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value='rejected'>
+            <div className='space-y-4'>
+              {collection.flashcards
+                .filter(card => card.reviewStatus === ReviewStatus.Rejected)
+                .map(flashcard => (
+                  <Card key={flashcard.id}>
+                    <CardContent className='p-4'>
+                      <div className='mb-2'>
+                        <h3 className='font-medium'>Question:</h3>
+                        <p>{flashcard.front}</p>
+                      </div>
+                      <div>
+                        <h3 className='font-medium'>Answer:</h3>
+                        <p>{flashcard.back}</p>
+                      </div>
+                      <div className='mt-3 text-xs inline-block px-2 py-1 bg-destructive text-destructive-foreground rounded'>
+                        Rejected
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
         </Tabs>
       )}
 

@@ -11,12 +11,12 @@ import { ReviewStatus } from '@/api/flashcard/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CollectionCard } from '@/components/collections/CollectionCard/CollectionCard';
 
-export type CollectionCardProps = CollectionResponse &{
-  cardCount: number,
-  lastStudied: string,
-  dueCards: number,
-  masteryLevel: number,
-} 
+export type CollectionCardProps = CollectionResponse & {
+  cardCount: number;
+  lastStudied: string;
+  dueCards: number;
+  masteryLevel: number;
+};
 
 export default function Dashboard() {
   const { data, isLoading } = useCollections({ archived: false });
@@ -331,4 +331,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

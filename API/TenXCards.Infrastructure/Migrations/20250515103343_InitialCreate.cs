@@ -41,6 +41,8 @@ namespace TenXCards.Infrastructure.Migrations
                     archived_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     total_cards = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     due_cards = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    LastStudied = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    MasteryLevel = table.Column<double>(type: "double precision", nullable: false),
                     color = table.Column<string>(type: "text", nullable: false),
                     tags = table.Column<List<string>>(type: "text[]", nullable: false),
                     categories = table.Column<List<string>>(type: "text[]", nullable: false)

@@ -179,6 +179,8 @@ namespace TenXCards.Core.Services
                 ArchivedAt = collection.ArchivedAt,
                 TotalCards = collection.TotalCards,
                 DueCards = collection.DueCards,
+                LastStudied = collection.LastStudied,
+                MasteryLevel = collection.MasteryLevel,
                 Color = collection.Color,
                 Tags = collection.Tags,
                 Categories = collection.Categories,

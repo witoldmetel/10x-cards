@@ -29,7 +29,9 @@ export default function PendingReview() {
     let total = 0;
 
     collection?.flashcards
-      .filter(card => card.creationSource === FlashcardCreationSource.AI && card.reviewStatus === ReviewStatus.ToCorrect)
+      .filter(
+        card => card.creationSource === FlashcardCreationSource.AI && card.reviewStatus === ReviewStatus.ToCorrect,
+      )
       .forEach(card => {
         if (!groupedByCollection[card.collectionId]) {
           const collection = collections?.collections.find(c => c.id === card.collectionId);
@@ -149,7 +151,7 @@ export default function PendingReview() {
             <CardTitle>Question</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-lg'>{currentCard.question}</p>
+            <p className='text-lg'>{currentCard.front}</p>
           </CardContent>
         </Card>
 
@@ -158,7 +160,7 @@ export default function PendingReview() {
             <CardTitle>Answer</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className='text-lg'>{currentCard.answer}</p>
+            <p className='text-lg'>{currentCard.back}</p>
           </CardContent>
         </Card>
 
@@ -211,7 +213,8 @@ export default function PendingReview() {
               <div>
                 <h2 className='text-2xl font-bold mb-2'>Review AI-Generated Cards</h2>
                 <p className='opacity-90 max-w-md'>
-                  Some AI-generated cards need correction. Review and improve these cards before adding them to your learning queue.
+                  Some AI-generated cards need correction. Review and improve these cards before adding them to your
+                  learning queue.
                 </p>
               </div>
               <Button

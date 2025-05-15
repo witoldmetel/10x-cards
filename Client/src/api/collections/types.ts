@@ -10,6 +10,8 @@ export interface CollectionResponse {
   dueCards: number;
   flashcards: Flashcard[];
   id: string;
+  lastStudied: string | null;
+  masteryLevel: number;
   name: string;
   tags: string[];
   totalCards: number;

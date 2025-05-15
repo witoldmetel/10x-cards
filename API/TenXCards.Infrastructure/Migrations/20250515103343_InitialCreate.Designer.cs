@@ -13,7 +13,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250513145218_InitialCreate")]
+    [Migration("20250515103343_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -62,6 +62,12 @@ namespace TenXCards.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("due_cards");
+
+                    b.Property<DateTime?>("LastStudied")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("MasteryLevel")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
