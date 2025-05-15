@@ -106,20 +106,16 @@ export default function Archive() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className='grid grid-cols-3 gap-4'>
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <p className='text-muted-foreground text-sm'>Cards</p>
-                    <p className='font-medium'>{collection.archivedFlashcards?.length}</p>
+                    <p className='text-muted-foreground text-sm'>Archived Cards</p>
+                    <p className='font-medium'>{collection.archivedFlashcards?.length || 0}</p>
                   </div>
                   <div>
-                    <p className='text-muted-foreground text-sm'>Archived</p>
+                    <p className='text-muted-foreground text-sm'>Archived Date</p>
                     <p className='font-medium'>
-                      {collection.createdAt ? new Date(collection.createdAt).toLocaleDateString() : 'Unknown date'}
+                      {collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date'}
                     </p>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm'>Mastery</p>
-                    <p className='font-medium'>{0}%</p>
                   </div>
                 </div>
               </CardContent>
@@ -128,7 +124,7 @@ export default function Archive() {
                   <ArchiveRestore size={16} className='mr-2' />
                   Unarchive
                 </Button>
-                <Button variant='ghost' size='sm' onClick={() => navigate(`/collections/${collection.id}`)}>
+                <Button variant='ghost' size='sm' onClick={() => navigate(`/collections/archive/${collection.id}`)}>
                   View Details
                   <ArrowRight size={16} className='ml-2' />
                 </Button>

@@ -16,6 +16,7 @@ import CollectionDetails from './collections/CollectionDetails';
 import NotFound from './NotFound';
 import CreateFlashcardsOptions from './flashcards/CreateFlashcardsOptions';
 import PendingReview from './flashcards/PendingReview';
+import ArchivedCollectionDetails from './collections/ArchivedCollectionDetails';
 
 export const routes = (
   <Routes>
@@ -39,6 +40,7 @@ export const routes = (
       <Route path='/flashcards/pending-review' element={<PendingReview />} />
       <Route path='/collections/:collectionId' element={<CollectionDetails />} />
       <Route path='/collections/archive' element={<Archive />} />
+      <Route path='/collections/archive/:collectionId' element={<ArchivedCollectionDetails />} />
       <Route path='/settings' element={<Settings />} />
     </Route>
 
