@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFlashcard, deleteFlashcard, generateFlashcards, updateFlashcard, archiveFlashcard } from './api';
 import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsRequest } from './types';
+import axios from 'axios';
+import { UseMutationOptions } from '@tanstack/react-query';
 
 type ErrorResponse = {
   message: string;
@@ -81,5 +83,19 @@ export const useArchiveFlashcard = () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', archivedFlashcard.collectionId] });
     },
+  });
+};
+
+export const useUnarchiveFlashcard = (options?: UseMutationOptions<void, Error, string>) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (flashcardId: string) => {
+      await axios.post(`/api/flashcards/${flashcardId}/unarchive`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+    },
+    ...options,
   });
 };
