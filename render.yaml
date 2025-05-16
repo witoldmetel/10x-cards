@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: 10x-cards-client
+    env: static
+    buildCommand: cd Client && npm install && npm run build
+    staticPublishPath: ./Client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://one0x-cards-api.onrender.com
+
+  - type: web
+    name: 10x-cards-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:5001
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: OpenRouter__ApiKey
+        sync: false
+      - key: OpenRouter__BaseUrl
+        value: https://openrouter.ai/api/v1
+      - key: OpenRouter__ApiEndpoint
+        value: /chat/completions
+      - key: OpenRouter__DefaultModel
+        value: openai/gpt-3.5-turbo
+      - key: OpenRouter__TimeoutSeconds
+        value: 120
+      - key: OpenRouter__SiteUrl
+        value: https://one0x-cards-client.onrender.com
+      - key: OpenRouter__SiteName
+        value: 10X Cards 
