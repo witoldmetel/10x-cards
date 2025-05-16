@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-const baseURL = import.meta.env.MODE === 'production' ? import.meta.env.VITE_API_URL : '/api';
+const baseURL = import.meta.env.MODE === 'production' ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
 export const instance: AxiosInstance = axios.create({
   baseURL,
