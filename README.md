@@ -1,4 +1,4 @@
-# 10x Cards
+# <img src="Client/src/assets/logo.png" alt="10x Cards Logo" width="40" height="40" style="vertical-align: middle"> 10x Cards
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/yourusername/10x-cards) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
