@@ -26,6 +26,19 @@ export class RegisterPage {
   async goto() {
     await this.page.goto('/register');
     await this.page.waitForLoadState('networkidle');
+
+    // Get current URL to check where we are
+    const currentUrl = await this.page.url();
+
+    if (currentUrl.includes('/login')) {
+      // If we're redirected to login, use the register link
+      const registerLink = this.page.getByTestId('register-link');
+      await registerLink.click();
+      await this.page.waitForLoadState('networkidle');
+    }
+
+    // Now we should be on register page
+    await expect(this.page).toHaveURL(/.*\/register/, { timeout: 30000 });
     await expect(this.registerForm).toBeVisible({ timeout: 30000 });
   }
 
