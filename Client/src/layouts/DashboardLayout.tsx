@@ -6,6 +6,7 @@ import { Home, Plus, Settings, LogOut, Archive, Menu, X, Brain } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/tailwind';
+import { Logo } from '@/components/core/Logo/Logo';
 
 export default function DashboardLayout() {
   const { isAuth, onLogout, user } = useAuth();
@@ -42,7 +43,7 @@ export default function DashboardLayout() {
             aria-label='Toggle menu'>
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </Button>
-          <Brain className='h-8 w-8 text-blue-600' />
+          <Logo />
         </div>
         <Avatar className='h-8 w-8'>
           <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
@@ -57,7 +58,7 @@ export default function DashboardLayout() {
         )}>
         <div className='flex flex-col h-full p-4'>
           <div className='flex items-center justify-between mb-8'>
-            <Brain className='h-8 w-8 text-blue-600' />
+            <Logo />
             <Button variant='ghost' size='icon' onClick={() => setIsMobileMenuOpen(false)}>
               <X size={20} />
             </Button>
@@ -96,7 +97,7 @@ export default function DashboardLayout() {
       <aside className='hidden md:flex md:w-64 md:flex-col h-screen sticky top-0 border-r'>
         <div className='flex flex-col flex-1 bg-card'>
           <div className='px-4 py-5 flex items-center'>
-            <Brain className='h-8 w-8 text-blue-600' />
+            <Logo />
           </div>
           <nav className='flex-1 px-2 py-4 space-y-1'>
             {navigationItems.map(item => (

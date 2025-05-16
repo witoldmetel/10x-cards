@@ -1,6 +1,6 @@
+import { Logo } from '@/components/core/Logo/Logo';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Brain } from 'lucide-react';
 import { Link, Navigate } from 'react-router';
 import { Outlet } from 'react-router';
 
@@ -17,7 +17,7 @@ export default function AuthLayout() {
       <header className='border-b bg-card'>
         <div className='container mx-auto flex justify-between items-center py-4'>
           <Link to='/'>
-            <Brain className='h-8 w-8 text-blue-600' />
+            <Logo />
           </Link>
           <div className='flex items-center gap-4'>
             <Link to='/login'>
@@ -39,7 +39,6 @@ export default function AuthLayout() {
         </div>
       </div>
 
-      {/* Footer from Landing Page */}
       <footer className='bg-muted py-8'>
         <div className='container mx-auto px-4'>
           <div className='flex flex-col md:flex-row justify-between items-center'>
