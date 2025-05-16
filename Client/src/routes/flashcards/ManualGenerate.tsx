@@ -273,7 +273,7 @@ export default function ManualGenerate() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value='new'>Create New Collection</SelectItem>
-                          {data?.collections.map(collection => (
+                          {data?.collections.map((collection: { id: string; name: string }) => (
                             <SelectItem key={collection.id} value={collection.id}>
                               {collection.name}
                             </SelectItem>

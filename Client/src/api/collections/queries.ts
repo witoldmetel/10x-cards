@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { getCollections, getCollection, getCollectionStatistics } from './api';
 import type {
   CollectionResponse,
@@ -8,14 +8,9 @@ import type {
 } from './types';
 
 export function useCollections(params?: CollectionsQueryParams) {
-  return useInfiniteQuery<PaginatedCollectionsResponse>({
+  return useQuery<PaginatedCollectionsResponse>({
     queryKey: ['collections', { archived: params?.archived, searchQuery: params?.searchQuery }],
-    queryFn: ({ pageParam }) => getCollections({ ...params, offset: pageParam as number }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      const nextOffset = allPages.length * (params?.limit || 20);
-      return nextOffset < lastPage.totalCount ? nextOffset : undefined;
-    },
+    queryFn: () => getCollections(params),
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 }

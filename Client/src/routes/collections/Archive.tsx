@@ -24,7 +24,7 @@ export default function Archive() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCardsQuery, setSearchCardsQuery] = useState('');
 
-  const { data, isLoading, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } = useCollections({
+  const { data, isLoading, refetch } = useCollections({
     searchQuery,
     limit: ITEMS_PER_PAGE,
   });
@@ -57,10 +57,6 @@ export default function Archive() {
     unarchiveFlashcardMutation.mutate(flashcardId);
   };
 
-  const handleLoadMore = () => {
-    fetchNextPage();
-  };
-
   if (isLoading) {
     return (
       <div className='flex items-center justify-center h-64'>
@@ -69,25 +65,21 @@ export default function Archive() {
     );
   }
 
-  const allArchivedCollections: CollectionResponse[] =
-    data?.pages.flatMap(page =>
-      page.collections
-        .filter((collection: CollectionResponse) => collection.archivedAt)
-        .map((collection: CollectionResponse) => ({
-          ...collection,
-          archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date',
-        })),
-    ) || [];
+  const allArchivedCollections =
+  data?.collections
+    .filter(collection => collection.archivedAt)
+    .map(collection => ({
+      ...collection,
+      archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date',
+    })) || [];
 
-  const allArchivedFlashcards: ArchivedFlashcard[] =
-    data?.pages.flatMap(page =>
-      page.collections.flatMap((collection: CollectionResponse) =>
-        collection.archivedFlashcards.map((flashcard: Flashcard) => ({
-          ...flashcard,
-          collectionName: collection.name,
-        })),
-      ),
-    ) || [];
+const allArchivedFlashcards =
+  data?.collections.flatMap(collection =>
+    collection.archivedFlashcards.map(flashcard => ({
+      ...flashcard,
+      collectionName: collection.name,
+    })),
+  ) || [];
 
   const filteredFlashcards = searchCardsQuery
     ? allArchivedFlashcards.filter(
@@ -205,18 +197,6 @@ export default function Archive() {
                       </CardFooter>
                     </Card>
                   ))}
-
-                  {hasNextPage && (
-                    <div className='mt-8 flex justify-center'>
-                      <Button
-                        variant='outline'
-                        onClick={handleLoadMore}
-                        disabled={isFetchingNextPage}
-                        className='min-w-[200px]'>
-                        {isFetchingNextPage ? 'Loading...' : 'Load More Collections'}
-                      </Button>
-                    </div>
-                  )}
                 </>
               ) : (
                 <div className='flex flex-col items-center justify-center my-24'>

@@ -13,7 +13,6 @@ import type {
   Flashcard,
   UpdateFlashcardDTO,
   GenerateFlashcardsRequest,
-  StudySessionRequest,
 } from './types';
 
 import { UseMutationOptions } from '@tanstack/react-query';

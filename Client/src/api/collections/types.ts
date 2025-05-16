@@ -46,7 +46,7 @@ export interface PaginatedCollectionsResponse {
   totalCount: number;
 }
 
-export type CreateCollectionDTO = {
+export type CreateCollection = {
   name: string;
   description?: string;
   color: string;
@@ -54,7 +54,7 @@ export type CreateCollectionDTO = {
   categories?: string[];
 };
 
-export type UpdateCollectionDTO = {
+export type UpdateCollection = {
   name?: string;
   description?: string;
   color?: string;

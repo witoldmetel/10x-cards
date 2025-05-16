@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { CollectionResponse } from '@/api/collections/types';
+import { CollectionResponse } from '@/api/collections/types';
 
 const aiGenerateSchema = z
   .object({
@@ -348,7 +348,7 @@ export default function AIGenerate() {
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value='new'>Create New Collection</SelectItem>
-                                {data?.items.map((collection: CollectionResponse) => (
+                                {data?.collections.map((collection: CollectionResponse) => (
                                   <SelectItem key={collection.id} value={collection.id}>
                                     {collection.name}
                                   </SelectItem>

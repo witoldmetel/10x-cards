@@ -2,8 +2,8 @@ import { instance } from '@/lib/axios';
 import { COLLECTIONS_API_BASE, COLLECTION_API_ROUTES } from './constants';
 import type {
   CollectionResponse,
-  CreateCollectionDTO,
-  UpdateCollectionDTO,
+  CreateCollection,
+  UpdateCollection,
   PaginatedCollectionsResponse,
   CollectionsQueryParams,
   CollectionStatistics,
@@ -28,13 +28,13 @@ export async function getCollection(id: string): Promise<CollectionResponse> {
   return data;
 }
 
-export async function createCollection(collection: CreateCollectionDTO): Promise<CollectionResponse> {
+export async function createCollection(collection: CreateCollection): Promise<CollectionResponse> {
   const { data } = await instance.post<CollectionResponse>(COLLECTIONS_API_BASE, collection);
 
   return data;
 }
 
-export async function updateCollection(id: string, collection: UpdateCollectionDTO): Promise<CollectionResponse> {
+export async function updateCollection(id: string, collection: UpdateCollection): Promise<CollectionResponse> {
   const { data } = await instance.put<CollectionResponse>(`${COLLECTIONS_API_BASE}/${id}`, collection);
 
   return data;

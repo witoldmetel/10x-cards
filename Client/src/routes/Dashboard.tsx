@@ -26,28 +26,25 @@ export default function Dashboard() {
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useCollections({
+  const { data, isPending } = useCollections({
     archived: false,
     limit: ITEMS_PER_PAGE,
     ...(searchQuery ? { searchQuery } : {}),
   });
 
-  const collections = useMemo(() => {
-    if (!data?.pages) return [];
-
-    return data.pages.flatMap(page => 
-      page.collections.map((collection: CollectionResponse) => ({
+  const collections = useMemo(
+    () =>
+      data?.collections.map(collection => ({
         ...collection,
         cardCount: collection.flashcards.length,
         lastStudied: 'Never',
         dueCards: collection.flashcards.filter(
-          (f: { collectionId: string; reviewStatus: ReviewStatus }) =>
-            f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
+          f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
         ).length,
         masteryLevel: 0,
-      }))
-    ) as CollectionCardProps[];
-  }, [data?.pages]);
+      })) as CollectionCardProps[],
+    [data?.collections],
+  );
 
   const debouncedSetSearchQuery = useMemo(
     () =>
@@ -61,10 +58,6 @@ export default function Dashboard() {
     const value = e.target.value;
     setInputValue(value);
     debouncedSetSearchQuery(value);
-  };
-
-  const handleLoadMore = () => {
-    fetchNextPage();
   };
 
   const totalDueCards = useMemo(() => {
@@ -145,7 +138,6 @@ export default function Dashboard() {
               <div className='animate-bounce-subtle'>Loading collections...</div>
             </div>
           ) : collections.length > 0 ? (
-            <>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 {collections.map(collection => (
                   <div key={collection.id}>
@@ -166,19 +158,6 @@ export default function Dashboard() {
                   </Card>
                 </Link>
               </div>
-
-              {hasNextPage && (
-                <div className='mt-8 flex justify-center'>
-                  <Button
-                    variant='outline'
-                    onClick={handleLoadMore}
-                    disabled={isFetchingNextPage}
-                    className='min-w-[200px]'>
-                    {isFetchingNextPage ? 'Loading...' : 'Load More Collections'}
-                  </Button>
-                </div>
-              )}
-            </>
           ) : (
             <div className='text-center py-12'>
               <div className='mx-auto rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4'>
