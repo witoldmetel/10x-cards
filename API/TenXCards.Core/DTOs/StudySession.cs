@@ -10,10 +10,11 @@ namespace TenXCards.Core.DTOs
         public DateTime StudiedAt { get; set; }
     }
 
-    public class StudySessionRequest
+    public record StudySessionRequest
     {
-        public Guid CollectionId { get; set; }
-        public List<StudySessionResult> Results { get; set; } = new();
+        public Guid CollectionId { get; init; }
+        public Guid UserId { get; init; }
+        public List<StudySessionResult> Results { get; init; } = new();
     }
 
     public class StudySessionResponse

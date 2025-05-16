@@ -1,41 +1,57 @@
-using Microsoft.EntityFrameworkCore;
 using TenXCards.Core.DTOs;
 using TenXCards.Core.Models;
-using TenXCards.Core.Services;
-using TenXCards.Infrastructure.Data;
+using TenXCards.Core.Repositories;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace TenXCards.Infrastructure.Services
+namespace TenXCards.Core.Services
 {
     public class StudyService : IStudyService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICollectionRepository _collectionRepository;
+        private readonly IFlashcardRepository _flashcardRepository;
 
-        public StudyService(ApplicationDbContext context)
+        public StudyService(ICollectionRepository collectionRepository, IFlashcardRepository flashcardRepository)
         {
-            _context = context;
+            _collectionRepository = collectionRepository;
+            _flashcardRepository = flashcardRepository;
         }
 
         public async Task<StudySessionResponse> ProcessStudySessionResults(StudySessionRequest request)
         {
-            var collection = await _context.Collections
-                .Include(c => c.Flashcards)
-                .FirstOrDefaultAsync(c => c.Id == request.CollectionId);
-
+            var collection = await _collectionRepository.GetByIdAsync(request.CollectionId, request.UserId);
             if (collection == null)
                 throw new InvalidOperationException("Collection not found");
 
+            var flashcards = await _flashcardRepository.GetAllAsync(new FlashcardsQueryParams 
+            { 
+                CollectionId = request.CollectionId,
+                UserId = request.UserId,
+                Offset = 0,
+                Limit = int.MaxValue
+            });
+
             foreach (var result in request.Results)
             {
-                var flashcard = collection.Flashcards.FirstOrDefault(f => f.Id == result.FlashcardId);
+                var flashcard = flashcards.Items.FirstOrDefault(f => f.Id == result.FlashcardId);
                 if (flashcard == null) continue;
 
                 UpdateSM2Algorithm(flashcard, result.Grade);
                 flashcard.ReviewedAt = result.StudiedAt;
+
+                await _flashcardRepository.UpdateSM2Parameters(
+                    flashcard.Id,
+                    flashcard.Sm2Repetitions,
+                    flashcard.Sm2Interval,
+                    flashcard.Sm2Efactor,
+                    flashcard.Sm2DueDate ?? DateTime.UtcNow
+                );
             }
 
             // Update collection stats
             var lastStudied = request.Results.Max(r => r.StudiedAt);
-            var masteryLevel = CalculateMasteryLevel(collection.Flashcards);
+            var masteryLevel = CalculateMasteryLevel(flashcards.Items);
 
             // Update streak
             UpdateStreak(collection, lastStudied);
@@ -43,14 +59,14 @@ namespace TenXCards.Infrastructure.Services
             collection.LastStudied = lastStudied;
             collection.MasteryLevel = masteryLevel;
 
-            await _context.SaveChangesAsync();
+            await _collectionRepository.UpdateAsync(collection);
 
             return new StudySessionResponse
             {
                 MasteryLevel = masteryLevel,
                 LastStudied = lastStudied,
-                TotalCards = collection.Flashcards.Count,
-                MasteredCards = collection.Flashcards.Count(f => f.Sm2Repetitions >= 3),
+                TotalCards = flashcards.Total,
+                MasteredCards = flashcards.Items.Count(f => f.Sm2Repetitions >= 3),
                 CurrentStreak = collection.CurrentStreak,
                 BestStreak = collection.BestStreak
             };
