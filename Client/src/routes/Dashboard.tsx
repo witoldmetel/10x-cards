@@ -1,4 +1,4 @@
-import { ArrowRight, Plus, Search } from 'lucide-react';
+import { ArrowRight, Plus, Search, Info, Sparkles, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCollections } from '@/api/collections/queries';
@@ -26,6 +26,9 @@ const ITEMS_PER_PAGE = 9;
 export default function Dashboard() {
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showStudyInfo, setShowStudyInfo] = useState(() => {
+    return localStorage.getItem('hideStudyInfo') !== 'true';
+  });
 
   const { data, isPending } = useCollections({
     archived: false,
@@ -78,6 +81,11 @@ export default function Dashboard() {
     { id: '3', action: 'Generated', collection: 'Advanced Mathematics', date: '3 days ago', cardsGenerated: 30 },
   ];
 
+  const handleHideStudyInfo = () => {
+    setShowStudyInfo(false);
+    localStorage.setItem('hideStudyInfo', 'true');
+  };
+
   return (
     <div>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6'>
@@ -95,6 +103,34 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Information about study sessions */}
+      {showStudyInfo && (
+        <div className='mb-6 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg p-4 relative'>
+          <button
+            onClick={handleHideStudyInfo}
+            className='absolute top-4 right-4 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 transition-colors'>
+            <X size={20} />
+          </button>
+          <div className='flex items-center gap-2'>
+            <Info size={20} className='text-blue-500 dark:text-blue-400' />
+            <h2 className='text-2xl font-bold text-blue-700 dark:text-blue-100'>Study Sessions</h2>
+            <span className='bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1'>
+              <Sparkles size={12} />
+              BETA
+            </span>
+          </div>
+          <div className='mt-2 space-y-2 text-blue-700 dark:text-blue-300'>
+            <p>Track your learning progress with our new study sessions feature. Here's what's available in beta:</p>
+            <ul className='list-disc list-inside ml-2 text-sm'>
+              <li>Daily study tracking and statistics</li>
+              <li>Progress visualization for each collection</li>
+              <li>Spaced repetition learning system</li>
+            </ul>
+            <p className='text-sm italic'>More features coming soon!</p>
+          </div>
+        </div>
+      )}
 
       {/* Statistics Cards */}
       <Statistics />
