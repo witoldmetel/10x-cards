@@ -74,6 +74,21 @@ jobs:
       run:
         working-directory: ./Client
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ten_x_cards_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: TenX@2024!SecurePass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -87,37 +102,76 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      # - name: Setup .NET for API
-      #   uses: actions/setup-dotnet@v4
-      #   with:
-      #     dotnet-version: '8.0.x'
+      - name: Setup .NET for API
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-      # - name: Start Backend API
-      #   working-directory: ./API
-      #   run: |
-      #     dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
-      #     dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
-      #     dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
-      #   env:
-      #     DOTNET_ENVIRONMENT: Development
-      #     ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-      #     JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
-      #     JWT__Issuer: ${{ secrets.JWT_ISSUER }}
-      #     JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
+      - name: Check if secrets exist
+        id: check-secrets
+        run: |
+          if [ -z "$JWT_SECRET_KEY" ]; then
+            echo "✗ JWT secret key is missing"
+            exit 1
+          fi
+          echo "✓ JWT secret key is present"
+        env:
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
-      # - name: Install Playwright Browsers
-      #   run: npx playwright install --with-deps
+      - name: Setup Database
+        working-directory: ./API
+        run: |
+          # Wait for PostgreSQL to be ready
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
 
-      # - name: Run Playwright tests
-      #   run: npx playwright test
+          # Install and run migrations
+          dotnet tool install --global dotnet-ef
+          dotnet ef database update --project ./TenXCards.Infrastructure --startup-project ./TenXCards.Api
+        env:
+          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
 
-      # - name: Upload Playwright Report
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: playwright-report
-      #     path: ./Client/playwright-report/
-      #     retention-days: 30
+      - name: Start Backend API
+        working-directory: ./API
+        run: |
+          dotnet restore ./TenXCards.Api/TenXCards.Api.csproj
+          dotnet build ./TenXCards.Api/TenXCards.Api.csproj --configuration Release --no-restore
+          dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
+        env:
+          DOTNET_ENVIRONMENT: Development
+          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
+          JWT__Key: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: "http://localhost:5001"
+          JWT__Audience: "http://localhost:5173"
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Start Frontend Dev Server
+        run: npm run dev &
+
+      - name: Wait for Services
+        run: |
+          echo "Waiting for services to start..."
+          sleep 15
+
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          JWT__Key: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Issuer: "http://localhost:5001"
+          JWT__Audience: "http://localhost:5173"
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ./Client/playwright-report/
+          retention-days: 30
 
   # status-comment:
   #   name: PR Status Comment

@@ -332,10 +332,56 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
        "Key": "your-secret-key",
        "Issuer": "your-issuer",
        "Audience": "your-audience"
-     },
-     "AllowedOrigins": "http://localhost:3000"
+     }
    }
    ```
+
+   ### Configuration Files
+
+1. **Development Environment** (appsettings.json)
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-secure-password"
+     },
+     "Jwt": {
+       "Key": "your-secret-key",
+       "Issuer": "your-issuer",
+       "Audience": "your-audience"
+     }
+   }
+   ```
+
+2. **Production Environment** (GitHub Secrets)
+
+   Required secrets in GitHub repository (Settings > Secrets and Variables > Actions):
+
+   #### Database
+   - `DATABASE_CONNECTION_STRING`: Production PostgreSQL connection string
+     Format: "Server=your-prod-host;Port=5432;Database=your-prod-db;User Id=your-prod-user;Password=your-prod-password;Pooling=true"
+
+   #### JWT Authentication
+   - `JWT_SECRET_KEY`: Production JWT key (min 256-bit/32 bytes, Base64 encoded)
+   - `JWT_ISSUER`: Production API URL (e.g., "https://api.your-domain.com")
+   - `JWT_AUDIENCE`: Production frontend URL (e.g., "https://your-domain.com")
+
+   #### Deployment
+   - `RENDER_FRONTEND_DEPLOY_HOOK`: Render deploy hook URL for frontend service
+   - `RENDER_BACKEND_DEPLOY_HOOK`: Render deploy hook URL for backend service
+
+3. **Local Development** (.env)
+   ```env
+   # OpenRouter AI Integration
+   OPENROUTER_API_KEY=your-api-key-here
+   
+   # Additional local configs if needed
+   ```
+
+### Security Notes
+- Never commit production secrets to the repository
+- Generate a strong JWT key for production
+- Use different JWT configurations for development and production
+- Keep deploy hooks secure and never expose them in code
 
 ## CI/CD Pipeline
 

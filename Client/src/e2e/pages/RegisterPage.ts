@@ -52,33 +52,19 @@ export class RegisterPage {
 
     try {
       const response = await responsePromise;
-      const responseData = await response.json();
-      console.log('Registration response:', {
-        status: response.status(),
-        ok: response.ok(),
-        data: responseData,
-      });
-
+      
       if (!response.ok()) {
-        // Don't throw error for expected error cases (like duplicate email)
         if (response.status() === 400 || response.status() === 409) {
-          // Wait for the error message to be displayed
           await expect(this.errorMessage).toBeVisible({ timeout: 30000 });
           return;
         }
-        throw new Error(`Registration failed: ${responseData.message || 'Unknown error'}`);
+        throw new Error(`Registration failed with status: ${response.status()}`);
       }
 
-      // Wait for URL change first
       await this.page.waitForURL(/.*\/dashboard/, { timeout: 60000 });
-      
-      // Then wait for the page to be fully loaded
       await this.page.waitForLoadState('networkidle', { timeout: 60000 });
 
-      // Additional check to ensure we're actually on the dashboard
       const currentUrl = this.page.url();
-      console.log('Final URL after registration:', currentUrl);
-
       if (!currentUrl.includes('/dashboard')) {
         throw new Error(`Failed to redirect to dashboard. Current URL: ${currentUrl}`);
       }
