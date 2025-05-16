@@ -2,7 +2,7 @@
 
 ## 1. Table `users`
 
-- **id**: UUID PRIMARY KEY
+- **user_id**: UUID PRIMARY KEY
 - **name**: TEXT NOT NULL
 - **email**: TEXT NOT NULL UNIQUE
 - **password**: TEXT NOT NULL -- (stored as bcrypt hash)
@@ -12,21 +12,26 @@
 ## 2. Table `collections`
 
 - **id**: UUID PRIMARY KEY
+- **user_id**: UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE
 - **name**: TEXT NOT NULL
-- **description**: TEXT -- Made optional
+- **description**: TEXT
 - **created_at**: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 - **updated_at**: TIMESTAMP WITH TIME ZONE
-- **archived_at**: TIMESTAMP WITH TIME ZONE  # Added for soft-archiving collections
+- **archived_at**: TIMESTAMP WITH TIME ZONE
 - **total_cards**: INTEGER DEFAULT 0
 - **due_cards**: INTEGER DEFAULT 0
-- **color**: TEXT NOT NULL -- Required field
-- **tags**: TEXT[] -- Moved from flashcards
-- **categories**: TEXT[] -- Moved from flashcards
+- **last_studied**: TIMESTAMP WITH TIME ZONE
+- **mastery_level**: DOUBLE PRECISION DEFAULT 0
+- **current_streak**: INTEGER DEFAULT 0
+- **best_streak**: INTEGER DEFAULT 0
+- **color**: TEXT NOT NULL
+- **tags**: TEXT[]
+- **categories**: TEXT[]
 
 ## 3. Table `flashcards`
 
 - **id**: UUID PRIMARY KEY
-- **user_id**: UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE
+- **user_id**: UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE
 - **collection_id**: UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE
 - **front**: TEXT NOT NULL
 - **back**: TEXT NOT NULL
@@ -36,8 +41,9 @@
   - _Default_: 'New' WHEN creation_source = 'AI'
 - **creation_source**: TEXT NOT NULL
   - _Constraint_: CHECK (creation_source IN ('Manual', 'AI'))
-- **reviewed_at**: TIMESTAMP WITH TIME ZONE  # Replaces last_reviewed and next_review
-- **archived_at**: TIMESTAMP WITH TIME ZONE  # Used for soft-archiving flashcards
+- **reviewed_at**: TIMESTAMP WITH TIME ZONE
+- **archived_at**: TIMESTAMP WITH TIME ZONE
+- **source_text_hash**: TEXT -- Hash of the source text for AI-generated cards
 - **sm2_repetitions**: INTEGER NOT NULL DEFAULT 0
 - **sm2_interval**: INTEGER NOT NULL DEFAULT 0
 - **sm2_efactor**: NUMERIC NOT NULL DEFAULT 2.5
@@ -45,28 +51,7 @@
 - **created_at**: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 - **updated_at**: TIMESTAMP WITH TIME ZONE
 
-## 4. Table `study_sessions`
-
-- **id**: UUID PRIMARY KEY
-- **collection_id**: UUID NOT NULL REFERENCES collections(id) ON DELETE CASCADE
-- **started_at**: TIMESTAMP WITH TIME ZONE NOT NULL
-- **completed_at**: TIMESTAMP WITH TIME ZONE
-- **cards_studied**: INTEGER NOT NULL DEFAULT 0
-- **correct_answers**: INTEGER NOT NULL DEFAULT 0
-
-## 5. Table Relationships
-
-- **users** (one) ↔ **flashcards** (many)
-- **collections** (one) ↔ **flashcards** (many)
-- **collections** (one) ↔ **study_sessions** (many)
-
-> **Archiving logic:**
-> - If all flashcards in a collection are archived, the collection is automatically archived (archived_at set).
-> - Collections with archived_at set are only returned when archived=true query parameter is used.
-> - Flashcards are included in their parent collection response.
-> - Collection responses include a flashcards array with all related flashcard objects.
-
-## 6. Indexes
+## 4. Indexes
 
 - **B-tree Index** on `user_id` column in `flashcards` table:
   ```sql
@@ -76,37 +61,98 @@
   ```sql
   CREATE INDEX idx_flashcards_collection_id ON flashcards (collection_id);
   ```
-- **B-tree Index** on `collection_id` column in `study_sessions` table:
-  ```sql
-  CREATE INDEX idx_study_sessions_collection_id ON study_sessions (collection_id);
-  ```
 - **B-tree Index** on `reviewed_at` column in `flashcards` table:
   ```sql
   CREATE INDEX idx_flashcards_reviewed_at ON flashcards (reviewed_at);
   ```
-
-## 7. Security Rules (RLS)
-
-- Enable RLS for all tables:
+- **B-tree Index** on `sm2_due_date` column in `flashcards` table:
   ```sql
-  ALTER TABLE flashcards ENABLE ROW LEVEL SECURITY;
-  ALTER TABLE collections ENABLE ROW LEVEL SECURITY;
-  ALTER TABLE study_sessions ENABLE ROW LEVEL SECURITY;
+  CREATE INDEX idx_flashcards_sm2_due_date ON flashcards (sm2_due_date);
   ```
-- Example RLS policies:
+- **B-tree Index** on `source_text_hash` column in `flashcards` table:
   ```sql
-  -- Flashcards access policy
-  CREATE POLICY user_flashcards_policy ON flashcards
-    USING (user_id = current_user_id());
-
-  -- Collections access policy
-  CREATE POLICY user_collections_policy ON collections
-    USING (id IN (SELECT collection_id FROM flashcards WHERE user_id = current_user_id()));
-
-  -- Study sessions access policy
-  CREATE POLICY user_study_sessions_policy ON study_sessions
-    USING (collection_id IN (SELECT collection_id FROM flashcards WHERE user_id = current_user_id()));
+  CREATE INDEX idx_flashcards_source_text_hash ON flashcards (source_text_hash)
+  WHERE source_text_hash IS NOT NULL;
   ```
+
+## 5. Table Relationships
+
+- **users** (one) ↔ **collections** (many)
+- **users** (one) ↔ **flashcards** (many)
+- **collections** (one) ↔ **flashcards** (many)
+
+## 6. Business Rules
+
+1. **Collection Statistics:**
+   - `total_cards`: Automatically updated when flashcards are added/removed
+   - `due_cards`: Updated based on SM2 algorithm due dates
+   - `mastery_level`: Calculated based on flashcard review statuses
+   - `current_streak`: Updated based on study sessions
+   - `best_streak`: Updated when current_streak exceeds previous best
+
+2. **Flashcard Review Status:**
+   - Manual creation: Default to 'Approved'
+   - AI creation: Default to 'New'
+   - Updated via review process
+   - Triggers update of `reviewed_at` timestamp
+
+3. **SM2 Algorithm Integration:**
+   - `sm2_repetitions`: Number of successful reviews
+   - `sm2_interval`: Current interval in days
+   - `sm2_efactor`: Ease factor for interval adjustments
+   - `sm2_due_date`: Next review date based on algorithm
+
+4. **Archiving Logic:**
+   - Soft delete using `archived_at` timestamp
+   - Collections can be archived independently
+   - Archiving collection doesn't auto-archive flashcards
+
+## 7. Security Enhancements
+
+1. **Environment Variables:**
+   - Store all sensitive information in environment variables:
+     - Database credentials
+     - API keys
+     - JWT secrets
+     - Other sensitive configuration
+
+2. **Connection String:**
+   ```sql
+   -- Development
+   "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=${DB_PASSWORD}"
+
+   -- Docker
+   "DefaultConnection": "Host=db;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=${DB_PASSWORD}"
+   ```
+
+3. **Row-Level Security:**
+   ```sql
+   -- Collections policy
+   CREATE POLICY collections_user_policy ON collections
+   USING (user_id = current_user_id());
+
+   -- Flashcards policy
+   CREATE POLICY flashcards_user_policy ON flashcards
+   USING (user_id = current_user_id());
+   ```
+
+4. **Password Storage:**
+   - Use bcrypt for password hashing
+   - Never store plain text passwords
+   - Implement password complexity requirements
+   - Regular password rotation policies
+
+5. **Access Control:**
+   - Implement role-based access control (RBAC)
+   - Separate database users for different operations
+   - Restrict database access to specific IP ranges
+   - Use SSL/TLS for database connections
+
+6. **Data Protection:**
+   - Encrypt sensitive data at rest
+   - Use secure protocols for data transmission
+   - Regular security audits
+   - Implement data backup and recovery procedures
 
 ## 8. Additional Notes
 
@@ -131,7 +177,7 @@
 ```sql
 CREATE TABLE api_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
+    user_id UUID NOT NULL REFERENCES users(user_id),
     endpoint TEXT NOT NULL,
     request_payload JSONB,
     response_payload JSONB,
@@ -151,7 +197,7 @@ CREATE INDEX idx_api_logs_status_code ON api_logs (status_code);
 ```sql
 CREATE TABLE api_usage (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
+    user_id UUID NOT NULL REFERENCES users(user_id),
     endpoint TEXT NOT NULL,
     requests_count INTEGER DEFAULT 1,
     last_request_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -188,70 +234,26 @@ CREATE INDEX idx_api_usage_last_request ON api_usage (last_request_at);
    FROM collections c
    LEFT JOIN flashcards f ON c.id = f.collection_id
    GROUP BY c.id;
-
-   -- Refresh function
-   CREATE OR REPLACE FUNCTION refresh_collection_stats()
-   RETURNS TRIGGER AS $$
-   BEGIN
-       REFRESH MATERIALIZED VIEW CONCURRENTLY collection_stats;
-       RETURN NULL;
-   END;
-   $$ LANGUAGE plpgsql;
-
-   -- Trigger for automatic refresh
-   CREATE TRIGGER refresh_collection_stats_trigger
-   AFTER INSERT OR UPDATE OR DELETE ON flashcards
-   FOR EACH STATEMENT
-   EXECUTE FUNCTION refresh_collection_stats();
-   ```
-
-3. **Partitioning Strategy:**
-   ```sql
-   -- Partition api_logs by month
-   CREATE TABLE api_logs (
-       id UUID NOT NULL,
-       user_id UUID NOT NULL,
-       endpoint TEXT NOT NULL,
-       created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-       -- other fields
-       PRIMARY KEY (created_at, id)
-   ) PARTITION BY RANGE (created_at);
-
-   -- Create monthly partitions
-   CREATE TABLE api_logs_y2024m05 PARTITION OF api_logs
-   FOR VALUES FROM ('2024-05-01') TO ('2024-06-01');
-   ```
-
-### Data Cleanup
-1. **Archival Strategy:**
-   ```sql
-   -- Function to archive old logs
-   CREATE OR REPLACE FUNCTION archive_old_api_logs(
-       days_to_keep INTEGER DEFAULT 30
-   ) RETURNS void AS $$
-   BEGIN
-       INSERT INTO api_logs_archive
-       SELECT * FROM api_logs
-       WHERE created_at < CURRENT_DATE - days_to_keep;
-
-       DELETE FROM api_logs
-       WHERE created_at < CURRENT_DATE - days_to_keep;
-   END;
-   $$ LANGUAGE plpgsql;
-   ```
-
-2. **Maintenance Tasks:**
-   ```sql
-   -- Schedule regular maintenance
-   SELECT cron.schedule('0 0 * * *', $$
-       VACUUM ANALYZE api_logs;
-       VACUUM ANALYZE api_usage;
-       REFRESH MATERIALIZED VIEW CONCURRENTLY collection_stats;
-   $$);
    ```
 
 ### Security Enhancements
-1. **Row-Level Security:**
+1. **Environment Variables:**
+   - Store all sensitive information in environment variables:
+     - Database credentials
+     - API keys
+     - JWT secrets
+     - Other sensitive configuration
+
+2. **Connection String:**
+   ```sql
+   -- Development
+   "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=${DB_PASSWORD}"
+
+   -- Docker
+   "DefaultConnection": "Host=db;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=${DB_PASSWORD}"
+   ```
+
+3. **Row-Level Security:**
    ```sql
    -- API usage policy
    CREATE POLICY api_usage_policy ON api_usage
@@ -262,7 +264,7 @@ CREATE INDEX idx_api_usage_last_request ON api_usage (last_request_at);
    USING (user_id = current_user_id());
    ```
 
-2. **Audit Logging:**
+4. **Audit Logging:**
    ```sql
    -- Trigger function for audit logging
    CREATE OR REPLACE FUNCTION log_flashcard_changes()
@@ -286,11 +288,24 @@ CREATE INDEX idx_api_usage_last_request ON api_usage (last_request_at);
        RETURN NEW;
    END;
    $$ LANGUAGE plpgsql;
-
-   -- Apply trigger to flashcards table
-   CREATE TRIGGER flashcard_audit_trigger
-   AFTER INSERT OR UPDATE OR DELETE ON flashcards
-   FOR EACH ROW EXECUTE FUNCTION log_flashcard_changes();
    ```
+
+5. **Password Storage:**
+   - Use bcrypt for password hashing
+   - Never store plain text passwords
+   - Implement password complexity requirements
+   - Regular password rotation policies
+
+6. **Access Control:**
+   - Implement role-based access control (RBAC)
+   - Separate database users for different operations
+   - Restrict database access to specific IP ranges
+   - Use SSL/TLS for database connections
+
+7. **Data Protection:**
+   - Encrypt sensitive data at rest
+   - Use secure protocols for data transmission
+   - Regular security audits
+   - Implement data backup and recovery procedures
 
 These enhancements provide better tracking, performance, and security for the AI flashcard generation feature while maintaining data integrity and system performance.

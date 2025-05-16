@@ -320,13 +320,22 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 ```json
 {
   "OpenRouter": {
-    "ApiKey": "your-openrouter-api-key",
+    "ApiKey": "${OPENROUTER_API_KEY}",
     "BaseUrl": "https://openrouter.ai/api/v1",
     "ApiEndpoint": "/chat/completions",
     "DefaultModel": "openai/gpt-3.5-turbo",
     "TimeoutSeconds": 120,
-    "SiteUrl": "http://localhost:3000",
-    "SiteName": "10X Cards - Development"
+    "SiteUrl": "${SITE_URL}",
+    "SiteName": "${SITE_NAME}"
+  },
+  "Database": {
+    "ConnectionString": "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}"
+  },
+  "Jwt": {
+    "Key": "${JWT_SECRET_KEY}",
+    "Issuer": "${JWT_ISSUER}",
+    "Audience": "${JWT_AUDIENCE}",
+    "ExpiryInDays": 7
   }
 }
 ```
@@ -369,20 +378,47 @@ Key fields: id (UUID), collection_id, started_at, completed_at, cards_studied, c
 
 #### 5. Security Measures
 - **API Security:**
-  - Store API key in secure configuration
-  - Use environment-specific site URLs
-  - Implement rate limiting per user
+  - Store sensitive data in environment variables
+  - Use HTTPS for all endpoints
+  - Implement rate limiting per user/IP
   - Log all API access attempts
-- **Input Validation:**
-  - Sanitize all input text
-  - Validate JSON structure
-  - Check character limits
-  - Verify collection ownership
-- **Response Handling:**
-  - Sanitize AI responses
-  - Validate JSON structure
-  - Remove any unsafe content
-  - Log suspicious responses
+  - Regular security audits
+  - Implement CORS with specific origins
+  - Use secure headers (HSTS, CSP, etc.)
+  - Input validation and sanitization
+  - Protection against common attacks (XSS, CSRF, etc.)
+
+- **Authentication:**
+  - JWT token expiration (7 days)
+  - Secure token storage
+  - Token refresh mechanism
+  - Password complexity requirements
+  - Account lockout after failed attempts
+  - Two-factor authentication (optional)
+
+- **Data Protection:**
+  - Encrypt sensitive data in transit and at rest
+  - Regular data backups
+  - Data retention policies
+  - Privacy policy compliance
+  - GDPR compliance (if applicable)
+  - Data anonymization for logs
+
+- **Environment-Specific Configuration:**
+  ```json
+  {
+    "Development": {
+      "AllowedOrigins": ["http://localhost:3000"],
+      "LogLevel": "Debug",
+      "EnableSwagger": true
+    },
+    "Production": {
+      "AllowedOrigins": ["https://your-domain.com"],
+      "LogLevel": "Warning",
+      "EnableSwagger": false
+    }
+  }
+  ```
 
 #### 6. Testing Scenarios
 1. **Authentication:**
