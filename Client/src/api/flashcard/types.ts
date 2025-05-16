@@ -92,6 +92,17 @@ export interface FlashcardsQueryParams {
   offset?: number;
   limit?: number;
   reviewStatus?: ReviewStatus;
-  searchPhrase?: string;
+  searchQuery?: string;
   archived?: boolean;
+}
+
+export interface StudySessionResult {
+  flashcardId: string;
+  grade: number;
+  studiedAt: string;
+}
+
+export interface StudySessionRequest {
+  collectionId: string;
+  results: StudySessionResult[];
 }

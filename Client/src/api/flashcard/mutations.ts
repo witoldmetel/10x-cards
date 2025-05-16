@@ -6,8 +6,15 @@ import {
   updateFlashcard,
   archiveFlashcard,
   unarchiveFlashcard,
+  submitStudySession,
 } from './api';
-import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsRequest } from './types';
+import type {
+  CreateFlashcardDTO,
+  Flashcard,
+  UpdateFlashcardDTO,
+  GenerateFlashcardsRequest,
+  StudySessionRequest,
+} from './types';
 
 import { UseMutationOptions } from '@tanstack/react-query';
 
@@ -103,5 +110,16 @@ export const useUnarchiveFlashcard = (options?: UseMutationOptions<Flashcard, Er
       queryClient.invalidateQueries({ queryKey: ['flashcards', unarchiveFlashcard.collectionId] });
     },
     ...options,
+  });
+};
+
+export const useSubmitStudySession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: submitStudySession,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+    },
   });
 };

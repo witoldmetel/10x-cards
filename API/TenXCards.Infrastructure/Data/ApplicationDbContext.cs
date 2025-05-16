@@ -93,6 +93,14 @@ namespace TenXCards.Infrastructure.Data
                     .HasColumnName("mastery_level")
                     .HasDefaultValue(0);
 
+                entity.Property(e => e.CurrentStreak)
+                    .HasColumnName("current_streak")
+                    .HasDefaultValue(0);
+
+                entity.Property(e => e.BestStreak)
+                    .HasColumnName("best_streak")
+                    .HasDefaultValue(0);
+
                 entity.Property(e => e.Color)
                     .HasColumnName("color")
                     .IsRequired();

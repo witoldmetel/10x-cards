@@ -1,37 +1,34 @@
 import { Flashcard } from '../flashcard/types';
 
 export interface CollectionResponse {
-  archivedAt: string | null;
-  archivedFlashcards: Flashcard[];
-  categories: string[];
-  color: string;
-  createdAt: string;
-  description: string | null;
-  dueCards: number;
-  flashcards: Flashcard[];
   id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  color: string;
+  tags: string[];
+  categories: string[];
+  totalCards: number;
+  dueCards: number;
   lastStudied: string | null;
   masteryLevel: number;
-  name: string;
-  tags: string[];
-  totalCards: number;
+  currentStreak: number;
+  bestStreak: number;
+  createdAt: string;
   updatedAt?: string;
+  archivedAt: string | null;
+  flashcards: Flashcard[];
+  archivedFlashcards: Flashcard[];
 }
 
-export interface CreateCollection {
-  name: string;
-  description?: string;
-  color: string;
-  tags?: string[];
-  categories?: string[];
-}
-
-export interface UpdateCollection {
-  name: string;
-  description?: string;
-  color: string;
-  tags?: string[];
-  categories?: string[];
+export interface CollectionStatistics {
+  masteryLevel: number;
+  lastStudied: string | null;
+  totalCards: number;
+  masteredCards: number;
+  currentStreak: number;
+  bestStreak: number;
+  dueCards: number;
 }
 
 export interface CollectionsQueryParams {
@@ -42,8 +39,25 @@ export interface CollectionsQueryParams {
 }
 
 export interface PaginatedCollectionsResponse {
-  collections: CollectionResponse[];
+  items: CollectionResponse[];
   limit: number;
   offset: number;
   totalCount: number;
 }
+
+export type CreateCollectionDTO = {
+  name: string;
+  description?: string;
+  color: string;
+  tags?: string[];
+  categories?: string[];
+};
+
+export type UpdateCollectionDTO = {
+  name?: string;
+  description?: string;
+  color?: string;
+  tags?: string[];
+  categories?: string[];
+  archivedAt?: string | null;
+};

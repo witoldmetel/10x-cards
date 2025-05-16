@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { FlashcardActions } from '@/components/flashcards/FlashcardActions/FlashcardActions';
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog/EditCollectionDialog';
+import { useSubmitStudySession } from '@/api/flashcard/mutations';
 
 export default function CollectionDetails() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function CollectionDetails() {
 
   const deleteCollectionMutation = useDeleteCollection();
   const archiveCollectionMutation = useArchiveCollection();
+  const submitStudySession = useSubmitStudySession();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -39,6 +41,9 @@ export default function CollectionDetails() {
     incorrect: 0,
     total: 0,
   });
+  const [sessionResults, setSessionResults] = useState<
+    Array<{ flashcardId: string; grade: number; studiedAt: string }>
+  >([]);
 
   const collectionFlashcards =
     collection?.flashcards.filter(
@@ -92,6 +97,18 @@ export default function CollectionDetails() {
   };
 
   const handleGradeCard = (grade: number) => {
+    const currentFlashcard = collectionFlashcards[currentCardIndex];
+
+    // Add result to session results
+    setSessionResults(prev => [
+      ...prev,
+      {
+        flashcardId: currentFlashcard.id,
+        grade,
+        studiedAt: new Date().toISOString(),
+      },
+    ]);
+
     // Update study stats
     if (grade >= 3) {
       setStudyStats(prev => ({ ...prev, correct: prev.correct + 1 }));
@@ -101,7 +118,7 @@ export default function CollectionDetails() {
       toast.error('Card marked as incorrect');
     }
 
-    if (currentCardIndex < collectionFlashcards?.length - 1) {
+    if (currentCardIndex < collectionFlashcards.length - 1) {
       // Move to next card
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
@@ -110,10 +127,17 @@ export default function CollectionDetails() {
       // End of study session
       const { correct, total } = studyStats;
 
+      // Submit session results
+      submitStudySession.mutate({
+        collectionId: collectionId!,
+        results: sessionResults,
+      });
+
       // Show completion screen
       setIsStudying(false);
       setShowAnswer(false);
       setCurrentCardIndex(0);
+      setSessionResults([]);
 
       // Show success message with detailed stats
       toast.success(

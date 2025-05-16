@@ -6,6 +6,7 @@ import type {
   GenerateFlashcardsRequest,
   GenerateFlashcardsResponse,
   ArchivedStatisticsDto,
+  StudySessionRequest,
 } from './types';
 import { FLASHCARD_API_ROUTES } from './constants';
 
@@ -58,4 +59,8 @@ export async function getArchivedStatistics(): Promise<ArchivedStatisticsDto> {
     `${FLASHCARD_API_ROUTES.GET_FLASHCARDS}/archived/statistics`,
   );
   return data;
+}
+
+export async function submitStudySession(request: StudySessionRequest): Promise<void> {
+  await instance.post(FLASHCARD_API_ROUTES.STUDY_SESSION, request);
 }

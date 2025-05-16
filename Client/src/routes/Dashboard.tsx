@@ -51,16 +51,17 @@ export default function Dashboard() {
 
   const collections = useMemo(
     () =>
-      data?.collections.map(collection => ({
+      data?.items.map((collection: CollectionResponse) => ({
         ...collection,
         cardCount: collection.flashcards.length,
         lastStudied: 'Never',
         dueCards: collection.flashcards.filter(
-          f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
+          (f: { collectionId: string; reviewStatus: ReviewStatus }) =>
+            f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
         ).length,
         masteryLevel: 0,
       })) as CollectionCardProps[],
-    [data?.collections],
+    [data?.items],
   );
 
   // Keep the mock recent activity for now
