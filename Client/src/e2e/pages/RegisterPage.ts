@@ -28,12 +28,11 @@ export class RegisterPage {
     await this.page.waitForLoadState('networkidle');
 
     // Get current URL to check where we are
-    const currentUrl = await this.page.url();
+    const currentUrl = this.page.url();
 
-    if (currentUrl.includes('/login')) {
-      // If we're redirected to login, use the register link
-      const registerLink = this.page.getByTestId('register-link');
-      await registerLink.click();
+    if (currentUrl === 'http://localhost:5173/') {
+      // If we're on the landing page, navigate to register
+      await this.page.getByTestId('signup-button').click();
       await this.page.waitForLoadState('networkidle');
     }
 

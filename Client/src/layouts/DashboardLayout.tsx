@@ -19,7 +19,7 @@ export default function DashboardLayout() {
   }, [location]);
 
   if (!isAuth) {
-    return <Navigate to='/login' replace state={{ from: location }} />;
+    return <Navigate to='/' replace state={{ from: location }} />;
   }
 
   const navigationItems = [

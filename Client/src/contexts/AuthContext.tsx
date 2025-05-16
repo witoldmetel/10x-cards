@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     queryClient.clear();
 
-    navigate('/login');
+    navigate('/');
   };
 
   const updateUserData = (updatedUser: User) => {

@@ -27,6 +27,7 @@ export class DashboardPage {
     // For mobile view, ensure the menu is open
     if (device === 'mobile') {
       const menuButton = this.page.getByRole('button', { name: 'Toggle menu' });
+      
       await menuButton.click();
       await this.page.waitForTimeout(500); // Wait for menu animation
     }
@@ -40,7 +41,7 @@ export class DashboardPage {
     // Click the button and wait for navigation
     await Promise.all([this.page.waitForLoadState('networkidle'), logoutButton.click()]);
 
-    // Verify we're logged out by checking URL (we get redirected to /login)
-    await expect(this.page).toHaveURL('/login', { timeout: 10000 });
+    // Verify we're logged out by checking URL (we get redirected to landing page)
+    await expect(this.page).toHaveURL('/', { timeout: 10000 });
   }
 }

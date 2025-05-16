@@ -33,8 +33,14 @@ setup('setup test user', async ({ page, context }) => {
     const dashboardPage = new DashboardPage(page);
     await dashboardPage.logout('desktop');
 
+    // After logout, we should be redirected to the landing page
+    await expect(page).toHaveURL('/', { timeout: 30000 });
+
+    // Navigate to login page
+    await page.getByTestId('signin-button').click();
+    await page.waitForLoadState('networkidle');
+
     const loginPage = new LoginPage(page);
-    await loginPage.gotoLogin();
     await loginPage.expectLoginFormVisible();
 
     console.log('Starting login...');
