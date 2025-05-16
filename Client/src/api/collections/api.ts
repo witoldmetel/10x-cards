@@ -52,8 +52,8 @@ export async function deleteCollection(id: string): Promise<void> {
   await instance.delete(`${COLLECTIONS_API_BASE}/${id}`);
 }
 
-export async function getCollectionStatistics(collectionId: string): Promise<CollectionStatistics> {
-  const { data } = await instance.get<CollectionStatistics>(`${COLLECTION_API_ROUTES.STATISTICS}/${collectionId}`);
+export async function getCollectionStatistics(): Promise<CollectionStatistics> {
+  const { data } = await instance.get<CollectionStatistics>(COLLECTION_API_ROUTES.STATISTICS);
 
   return data;
 }

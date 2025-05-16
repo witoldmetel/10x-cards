@@ -1,4 +1,5 @@
 import { useCollections } from '@/api/collections/queries';
+
 import { useNavigate } from 'react-router';
 import { ArchiveRestore, ArrowLeft, ArrowRight, RotateCcw, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +11,6 @@ import { TagBadge } from '@/components/ui/tag-badge';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUnarchiveFlashcard } from '@/api/flashcard/mutations';
-import { CollectionResponse } from '@/api/collections/types';
-import { Flashcard } from '@/api/flashcard/types';
-
-interface ArchivedFlashcard extends Flashcard {
-  collectionName: string;
-}
-
-const ITEMS_PER_PAGE = 9;
 
 export default function Archive() {
   const navigate = useNavigate();
@@ -26,7 +19,6 @@ export default function Archive() {
 
   const { data, isLoading, refetch } = useCollections({
     searchQuery,
-    limit: ITEMS_PER_PAGE,
   });
 
   const unarchiveCollectionMutation = useUnarchiveCollection({
@@ -66,24 +58,24 @@ export default function Archive() {
   }
 
   const allArchivedCollections =
-  data?.collections
-    .filter(collection => collection.archivedAt)
-    .map(collection => ({
-      ...collection,
-      archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date',
-    })) || [];
+    data?.collections
+      .filter(collection => collection.archivedAt)
+      .map(collection => ({
+        ...collection,
+        archivedAt: collection.archivedAt ? new Date(collection.archivedAt).toLocaleDateString() : 'Unknown date',
+      })) || [];
 
-const allArchivedFlashcards =
-  data?.collections.flatMap(collection =>
-    collection.archivedFlashcards.map(flashcard => ({
-      ...flashcard,
-      collectionName: collection.name,
-    })),
-  ) || [];
+  const allArchivedFlashcards =
+    data?.collections.flatMap(collection =>
+      collection.archivedFlashcards.map(flashcard => ({
+        ...flashcard,
+        collectionName: collection.name,
+      })),
+    ) || [];
 
   const filteredFlashcards = searchCardsQuery
     ? allArchivedFlashcards.filter(
-        (card: ArchivedFlashcard) =>
+        card =>
           card.front.toLowerCase().includes(searchCardsQuery.toLowerCase()) ||
           card.back.toLowerCase().includes(searchCardsQuery.toLowerCase()) ||
           card.collectionName.toLowerCase().includes(searchCardsQuery.toLowerCase()),
@@ -146,58 +138,54 @@ const allArchivedFlashcards =
           ) : (
             <div className='space-y-6'>
               {allArchivedCollections.length > 0 ? (
-                <>
-                  {allArchivedCollections.map((collection: CollectionResponse) => (
-                    <Card key={collection.id}>
-                      <CardHeader>
-                        <CardTitle>{collection.name}</CardTitle>
-                        <CardDescription>{collection.description}</CardDescription>
-                        {/* Display categories and tags */}
-                        <div className='flex flex-wrap gap-2 mt-2'>
-                          {collection.categories &&
-                            collection.categories.length > 0 &&
-                            collection.categories.map((category: string) => (
-                              <TagBadge key={`category-${category}`} text={category} variant='category' />
-                            ))}
-                          {collection.tags &&
-                            collection.tags.length > 0 &&
-                            collection.tags.map((tag: string) => (
-                              <TagBadge key={`tag-${tag}`} text={tag} variant='tag' />
-                            ))}
+                allArchivedCollections.map(collection => (
+                  <Card key={collection.id}>
+                    <CardHeader>
+                      <CardTitle>{collection.name}</CardTitle>
+                      <CardDescription>{collection.description}</CardDescription>
+                      {/* Display categories and tags */}
+                      <div className='flex flex-wrap gap-2 mt-2'>
+                        {collection.categories &&
+                          collection.categories.length > 0 &&
+                          collection.categories.map(category => (
+                            <TagBadge key={`category-${category}`} text={category} variant='category' />
+                          ))}
+                        {collection.tags &&
+                          collection.tags.length > 0 &&
+                          collection.tags.map(tag => <TagBadge key={`tag-${tag}`} text={tag} variant='tag' />)}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div>
+                          <p className='text-muted-foreground text-sm'>Archived Cards</p>
+                          <p className='font-medium'>{collection.archivedFlashcards?.length || 0}</p>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className='grid grid-cols-2 gap-4'>
-                          <div>
-                            <p className='text-muted-foreground text-sm'>Archived Cards</p>
-                            <p className='font-medium'>{collection.archivedFlashcards?.length || 0}</p>
-                          </div>
-                          <div>
-                            <p className='text-muted-foreground text-sm'>Archived Date</p>
-                            <p className='font-medium'>
-                              {collection.archivedAt
-                                ? new Date(collection.archivedAt).toLocaleDateString()
-                                : 'Unknown date'}
-                            </p>
-                          </div>
+                        <div>
+                          <p className='text-muted-foreground text-sm'>Archived Date</p>
+                          <p className='font-medium'>
+                            {collection.archivedAt
+                              ? new Date(collection.archivedAt).toLocaleDateString()
+                              : 'Unknown date'}
+                          </p>
                         </div>
-                      </CardContent>
-                      <CardFooter className='flex justify-between'>
-                        <Button variant='ghost' size='sm' onClick={() => handleUnarchive(collection.id)}>
-                          <ArchiveRestore size={16} className='mr-2' />
-                          Unarchive
-                        </Button>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => navigate(`/collections/archive/${collection.id}`)}>
-                          View Details
-                          <ArrowRight size={16} className='ml-2' />
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </>
+                      </div>
+                    </CardContent>
+                    <CardFooter className='flex justify-between'>
+                      <Button variant='ghost' size='sm' onClick={() => handleUnarchive(collection.id)}>
+                        <ArchiveRestore size={16} className='mr-2' />
+                        Unarchive
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => navigate(`/collections/archive/${collection.id}`)}>
+                        View Details
+                        <ArrowRight size={16} className='ml-2' />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))
               ) : (
                 <div className='flex flex-col items-center justify-center my-24'>
                   <RotateCcw className='h-16 w-16 text-neutral-300 mb-4' />
@@ -235,7 +223,7 @@ const allArchivedFlashcards =
                 </p>
               </div>
             ) : (
-              filteredFlashcards.map((flashcard: ArchivedFlashcard) => (
+              filteredFlashcards.map(flashcard => (
                 <Card key={flashcard.id}>
                   <CardContent className='p-4'>
                     <div className='mb-2'>

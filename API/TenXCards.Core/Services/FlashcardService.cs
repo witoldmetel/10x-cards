@@ -177,6 +177,8 @@ namespace TenXCards.Core.Services
             // Set archive timestamp
             flashcard.ArchivedAt = DateTime.UtcNow;
             var updatedFlashcard = await _repository.UpdateAsync(flashcard);
+            if (updatedFlashcard == null)
+                return null;
 
             // Update collection statistics
             if (flashcard.CollectionId != Guid.Empty)

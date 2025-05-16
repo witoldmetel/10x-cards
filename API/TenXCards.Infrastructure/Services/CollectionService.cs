@@ -73,10 +73,10 @@ public class CollectionService : ICollectionService
             Id = Guid.NewGuid(),
             UserId = userId,
             Name = createDto.Name,
-            Description = createDto.Description,
+            Description = createDto.Description ?? string.Empty,
             Color = createDto.Color,
-            Tags = createDto.Tags,
-            Categories = createDto.Categories,
+            Tags = createDto.Tags ?? new List<string>(),
+            Categories = createDto.Categories ?? new List<string>(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -91,10 +91,10 @@ public class CollectionService : ICollectionService
         if (collection == null) return null;
 
         collection.Name = updateDto.Name;
-        collection.Description = updateDto.Description;
+        collection.Description = updateDto.Description ?? string.Empty;
         collection.Color = updateDto.Color;
-        collection.Tags = updateDto.Tags;
-        collection.Categories = updateDto.Categories;
+        collection.Tags = updateDto.Tags ?? collection.Tags;
+        collection.Categories = updateDto.Categories ?? collection.Categories;
         collection.UpdatedAt = DateTime.UtcNow;
 
         var updated = await _collectionRepository.UpdateAsync(collection);

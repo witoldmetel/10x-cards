@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   const collections = useMemo(
     () =>
-      data?.collections.map(collection => ({
+      data?.collections?.map(collection => ({
         ...collection,
         cardCount: collection.flashcards.length,
         lastStudied: 'Never',
@@ -61,7 +61,7 @@ export default function Dashboard() {
   };
 
   const totalDueCards = useMemo(() => {
-    return collections.reduce((acc: number, collection) => acc + collection.dueCards, 0);
+    return collections?.reduce((acc: number, collection) => acc + collection.dueCards, 0);
   }, [collections]);
 
   useEffect(() => {
@@ -127,7 +127,7 @@ export default function Dashboard() {
                 className='pl-9 bg-white'
                 value={inputValue}
                 onChange={handleSearchInputChange}
-                disabled={collections.length === 0 && !inputValue}
+                disabled={collections?.length === 0 && !inputValue}
               />
             </div>
           </div>

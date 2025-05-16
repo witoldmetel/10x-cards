@@ -23,10 +23,10 @@ export const useCollection = (id: string) => {
   });
 };
 
-export const useCollectionStatistics = (id?: string) => {
+export const useCollectionStatistics = () => {
   return useQuery<CollectionStatistics>({
-    queryKey: ['collections', id || 'global', 'statistics'],
-    queryFn: () => getCollectionStatistics(id || 'global'),
+    queryKey: ['statistics'],
+    queryFn: getCollectionStatistics,
     enabled: true,
   });
 };

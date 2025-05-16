@@ -2,52 +2,13 @@ import { AlertCircle, ArrowRight, Archive } from 'lucide-react';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useCollections } from '@/api/collections/queries';
-import { CollectionResponse } from '@/api/collections/types';
-import { ReviewStatus } from '@/api/flashcard/types';
+import { useCollectionStatistics } from '@/api/collections/queries';
 
 export function Statistics() {
-  const { data, isLoading } = useCollections({
-    limit: 100, // Fetch more items for accurate statistics
-  });
+  const { data: statistics, isPending } = useCollectionStatistics();
 
-  if (isLoading || !data?.pages) {
+  if (isPending || !statistics) {
     return null;
-  }
-
-  const collections = data.pages.flatMap(page => page.collections);
-
-  const statistics = {
-    totalCards: collections.reduce(
-      (acc: number, collection: CollectionResponse) =>
-        acc + collection.flashcards.length + collection.archivedFlashcards.length,
-      0,
-    ),
-    totalCollections: collections.length,
-    dueCards: collections.reduce(
-      (acc: number, collection: CollectionResponse) =>
-        acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
-      0,
-    ),
-    masteredCards: collections.reduce(
-      (acc: number, collection: CollectionResponse) =>
-        acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length,
-      0,
-    ),
-    archivedCards: collections.reduce(
-      (acc: number, collection: CollectionResponse) => acc + collection.archivedFlashcards.length,
-      0,
-    ),
-    masteryLevel: calculateOverallMastery(collections),
-    currentStreak: collections.reduce((acc, collection) => Math.max(acc, collection.currentStreak || 0), 0),
-    bestStreak: collections.reduce((acc, collection) => Math.max(acc, collection.bestStreak || 0), 0),
-  };
-
-  function calculateOverallMastery(collections: CollectionResponse[]) {
-    if (collections.length === 0) return 0;
-
-    const totalMastery = collections.reduce((sum, collection) => sum + (collection.masteryLevel || 0), 0);
-    return Math.round(totalMastery / collections.length);
   }
 
   return (
