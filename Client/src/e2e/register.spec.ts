@@ -15,16 +15,8 @@ test.describe('Register', () => {
     const page = await context.newPage();
     registerPage = new RegisterPage(page);
 
-    // Start from the home page and click the register link
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // Click the register button
-    const registerButton = page.getByTestId('signup-button');
-    await registerButton.click();
-
-    // Wait for navigation and form
-    await page.waitForURL('/register');
+    // Use the RegisterPage.goto() method which handles redirections
+    await registerPage.goto();
     await expect(page.getByTestId('register-form')).toBeVisible({ timeout: 30000 });
 
     await context.close();

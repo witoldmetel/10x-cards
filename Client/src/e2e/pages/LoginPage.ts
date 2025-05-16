@@ -39,22 +39,6 @@ export class LoginPage {
   }
 
   async login(email: string, password: string) {
-    // Add request logging
-    this.page.on('request', request => {
-      console.log(`>> ${request.method()} ${request.url()}`);
-      if (request.url().includes('/api/users/login')) {
-        console.log('Request headers:', request.headers());
-        console.log('Request body:', request.postData());
-      }
-    });
-
-    this.page.on('response', response => {
-      console.log(`<< ${response.status()} ${response.url()}`);
-      if (response.url().includes('/api/users/login')) {
-        response.json().then(data => console.log('Response data:', data));
-      }
-    });
-
     // Wait for inputs to be ready
     await this.emailInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.passwordInput.waitFor({ state: 'visible', timeout: 10000 });

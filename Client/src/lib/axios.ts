@@ -1,6 +1,10 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-const baseURL = import.meta.env.MODE === 'production' ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+let baseURL = '/api';
+
+if (import.meta.env.MODE === 'production' && !import.meta.env.VITEST) {
+  baseURL = `${import.meta.env.VITE_API_URL}/api`;
+}
 
 export const instance: AxiosInstance = axios.create({
   baseURL,

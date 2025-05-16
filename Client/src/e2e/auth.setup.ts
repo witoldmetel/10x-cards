@@ -10,8 +10,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const authFile = path.join(__dirname, '.auth/user.json');
 
-setup('setup test user', async ({ page }) => {
+setup('setup test user', async ({ page, context }) => {
   try {
+    await context.clearCookies();
+    
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
     

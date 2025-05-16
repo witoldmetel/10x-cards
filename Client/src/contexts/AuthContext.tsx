@@ -34,6 +34,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   });
 
   useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token' && !e.newValue) {
+        handleLogout();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    if (!token) {
+      handleLogout();
+    }
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  useEffect(() => {
     const initializeAuth = async () => {
       if (token && !user) {
         try {
