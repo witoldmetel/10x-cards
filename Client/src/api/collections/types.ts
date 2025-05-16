@@ -29,6 +29,7 @@ export interface CollectionStatistics {
   currentStreak: number;
   bestStreak: number;
   dueCards: number;
+  archivedCards: number;
 }
 
 export interface CollectionsQueryParams {
@@ -39,7 +40,7 @@ export interface CollectionsQueryParams {
 }
 
 export interface PaginatedCollectionsResponse {
-  items: CollectionResponse[];
+  collections: CollectionResponse[];
   limit: number;
   offset: number;
   totalCount: number;

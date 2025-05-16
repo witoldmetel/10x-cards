@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { getCollections, getCollection, getCollectionStatistics } from './api';
 import type {
   CollectionResponse,
@@ -8,9 +8,14 @@ import type {
 } from './types';
 
 export function useCollections(params?: CollectionsQueryParams) {
-  return useQuery<PaginatedCollectionsResponse>({
+  return useInfiniteQuery<PaginatedCollectionsResponse>({
     queryKey: ['collections', { archived: params?.archived, searchQuery: params?.searchQuery }],
-    queryFn: () => getCollections(params),
+    queryFn: ({ pageParam }) => getCollections({ ...params, offset: pageParam as number }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const nextOffset = allPages.length * (params?.limit || 20);
+      return nextOffset < lastPage.totalCount ? nextOffset : undefined;
+    },
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
   });
 }
@@ -23,10 +28,10 @@ export const useCollection = (id: string) => {
   });
 };
 
-export const useCollectionStatistics = (id: string) => {
+export const useCollectionStatistics = (id?: string) => {
   return useQuery<CollectionStatistics>({
-    queryKey: ['collections', id, 'statistics'],
-    queryFn: () => getCollectionStatistics(id),
-    enabled: !!id,
+    queryKey: ['collections', id || 'global', 'statistics'],
+    queryFn: () => getCollectionStatistics(id || 'global'),
+    enabled: true,
   });
 };

@@ -2,18 +2,20 @@ import { AlertCircle, ArrowRight, Archive } from 'lucide-react';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useCollections } from '@/api/collections/queries';
 import { CollectionResponse } from '@/api/collections/types';
 import { ReviewStatus } from '@/api/flashcard/types';
-import { useCollections } from '@/api/collections/queries';
 
 export function Statistics() {
-  const { data, isLoading } = useCollections();
+  const { data, isLoading } = useCollections({
+    limit: 100, // Fetch more items for accurate statistics
+  });
 
-  if (isLoading || !data?.collections) {
+  if (isLoading || !data?.pages) {
     return null;
   }
 
-  const collections = data.collections;
+  const collections = data.pages.flatMap(page => page.collections);
 
   const statistics = {
     totalCards: collections.reduce(
@@ -22,12 +24,12 @@ export function Statistics() {
       0,
     ),
     totalCollections: collections.length,
-    cardsToReview: collections.reduce(
+    dueCards: collections.reduce(
       (acc: number, collection: CollectionResponse) =>
         acc + collection.flashcards.filter(f => f.reviewStatus === ReviewStatus.New).length,
       0,
     ),
-    cardsLearned: collections.reduce(
+    masteredCards: collections.reduce(
       (acc: number, collection: CollectionResponse) =>
         acc + collection.flashcards.filter(f => f.reviewStatus !== ReviewStatus.New).length,
       0,
@@ -37,16 +39,14 @@ export function Statistics() {
       0,
     ),
     masteryLevel: calculateOverallMastery(collections),
-    streak: 0,
+    currentStreak: collections.reduce((acc, collection) => Math.max(acc, collection.currentStreak || 0), 0),
+    bestStreak: collections.reduce((acc, collection) => Math.max(acc, collection.bestStreak || 0), 0),
   };
 
   function calculateOverallMastery(collections: CollectionResponse[]) {
     if (collections.length === 0) return 0;
 
-    // @todo: Implement mastery calculation
-    // const totalMastery = collections.reduce((sum, collection) => sum + (collection.masteryPercentage || 0), 0);
-    const totalMastery = 0;
-
+    const totalMastery = collections.reduce((sum, collection) => sum + (collection.masteryLevel || 0), 0);
     return Math.round(totalMastery / collections.length);
   }
 
@@ -55,7 +55,7 @@ export function Statistics() {
       <Card>
         <CardHeader className='pb-2'>
           <CardDescription>Cards to Review</CardDescription>
-          <CardTitle className='text-3xl'>{statistics.cardsToReview}</CardTitle>
+          <CardTitle className='text-3xl'>{statistics.dueCards}</CardTitle>
         </CardHeader>
         <CardFooter>
           <Link
@@ -71,7 +71,7 @@ export function Statistics() {
           <CardTitle className='text-3xl'>{statistics.totalCards}</CardTitle>
         </CardHeader>
         <CardFooter>
-          <p className='text-sm text-muted-foreground'>{statistics.cardsLearned} learned</p>
+          <p className='text-sm text-muted-foreground'>{statistics.masteredCards} learned</p>
         </CardFooter>
       </Card>
       <Card>
@@ -95,7 +95,7 @@ export function Statistics() {
                   <AlertCircle size={14} className='text-muted-foreground' />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>This feature is in progress</p>
+                  <p>Average mastery level across all collections</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -118,15 +118,15 @@ export function Statistics() {
                   <AlertCircle size={14} className='text-muted-foreground' />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>This feature is in progress</p>
+                  <p>Days in a row you've studied</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <CardTitle className='text-3xl'>{statistics.streak} days</CardTitle>
+          <CardTitle className='text-3xl'>{statistics.currentStreak} days</CardTitle>
         </CardHeader>
         <CardFooter>
-          <p className='text-sm text-muted-foreground'>Keep it going!</p>
+          <p className='text-sm text-muted-foreground'>Best streak: {statistics.bestStreak} days</p>
         </CardFooter>
       </Card>
     </div>

@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router';
 import { AuthResponse, User } from '@/api/user/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { getUserById } from '@/api/user/api';
+import { instance } from '@/lib/axios';
+import { toast } from 'sonner';
 
 const AuthContext = createContext<{
   isAuth: boolean;
@@ -73,6 +75,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     initializeAuth();
   }, [token]);
+
+  useEffect(() => {
+    const interceptor = instance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          handleLogout();
+          toast.error('Your session has expired. Please log in again.');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      instance.interceptors.response.eject(interceptor);
+    };
+  }, []);
 
   const handleLogin = async (data: AuthResponse) => {
     if (!data.token) {
