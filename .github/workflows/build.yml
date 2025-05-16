@@ -117,6 +117,38 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Check if secrets exist
+        id: check-secrets
+        run: |
+          if [ -z "$DATABASE_CONNECTION_STRING" ]; then
+            echo "✗ Database connection string is missing"
+            exit 1
+          fi
+          echo "✓ Database connection string is present"
+          
+          if [ -z "$JWT_SECRET_KEY" ]; then
+            echo "✗ JWT secret key is missing"
+            exit 1
+          fi
+          echo "✓ JWT secret key is present"
+          
+          if [ -z "$JWT_ISSUER" ]; then
+            echo "✗ JWT issuer is missing"
+            exit 1
+          fi
+          echo "✓ JWT issuer is present"
+          
+          if [ -z "$JWT_AUDIENCE" ]; then
+            echo "✗ JWT audience is missing"
+            exit 1
+          fi
+          echo "✓ JWT audience is present"
+        env:
+          DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+          JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE }}
+
       - name: Display Structure
         run: |
           pwd
