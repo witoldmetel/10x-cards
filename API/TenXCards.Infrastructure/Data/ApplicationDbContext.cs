@@ -86,6 +86,13 @@ namespace TenXCards.Infrastructure.Data
                     .HasColumnName("due_cards")
                     .HasDefaultValue(0);
 
+                entity.Property(e => e.LastStudied)
+                    .HasColumnName("last_studied");
+
+                entity.Property(e => e.MasteryLevel)
+                    .HasColumnName("mastery_level")
+                    .HasDefaultValue(0);
+
                 entity.Property(e => e.Color)
                     .HasColumnName("color")
                     .IsRequired();
