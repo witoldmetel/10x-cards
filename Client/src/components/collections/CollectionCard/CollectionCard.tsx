@@ -47,7 +47,7 @@ export function CollectionCard({ ...collection }: CollectionCardProps) {
           </div>
           <div>
             <p className='text-muted-foreground'>Mastery</p>
-            <p className='font-medium'>{collection.masteryLevel}%</p>
+            <p className='font-medium'>{collection.masteryLevel?.toFixed(2)}%</p>
           </div>
         </div>
         <Progress value={collection.masteryLevel} className='mt-4 h-1.5' />

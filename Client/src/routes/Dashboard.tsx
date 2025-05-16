@@ -46,7 +46,7 @@ export default function Dashboard() {
         dueCards: collection.flashcards.filter(
           f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
         ).length,
-        masteryLevel: 0,
+        masteryLevel: collection.masteryLevel,
       })) as CollectionCardProps[],
     [data?.collections],
   );

@@ -241,7 +241,7 @@ export default function CollectionDetails() {
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
-                <p className='text-2xl font-medium mr-2'>{collection.masteryLevel}%</p>
+                <p className='text-2xl font-medium mr-2'>{collection.masteryLevel?.toFixed(2)}%</p>
                 <Progress value={collection.masteryLevel} className='h-2 w-24' />
               </div>
             </div>

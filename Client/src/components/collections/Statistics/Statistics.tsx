@@ -74,7 +74,7 @@ export function Statistics() {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <CardTitle className='text-3xl'>{statistics.masteryLevel}%</CardTitle>
+          <CardTitle className='text-3xl'>{statistics.masteryLevel?.toFixed(2)}%</CardTitle>
         </CardHeader>
         <CardFooter>
           <div className='w-full bg-muted rounded-full h-2 mt-2'>
