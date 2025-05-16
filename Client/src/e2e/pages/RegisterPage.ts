@@ -52,8 +52,6 @@ export class RegisterPage {
 
     try {
       const response = await responsePromise;
-      console.log('Registration response status:', response.status());
-      console.log('Registration response headers:', response.headers());
       
       if (!response.ok()) {
         if (response.status() === 400 || response.status() === 409) {
@@ -61,19 +59,6 @@ export class RegisterPage {
           return;
         }
         throw new Error(`Registration failed with status: ${response.status()}`);
-      }
-
-      const responseText = await response.text();
-      console.log('Registration response text:', responseText);
-
-      let responseData;
-      if (responseText) {
-        try {
-          responseData = JSON.parse(responseText);
-          console.log('Registration response data:', responseData);
-        } catch (e) {
-          console.log('Failed to parse response as JSON:', e);
-        }
       }
 
       await this.page.waitForURL(/.*\/dashboard/, { timeout: 60000 });
