@@ -23,15 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# E2E Testing
-.env.test
-.env.test.ci
+.env*
 
 # New e2e test directories
 src/e2e/.auth/
