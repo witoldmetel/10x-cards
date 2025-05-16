@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
-import { TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_NAME } from './test-data';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,15 +14,6 @@ setup('setup test user', async ({ page }) => {
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
     
-    console.log('Starting registration...');
-    const response = await registerPage.submitRegistration(
-      TEST_USER_NAME, 
-      TEST_USER_EMAIL, 
-      TEST_USER_PASSWORD, 
-      TEST_USER_PASSWORD
-    );
-    console.log('Registration response:', response);
-
     // After successful registration, we should be on the dashboard
     await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 30000 });
 
@@ -34,10 +24,6 @@ setup('setup test user', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.gotoLogin();
     await loginPage.expectLoginFormVisible();
-    
-    console.log('Starting login...');
-    const loginResponse = await loginPage.login(TEST_USER_EMAIL, TEST_USER_PASSWORD);
-    console.log('Login response:', loginResponse);
     
     await loginPage.expectLoggedIn();
 
