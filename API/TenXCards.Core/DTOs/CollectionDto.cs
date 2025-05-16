@@ -137,3 +137,31 @@ public record CollectionsResponse
     [SwaggerSchema(Description = "Total number of items available")]
     public int TotalCount { get; init; }
 }
+
+[SwaggerSchema(Title = "Global Statistics Response")]
+public record GlobalStatisticsDto
+{
+    [SwaggerSchema(Description = "Average mastery level across all collections")]
+    public int MasteryLevel { get; init; }
+
+    [SwaggerSchema(Description = "Last study session date")]
+    public DateTime? LastStudied { get; init; }
+
+    [SwaggerSchema(Description = "Total number of flashcards")]
+    public int TotalCards { get; init; }
+
+    [SwaggerSchema(Description = "Number of mastered flashcards")]
+    public int MasteredCards { get; init; }
+
+    [SwaggerSchema(Description = "Current study streak in days")]
+    public int CurrentStreak { get; init; }
+
+    [SwaggerSchema(Description = "Best study streak achieved")]
+    public int BestStreak { get; init; }
+
+    [SwaggerSchema(Description = "Number of cards due for review")]
+    public int DueCards { get; init; }
+
+    [SwaggerSchema(Description = "Number of archived cards")]
+    public int ArchivedCards { get; init; }
+}
