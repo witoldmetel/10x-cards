@@ -8,6 +8,12 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+    headers:
+      /**:
+        - key: Cache-Control
+          value: no-store, no-cache
+        - key: Access-Control-Allow-Origin
+          value: "*"
     envVars:
       - key: VITE_API_URL
         value: https://one0x-cards-api.onrender.com
