@@ -99,13 +99,13 @@ docker-compose stop db
 1. **Local Development**
 
    ```json
-   "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=TenX@2024!SecurePass"
+   "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-password"
    ```
 
 2. **Docker Development**
 
    ```json
-   "DefaultConnection": "Host=db;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=TenX@2024!SecurePass"
+   "DefaultConnection": "Host=db;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-password"
    ```
 
 ### Port Configuration
@@ -119,75 +119,120 @@ docker-compose stop db
 
 #### Flashcards
 
-- **GET /api/flashcards** - Get all active flashcards
+- **GET /api/collections/{collectionId}/flashcards** - Get flashcards by collection
+  - Requires authentication
   - Supports pagination (`page`, `limit`)
-  - Filtering by `reviewStatus`, `searchQuery`, `tag`, `category`
   - Returns paginated response with metadata
 
-- **GET /api/flashcards/archived** - Get all archived flashcards
-  - Same pagination and filtering support as main endpoint
-  - Returns paginated response with metadata
-
-- **GET /api/flashcards/{id}** - Get specific flashcard
-
-- **GET /api/flashcards/archived/statistics** - Get archived flashcards statistics
-  - Returns total count and breakdown by category
-
-- **POST /api/flashcards** - Create new flashcard
-  - Supports tags and categories
-  - Configurable review status
-  - Manual/AI creation source tracking
+- **POST /api/collections/{collectionId}/flashcards** - Create new flashcard in collection
+  - Requires authentication
+  - Request body: `CreateFlashcardDto`
+  - Returns created flashcard
+  - Status: 201 Created, 400 Bad Request
 
 - **PUT /api/flashcards/{id}** - Update existing flashcard
-  - Full update of all fields
-  - Supports tags and categories
-  - Review status management
+  - Requires authentication
+  - Request body: `UpdateFlashcardDto`
+  - Returns updated flashcard
+  - Status: 200 OK, 404 Not Found, 400 Bad Request
 
-- **PATCH /api/flashcards/batch** - Batch update multiple flashcards
-  - Update multiple flashcards simultaneously
-  - Partial updates supported
-  - Same fields as single update
+- **PUT /api/flashcards/{id}/archive** - Archive flashcard
+  - Requires authentication
+  - Returns updated flashcard
+  - Status: 200 OK, 404 Not Found
 
-- **PATCH /api/flashcards/{id}/archive** - Archive flashcard
-  - Tracks archival time
-  - Preserves flashcard data
-
-- **PATCH /api/flashcards/{id}/unarchive** - Unarchive flashcard
-  - Restores flashcard to active state
-  - Maintains history
+- **PUT /api/flashcards/{id}/unarchive** - Unarchive flashcard
+  - Requires authentication
+  - Returns updated flashcard
+  - Status: 200 OK, 404 Not Found
 
 - **DELETE /api/flashcards/{id}** - Delete flashcard permanently
+  - Requires authentication
+  - Status: 204 No Content, 404 Not Found
+
+- **POST /api/collections/{collectionId}/flashcards/generate** - Generate flashcards using AI
+  - Requires authentication
+  - Request body: `FlashcardGenerationRequestDto`
+  - Returns list of generated flashcards
+  - Status: 201 Created, 400 Bad Request
 
 #### Authentication
 
-- POST /api/users/register - Register new user
-- POST /api/users/login - User login
-
-All endpoints support:
-
-- Rate limiting (5 requests per minute)
-- CORS (configurable origins)
+All endpoints require authentication using JWT Bearer token.
 
 ### API Features
 
 1. **Authentication & Authorization**
-
-   - JWT-based authentication
-   - Secure password hashing with BCrypt
-   - Token-based API key system
+   - JWT Bearer authentication
+   - Required for all endpoints
+   - User context management
 
 2. **Security**
-
    - Rate limiting protection
    - CORS policy configuration
    - Global exception handling
    - Request validation middleware
 
-3. **Database**
-   - PostgreSQL with Entity Framework Core
-   - Clean architecture implementation
-   - Repository pattern
-   - Proper entity configurations
+3. **Flashcard Management**
+   - Full CRUD operations
+   - Collection-based organization
+   - AI-powered flashcard generation
+   - Archiving functionality
+
+4. **Response Types**
+   - `FlashcardResponseDto` - Standard flashcard response
+   - `PaginatedResponse<T>` - Paginated list response
+   - `ProblemDetails` - Error response
+
+### Data Models
+
+1. **CreateFlashcardDto**
+   ```json
+   {
+     "front": "string",
+     "back": "string",
+     "tags": ["string"],
+     "categories": ["string"],
+     "creationSource": "Manual | AI"
+   }
+   ```
+
+2. **UpdateFlashcardDto**
+   ```json
+   {
+     "front": "string",
+     "back": "string",
+     "tags": ["string"],
+     "categories": ["string"],
+     "reviewStatus": "New | ToCorrect | Approved | Rejected"
+   }
+   ```
+
+3. **FlashcardGenerationRequestDto**
+   ```json
+   {
+     "content": "string",
+     "count": 5,
+     "categories": ["string"]
+   }
+   ```
+
+4. **FlashcardResponseDto**
+   ```json
+   {
+     "id": "uuid",
+     "front": "string",
+     "back": "string",
+     "createdAt": "datetime",
+     "updatedAt": "datetime",
+     "isArchived": false,
+     "archivedAt": "datetime",
+     "creationSource": "Manual | AI",
+     "reviewStatus": "New | ToCorrect | Approved | Rejected",
+     "tags": ["string"],
+     "categories": ["string"]
+   }
+   ```
 
 ### Configuration
 

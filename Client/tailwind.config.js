@@ -79,6 +79,9 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      borderWidth: {
+				'3': '3px',
+			},
       keyframes: {
         'accordion-down': {
           from: {
@@ -115,6 +118,7 @@ export default {
         flip: 'flip 0.6s ease-in-out',
         'fade-in': 'fade-in 0.3s ease-in',
         'bounce-subtle': 'bounce-subtle 2s ease-in-out infinite',
+        'gradient-spin': 'gradient-spin 1.5s linear infinite',
       },
     },
   },

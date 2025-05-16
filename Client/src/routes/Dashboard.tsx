@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CollectionCard } from '@/components/collections/CollectionCard/CollectionCard';
 import { Statistics } from '@/components/collections/Statistics/Statistics';
 import { format } from 'date-fns';
+import { Spinner } from '@/components/ui/spinner';
 
 export type CollectionCardProps = CollectionResponse & {
   cardCount: number;
@@ -172,36 +173,41 @@ export default function Dashboard() {
           {/* Display filtered collections or a message if none found */}
           {isPending ? (
             <div className='flex items-center justify-center h-64'>
-              <div className='animate-bounce-subtle'>Loading collections...</div>
+              <div className='flex flex-col items-center gap-4'>
+                <Spinner size='lg' className='animate-gradient-spin' />
+                <div className='text-muted-foreground'>Loading collections....</div>
+              </div>
             </div>
           ) : collections.length > 0 ? (
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-                {collections.map(collection => (
-                  <div key={collection.id}>
-                    <CollectionCard {...collection} />
-                  </div>
-                ))}
-                <Link to='/flashcards/options' className='block'>
-                  <Card className='border-dashed h-full border-2 hover:border-primary hover:shadow-md transition-all'>
-                    <CardContent className='flex flex-col items-center justify-center h-full py-12'>
-                      <div className='rounded-full bg-primary/10 p-3 mb-4'>
-                        <Plus size={24} className='text-primary' />
-                      </div>
-                      <p className='font-medium text-center'>Create a new collection</p>
-                      <p className='text-sm text-muted-foreground text-center mt-1'>
-                        Add flashcards manually or generate them with AI
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+              {collections.map(collection => (
+                <div key={collection.id}>
+                  <CollectionCard {...collection} />
+                </div>
+              ))}
+              <Link to='/flashcards/options' className='block'>
+                <Card className='border-dashed h-full border-2 hover:border-primary hover:shadow-md transition-all'>
+                  <CardContent className='flex flex-col items-center justify-center h-full py-12'>
+                    <div className='rounded-full bg-primary/10 p-3 mb-4'>
+                      <Plus size={24} className='text-primary' />
+                    </div>
+                    <p className='font-medium text-center'>Create a new collection</p>
+                    <p className='text-sm text-muted-foreground text-center mt-1'>
+                      Add flashcards manually or generate them with AI
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
           ) : (
             <div className='text-center py-12'>
               <div className='mx-auto rounded-full bg-muted w-12 h-12 flex items-center justify-center mb-4'>
                 <Search className='h-6 w-6 text-muted-foreground' />
               </div>
               <h3 className='text-lg font-medium mb-2'>No collections found</h3>
-              <p className='text-sm text-muted-foreground mb-6'>Try a different search term or create a new collection</p>
+              <p className='text-sm text-muted-foreground mb-6'>
+                Try a different search term or create a new collection
+              </p>
               <div className='flex justify-center'>
                 <Link to='/flashcards/create'>
                   <Button className='flex items-center gap-2'>

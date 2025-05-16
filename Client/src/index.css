@@ -99,4 +99,34 @@
   .flashcard-back {
     transform: rotateY(180deg);
   }
+
+  .spinner-gradient {
+    border-color: transparent;
+    border-top-color: #00CFFF;
+    border-right-color: #5B5FFF;
+    border-bottom-color: #A259FF;
+    border-left-color: #00CFFF;
+    box-shadow: 0 0 10px rgba(0, 207, 255, 0.3);
+  }
+  
+  @keyframes gradient-spin {
+    0% {
+      transform: rotate(0deg);
+      border-top-color: #00CFFF;
+      border-right-color: #5B5FFF;
+      border-bottom-color: #A259FF;
+      border-left-color: #00CFFF;
+    }
+    100% {
+      transform: rotate(360deg);
+      border-top-color: #00CFFF;
+      border-right-color: #5B5FFF;
+      border-bottom-color: #A259FF;
+      border-left-color: #00CFFF;
+    }
+  }
+  
+  .animate-gradient-spin {
+    animation: gradient-spin 1.5s linear infinite;
+  }
 }

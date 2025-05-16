@@ -117,7 +117,7 @@ export default function CollectionDetails() {
       newStats.incorrect = studyStats.incorrect + 1;
       toast.error('Card marked as incorrect');
     }
-    
+
     setStudyStats(newStats);
 
     // Add result to session results
@@ -234,7 +234,9 @@ export default function CollectionDetails() {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Last Studied</p>
-              <p className='text-2xl font-medium'>{collection.lastStudied ? format(new Date(collection.lastStudied), 'dd.MM.yyyy') : 'Never'}</p>
+              <p className='text-2xl font-medium'>
+                {collection.lastStudied ? format(new Date(collection.lastStudied), 'dd.MM.yyyy') : 'Never'}
+              </p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>

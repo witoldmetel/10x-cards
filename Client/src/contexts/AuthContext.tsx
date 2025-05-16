@@ -78,14 +78,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     const interceptor = instance.interceptors.response.use(
-      (response) => response,
-      (error) => {
+      response => response,
+      error => {
         if (error.response?.status === 401) {
           handleLogout();
           toast.error('Your session has expired. Please log in again.');
         }
         return Promise.reject(error);
-      }
+      },
     );
 
     return () => {
