@@ -6,13 +6,15 @@
 
 - [Project Description](#project-description)
 - [Tech Stack](#tech-stack)
-- [Getting Started Locally](#getting-started-locally)
-- [Development Scripts](#development-scripts)
-- [Project Scope](#project-scope)
-- [Project Status](#project-status)
+- [Development Setup](#development-setup)
+  - [Prerequisites](#prerequisites)
+  - [Environment Configuration](#environment-configuration)
+  - [Running the Application](#running-the-application)
+  - [Database Management](#database-management)
+  - [Testing](#testing)
+  - [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
 - [License](#license)
-- [Features](#features)
-- [CI/CD Pipeline](#ci-cd-pipeline)
 
 ## Project Description
 
@@ -26,292 +28,49 @@
 
 ## Tech Stack
 
-- **Frontend:** React 19 with TypeScript 5, Tailwind 4, and Shadcn/ui components
+- **Frontend:** React 19 with TypeScript 5, Tailwind 3, and Shadcn/ui components
 - **Backend:** .NET 8 (LTS) with Entity Framework Core
 - **Database:** PostgreSQL 16
 - **AI Integration:** OpenRouter.ai API
 
-_Note: For detailed technology specifications, please refer to the [tech-stack.md](.ai/tech-stack.md) file._
+## Development Setup
 
-## Getting Started Locally
+### Prerequisites
 
-Follow these steps to set up the project on your local machine:
+1. **Required Software:**
+   - Node.js (v18+)
+   - .NET SDK 8.0
+   - Docker Desktop
+   - Git
 
-1. **Clone the repository:**
+2. **IDE Recommendations:**
+   - Visual Studio Code with extensions:
+     - ESLint
+     - Prettier
+     - C# Dev Kit
+     - Docker
 
+### Environment Configuration
+
+1. **Clone the Repository:**
    ```bash
    git clone https://github.com/yourusername/10x-cards.git
    cd 10x-cards
    ```
 
-2. **Environment Setup:**
+2. **Environment Variables:**
 
-   Copy the `.env.example` file to `.env` and update the values:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your preferred text editor
-   ```
-
-3. **Start the Database:**
-
-   Start PostgreSQL using Docker:
-
-   ```bash
-   docker-compose up db -d
-   ```
-
-   Database connection details:
-
-   - Host: localhost
-   - Port: 5432
-   - Database: ten_x_cards_db
-   - Username: postgres
-   - Password: (set in .env file)
-
-4. **Start the API:**
-
-   Navigate to the API directory and run the .NET application:
-
-   ```bash
-   cd API/TenXCards.API
-   dotnet restore
-   dotnet run
-   ```
-
-   The API will be available at:
-
-   - Main API: http://localhost:5001
-   - Swagger UI: http://localhost:5001/swagger
-
-5. **Start the Client:**
-
-   In a new terminal, navigate to the Client directory:
-
-   ```bash
-   cd Client
-   npm install
-   npm run dev
-   ```
-
-   The client will be available at http://localhost:3000
-
-### Port Configuration
-
-All services use fixed ports for consistency:
-
-- Frontend (Client): 3000
-- Backend (API): 5001
-- Database: 5432
-
-### Docker Commands
-
-```bash
-# Start all services
-docker-compose up -d --build
-
-# Start only database
-docker-compose up db -d
-
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-```
-
-## Development Scripts
-
-### Database Management
-
-```bash
-# Start PostgreSQL
-docker-compose up db -d
-
-# Check database status
-docker ps
-docker logs tenxcards-db
-
-# Stop database
-docker-compose stop db
-
-# Reset database (removes all data)
-docker-compose down -v
-
-# Create a new migration
-cd API/TenXCards.Infrastructure
-dotnet ef migrations add MigrationName
-
-# Start only the database
-docker-compose up db -d
-
-# Apply pending migrations
-dotnet ef database update
-
-# Remove the last migration (only if not applied to database)
-dotnet ef migrations remove
-
-# List all migrations
-dotnet ef migrations list
-
-# Generate SQL script for migrations
-dotnet ef migrations script
-
-### Fixing "relation already exists" Error
-# If you encounter the "42P07: relation already exists" error, follow these steps:
-
-# 1. Stop the API and DB containers
-docker-compose down
-
-# 2. Start only the database
-docker-compose up db -d
-
-# 3. Reset the database schema (this will delete all data)
-docker exec -it db psql -U postgres -d ten_x_cards_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-
-# 4. Navigate to Infrastructure project
-cd API/TenXCards.Infrastructure
-
-# 5. Remove existing migrations
-rm -rf Migrations/*
-
-# 6. Create a fresh initial migration
-dotnet ef migrations add InitialCreate
-
-# 7. Apply the migration
-dotnet ef database update
-
-# 8. Start the API
-docker-compose up api -d
-```
-
-### Backend (API) Development
-
-```bash
-# Local Development
-cd API/TenXCards.API
-dotnet restore
-dotnet run
-
-# Docker Development
-docker-compose up api -d
-docker logs tenxcards-api
-docker-compose stop api
-```
-
-### Frontend Development
-
-```bash
-# Start development server
-cd Client
-npm run dev
-
-# Build for production
-npm run build
-
-# Lint and format
-npm run lint
-npm run format
-```
-
-### Docker Commands
-
-```bash
-# Start all services
-docker-compose up -d
-
-# Start specific service
-docker-compose up db -d
-docker-compose up api -d
-
-# View logs
-docker-compose logs -f
-docker logs tenxcards-db
-docker logs tenxcards-api
-
-# Stop services
-docker-compose stop
-docker-compose down
-
-# Rebuild services
-docker-compose up -d --build
-```
-
-### Troubleshooting Commands
-
-```bash
-# Check ports in use
-lsof -i :5001  # API port
-lsof -i :5432  # Database port
-lsof -i :3000  # Client port
-
-# Check container health
-docker inspect tenxcards-db | grep Status
-docker inspect tenxcards-api | grep Status
-
-# View real-time logs
-docker-compose logs -f
-```
-
-### Port Configuration
-
-All services use fixed ports for consistency:
-
-- Frontend (Client): http://localhost:3000
-- Backend (API): http://localhost:5001
-- Swagger UI: http://localhost:5001/swagger
-- Database: localhost:5432
-
-### Database Connection Details
-
-- Host: localhost
-- Port: 5432
-- Database: ten_x_cards_db
-- Username: postgres
-- Password: (set in .env file)
-
-## Project Scope
-
-The MVP scope includes:
-
-- AI-powered flashcard generation from text
-- Flashcard management with metadata
-- Spaced repetition system
-- User account management
-- Review interface with filtering
-
-## Project Status
-
-Currently in active development. See [PRD](.ai/prd.md) for details.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
-## Features
-
-### Authentication & Security
-
-- User registration and login with JWT authentication
-- Secure password hashing using BCrypt
-- Rate limiting protection (5 requests/minute)
-- CORS security with configurable origins
-
-### API Endpoints
-
-- POST /api/users/register - Create new account
-- POST /api/users/login - Authenticate user
-- More endpoints coming soon...
-
-### Configuration Files
-
-1. **Environment Variables** (.env)
-
+   Create `.env` file in the root directory:
    ```env
    # Database
    POSTGRES_USER=postgres
    POSTGRES_PASSWORD=your-secure-password
    POSTGRES_DB=ten_x_cards_db
+
+   # OpenRouter AI
+   OPENROUTER_API_KEY=your-api-key
+   SITE_URL=http://localhost:3000
+   SITE_NAME=10X Cards - Development
 
    # JWT Authentication
    JWT_KEY=your-secret-key
@@ -322,112 +81,158 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
    ALLOWED_ORIGINS=http://localhost:3000
    ```
 
-2. **API Configuration** (appsettings.json)
+3. **API Configuration:**
+
+   Update `API/TenXCards.API/appsettings.Development.json`:
    ```json
    {
+     "AllowedHosts": "*",
+     "AllowedOrigins": "http://localhost:3000",
      "ConnectionStrings": {
        "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-secure-password"
      },
      "Jwt": {
-       "Key": "your-secret-key",
-       "Issuer": "your-issuer",
-       "Audience": "your-audience"
-     }
-   }
-   ```
-
-   ### Configuration Files
-
-1. **Development Environment** (appsettings.json)
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Port=5432;Database=ten_x_cards_db;Username=postgres;Password=your-secure-password"
+       "Key": "your-jwt-secret-key",
+       "Issuer": "http://localhost:5001", 
+       "Audience": "http://localhost:3000"
      },
-     "Jwt": {
-       "Key": "your-secret-key",
-       "Issuer": "your-issuer",
-       "Audience": "your-audience"
+     "OpenRouter": {
+       "ApiKey": "your-api-key",
+       "BaseUrl": "https://openrouter.ai/api/v1",
+       "ApiEndpoint": "/chat/completions",
+       "DefaultModel": "openai/gpt-3.5-turbo",
+       "TimeoutSeconds": 120,
+       "SiteUrl": "http://localhost:3000",
+       "SiteName": "10X Cards - Development"
      }
    }
    ```
 
-2. **Production Environment** (GitHub Secrets)
+### Running the Application
 
-   Required secrets in GitHub repository (Settings > Secrets and Variables > Actions):
+1. **Start All Services:**
+   ```bash
+   npm install
+   npm run dev
+   ```
+   This will start:
+   - PostgreSQL database (port 5432)
+   - .NET API (port 5001)
+   - React client (port 3000)
 
-   #### Database
-   - `DATABASE_CONNECTION_STRING`: Production PostgreSQL connection string
-     Format: "Server=your-prod-host;Port=5432;Database=your-prod-db;User Id=your-prod-user;Password=your-prod-password;Pooling=true"
+2. **Individual Service Commands:**
+   ```bash
+   # Start only database
+   npm run server
 
-   #### JWT Authentication
-   - `JWT_SECRET_KEY`: Production JWT key (min 256-bit/32 bytes, Base64 encoded)
-   - `JWT_ISSUER`: Production API URL (e.g., "https://api.your-domain.com")
-   - `JWT_AUDIENCE`: Production frontend URL (e.g., "https://your-domain.com")
+   # Start only frontend
+   npm run client
 
-   #### Deployment
-   - `RENDER_FRONTEND_DEPLOY_HOOK`: Render deploy hook URL for frontend service
-   - `RENDER_BACKEND_DEPLOY_HOOK`: Render deploy hook URL for backend service
+   # Rebuild and restart API
+   npm run refresh
 
-3. **Local Development** (.env)
-   ```env
-   # OpenRouter AI Integration
-   OPENROUTER_API_KEY=your-api-key-here
+   # Clean Docker environment
+   npm run clean-docker
+   ```
+
+### Database Management
+
+1. **Create New Migration:**
+   ```bash
+   cd API/TenXCards.Infrastructure
+   dotnet ef migrations add MigrationName
+   ```
+
+2. **Apply Migrations:**
+   ```bash
+   dotnet ef database update
+   ```
+
+3. **Reset Database:**
+   ```bash
+   # Stop all services
+   docker-compose down
+
+   # Remove volumes
+   docker-compose down -v
+
+   # Start fresh
+   docker-compose up -d
+   ```
+
+4. **Fix Common Issues:**
+   ```bash
+   # Fix "relation already exists" error
+   docker exec -it db psql -U postgres -d ten_x_cards_db -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+   cd API/TenXCards.Infrastructure
+   rm -rf Migrations/*
+   dotnet ef migrations add InitialCreate
+   dotnet ef database update
+   ```
+
+### Testing
+
+1. **Frontend Tests:**
+   ```bash
+   cd Client
    
-   # Additional local configs if needed
+   # Unit tests
+   npm run test
+   
+   # Test coverage
+   npm run test:coverage
+   
+   # E2E tests
+   npm run test:e2e
    ```
 
-### Security Notes
-- Never commit production secrets to the repository
-- Generate a strong JWT key for production
-- Use different JWT configurations for development and production
-- Keep deploy hooks secure and never expose them in code
+2. **Backend Tests:**
+   ```bash
+   cd API
+   
+   # Run all tests
+   dotnet test
+   
+   # Run specific project tests
+   dotnet test TenXCards.Tests
+   ```
 
-## CI/CD Pipeline
-
-The project uses GitHub Actions for continuous integration and deployment. The pipeline is configured to run:
-
-### Trigger Conditions
-- Automatically on push to `main` branch
-- Automatically on pull requests targeting `main` branch
-- Manually through GitHub Actions interface
-
-### Pipeline Stages
-
-#### Frontend (Client)
-- Type checking with TypeScript
-- Unit tests with Vitest
-- E2E tests with Playwright
-- Production build
-
-#### Backend (API)
-- .NET build
-- Unit tests with code coverage
-- Integration tests
-
-#### Deployment
-- Automatic deployment to Render when changes are merged to main
-
-### Required Secrets
-
-For deployment to work, you need to set up the following secret in your GitHub repository:
-- `RENDER_DEPLOY_HOOK_URL`: The deploy hook URL from your Render service
-
-### Local Development
-
-To run the same checks locally before pushing:
+### Available Scripts
 
 ```bash
-# Frontend checks
-cd Client
-npm run check-types
-npm run test:coverage
-npm run test:e2e
-npm run build
+# Development
+npm run dev          # Start all services
+npm run client       # Start frontend only
+npm run server       # Start database and API
 
-# Backend checks
-cd API
-dotnet restore
-dotnet build
-dotnet test
+# API Management
+npm run rebuild-api  # Clean and rebuild API
+npm run restart-api  # Restart API containers
+npm run refresh      # Rebuild and restart API
+
+# Docker
+npm run clean-docker # Clean all Docker resources
+
+# Database
+docker-compose up db -d    # Start database
+docker-compose stop db     # Stop database
+docker-compose down -v     # Reset database
 ```
+
+## Project Structure
+
+```
+10x-cards/
+├── API/                      # Backend API
+│   ├── TenXCards.API/       # API entry point
+│   ├── TenXCards.Core/      # Business logic
+│   └── TenXCards.Infrastructure/ # Data access
+├── Client/                   # Frontend React app
+├── .env                      # Environment variables
+├── docker-compose.yml        # Docker configuration
+└── package.json             # Project scripts
+```
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
