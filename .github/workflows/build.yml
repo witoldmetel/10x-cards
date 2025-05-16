@@ -16,20 +16,20 @@ jobs:
       run:
         working-directory: ./Client
 
-    # services:
-    #   postgres:
-    #     image: postgres:latest
-    #     env:
-    #       POSTGRES_DB: ten_x_cards_db
-    #       POSTGRES_USER: postgres
-    #       POSTGRES_PASSWORD: <your-password>
-    #     ports:
-    #       - 5432:5432
-    #     options: >-
-    #       --health-cmd pg_isready
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 5
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ten_x_cards_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: TenX@2024!SecurePass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -57,6 +57,42 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Check if secrets exist
+        id: check-secrets
+        run: |
+          if [ -z "$DATABASE_CONNECTION_STRING" ]; then
+            echo "✗ Database connection string is missing"
+            exit 1
+          fi
+          echo "✓ Database connection string is present"
+          
+          if [ -z "$JWT_SECRET_KEY" ]; then
+            echo "✗ JWT secret key is missing"
+            exit 1
+          fi
+          echo "✓ JWT secret key is present"
+        env:
+          DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+
+      - name: Setup Database
+        working-directory: ./API
+        run: |
+          # Wait for PostgreSQL to be ready
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h localhost -p 5432 -U $POSTGRES_USER; do
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+
+          # Install and run migrations
+          dotnet tool install --global dotnet-ef
+          dotnet ef database update --project ./TenXCards.Infrastructure --startup-project ./TenXCards.Api
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+
       - name: Start Backend API
         working-directory: ./API
         run: |
@@ -65,8 +101,8 @@ jobs:
           dotnet run --project ./TenXCards.Api/TenXCards.Api.csproj --configuration Release &
         env:
           DOTNET_ENVIRONMENT: Development
-          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
-          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          JWT__Key: ${{ secrets.JWT_SECRET_KEY }}
           JWT__Issuer: "http://localhost:5001"
           JWT__Audience: "http://localhost:5173"
 
@@ -84,9 +120,10 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
-          DOTNET_ENVIRONMENT: Development
-          ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
-          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT__Key: ${{ secrets.JWT_SECRET_KEY }}
           JWT__Issuer: "http://localhost:5001"
           JWT__Audience: "http://localhost:5173"
 
@@ -143,11 +180,25 @@ jobs:
             exit 1
           fi
           echo "✓ JWT audience is present"
+          
+          if [ -z "$RENDER_FRONTEND_DEPLOY_HOOK" ]; then
+            echo "✗ Frontend deploy hook is missing"
+            exit 1
+          fi
+          echo "✓ Frontend deploy hook is present"
+          
+          if [ -z "$RENDER_BACKEND_DEPLOY_HOOK" ]; then
+            echo "✗ Backend deploy hook is missing"
+            exit 1
+          fi
+          echo "✓ Backend deploy hook is present"
         env:
           DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
           JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE }}
+          RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+          RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
 
       - name: Display Structure
         run: |
@@ -162,7 +213,7 @@ jobs:
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Key: ${{ secrets.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ secrets.JWT_ISSUER }}
           JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
 
@@ -171,27 +222,9 @@ jobs:
         env:
           DOTNET_ENVIRONMENT: Development
           ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+          JWT__Key: ${{ secrets.JWT_SECRET_KEY }}
           JWT__Issuer: ${{ secrets.JWT_ISSUER }}
           JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
-
-      # @todo: We don't have any tests yet
-      # - name: Run Tests
-      #   run: dotnet test --no-restore --verbosity normal --collect:"XPlat Code Coverage"
-      #   env:
-      #     DOTNET_ENVIRONMENT: Development
-      #     ConnectionStrings__DefaultConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-      #     JWT__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
-      #     JWT__Issuer: ${{ secrets.JWT_ISSUER }}
-      #     JWT__Audience: ${{ secrets.JWT_AUDIENCE }}
-
-      # - name: Upload Backend Test Results
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: backend-test-results
-      #     path: ./API/TestResults/
-      #     retention-days: 30
 
   deploy:
     name: Deploy to Render
@@ -202,24 +235,6 @@ jobs:
       name: Production
     
     steps:
-      - name: Check if secrets exist
-        id: check-secrets
-        run: |
-          if [ -z "$RENDER_FRONTEND_DEPLOY_HOOK" ]; then
-            echo "✗ Frontend deploy hook is missing"
-            exit 1
-          fi
-          echo "✓ Frontend deploy hook is present"
-          
-          if [ -z "$RENDER_BACKEND_DEPLOY_HOOK" ]; then
-            echo "✗ Backend deploy hook is missing"
-            exit 1
-          fi
-          echo "✓ Backend deploy hook is present"
-        env:
-          RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
-          RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
-
       - name: Deploy Frontend
         env:
           RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
