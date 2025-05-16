@@ -1,6 +1,16 @@
+import { Logo } from '@/components/core/Logo/Logo';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { Brain } from 'lucide-react';
 
 import { Link } from 'react-router';
 
@@ -11,7 +21,7 @@ export default function LandingPage() {
     <div className='min-h-screen flex flex-col'>
       <header className='border-b bg-card'>
         <div className='container mx-auto flex justify-between items-center py-4'>
-          <Brain className='h-8 w-8 text-blue-600' />
+          <Logo />
           <div className='flex items-center gap-4'>
             {isAuth ? (
               <Link to='/dashboard'>
@@ -38,7 +48,8 @@ export default function LandingPage() {
         <section className='py-20 bg-gradient-to-b from-background to-muted'>
           <div className='container mx-auto px-4 text-center'>
             <h1 className='text-4xl md:text-6xl font-bold mb-6'>
-              Learn 10x Faster with <span className='text-primary'>AI-Powered Flashcards</span>
+              Learn <span className='text-primary'>10x</span> Faster with{' '}
+              <span className='text-primary'>AI-Powered Flashcards</span>
             </h1>
             <p className='text-xl md:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto'>
               Generate high-quality flashcards from any text and learn efficiently with our advanced spaced repetition
@@ -58,7 +69,7 @@ export default function LandingPage() {
             </div>
             <div className='mt-16 relative'>
               <div className='bg-card shadow-lg rounded-lg border p-6 max-w-5xl mx-auto'>
-                <div className='flex flex-col sm:flex-row gap-6'>
+                <div className='flex flex-col sm:flex-row gap-6 items-center'>
                   <div className='flex-1 flex flex-col gap-4'>
                     <div className='bg-muted rounded-lg p-4'>
                       <h3 className='font-semibold'>Source Text</h3>
@@ -67,18 +78,18 @@ export default function LandingPage() {
                         stored energy...
                       </p>
                     </div>
-                    <div className='flex justify-center'>
-                      <div className='animate-bounce-subtle'>
-                        <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
-                          <path
-                            d='M12 5L12 19M12 19L5 12M12 19L19 12'
-                            stroke='currentColor'
-                            strokeWidth='2'
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                          />
-                        </svg>
-                      </div>
+                  </div>
+                  <div className='hidden sm:flex items-center'>
+                    <div className='animate-bounce-subtle'>
+                      <svg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
+                        <path
+                          d='M5 12H19M19 12L12 5M19 12L12 19'
+                          stroke='currentColor'
+                          strokeWidth='2'
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                        />
+                      </svg>
                     </div>
                   </div>
                   <div className='flex-1 flex flex-col gap-4'>
@@ -240,19 +251,99 @@ export default function LandingPage() {
         <div className='container mx-auto px-4'>
           <div className='flex flex-col md:flex-row justify-between items-center'>
             <div className='mb-4 md:mb-0'>
-              <Brain className='h-8 w-8 text-blue-600' />
               <p className='text-sm text-muted-foreground'>© 2025 10x Cards. All rights reserved.</p>
             </div>
             <div className='flex gap-6'>
-              <a href='#' className='text-sm text-muted-foreground hover:text-foreground'>
-                Privacy Policy
-              </a>
-              <a href='#' className='text-sm text-muted-foreground hover:text-foreground'>
-                Terms of Service
-              </a>
-              <a href='#' className='text-sm text-muted-foreground hover:text-foreground'>
-                Contact
-              </a>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className='text-sm text-muted-foreground hover:text-foreground'>Privacy Policy</button>
+                </DialogTrigger>
+                <DialogContent className='max-w-2xl max-h-[80vh] overflow-y-auto'>
+                  <DialogHeader>
+                    <DialogTitle>Privacy Policy</DialogTitle>
+                    <DialogDescription>Last updated: March 2024</DialogDescription>
+                  </DialogHeader>
+                  <div className='space-y-4 py-4'>
+                    <h3 className='text-lg font-semibold'>1. Information We Collect</h3>
+                    <p className='text-muted-foreground'>
+                      We collect information that you provide directly to us, including your name, email address, and
+                      usage data to improve your learning experience.
+                    </p>
+
+                    <h3 className='text-lg font-semibold'>2. How We Use Your Information</h3>
+                    <p className='text-muted-foreground'>
+                      We use the information we collect to provide and improve our services, personalize your
+                      experience, and send you updates about your learning progress.
+                    </p>
+
+                    <h3 className='text-lg font-semibold'>3. Data Security</h3>
+                    <p className='text-muted-foreground'>
+                      We implement appropriate security measures to protect your personal information from unauthorized
+                      access, alteration, or destruction.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className='text-sm text-muted-foreground hover:text-foreground'>Terms of Service</button>
+                </DialogTrigger>
+                <DialogContent className='max-w-2xl max-h-[80vh] overflow-y-auto'>
+                  <DialogHeader>
+                    <DialogTitle>Terms of Service</DialogTitle>
+                    <DialogDescription>Last updated: March 2024</DialogDescription>
+                  </DialogHeader>
+                  <div className='space-y-4 py-4'>
+                    <h3 className='text-lg font-semibold'>1. Acceptance of Terms</h3>
+                    <p className='text-muted-foreground'>
+                      By accessing or using 10x Cards, you agree to be bound by these Terms of Service and all
+                      applicable laws and regulations.
+                    </p>
+
+                    <h3 className='text-lg font-semibold'>2. User Accounts</h3>
+                    <p className='text-muted-foreground'>
+                      You are responsible for maintaining the confidentiality of your account and password. You agree to
+                      accept responsibility for all activities that occur under your account.
+                    </p>
+
+                    <h3 className='text-lg font-semibold'>3. Intellectual Property</h3>
+                    <p className='text-muted-foreground'>
+                      The service and its original content, features, and functionality are owned by 10x Cards and are
+                      protected by international copyright, trademark, and other intellectual property laws.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className='text-sm text-muted-foreground hover:text-foreground'>Contact</button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Contact Us</DialogTitle>
+                    <DialogDescription>
+                      Send us a message and we'll get back to you as soon as possible.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className='space-y-4 py-4'>
+                    <div className='space-y-2'>
+                      <label className='text-sm font-medium'>Name</label>
+                      <Input placeholder='Enter your name' />
+                    </div>
+                    <div className='space-y-2'>
+                      <label className='text-sm font-medium'>Email</label>
+                      <Input type='email' placeholder='Enter your email' />
+                    </div>
+                    <div className='space-y-2'>
+                      <label className='text-sm font-medium'>Message</label>
+                      <Textarea placeholder='Type your message here' className='min-h-[100px]' />
+                    </div>
+                    <Button className='w-full'>Send Message</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

@@ -24,18 +24,21 @@ export default function Dashboard() {
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data, isLoading } = useCollections({
+  const { data, isPending } = useCollections({
     archived: false,
     ...(searchQuery ? { searchQuery } : {}),
   });
 
-  const debouncedSetSearchQuery = debounce((value: string) => {
-    setSearchQuery(value.trim());
-  }, 1000);
+  const debouncedSetSearchQuery = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchQuery(value.trim());
+      }, 1000),
+    [],
+  );
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-
     setInputValue(value);
     debouncedSetSearchQuery(value);
   };
@@ -44,7 +47,7 @@ export default function Dashboard() {
     return () => {
       debouncedSetSearchQuery.cancel();
     };
-  }, []);
+  }, [debouncedSetSearchQuery]);
 
   const collections = useMemo(
     () =>
@@ -66,14 +69,6 @@ export default function Dashboard() {
     { id: '2', action: 'Created', collection: 'Spanish Vocabulary', date: 'Yesterday', cardsCreated: 20 },
     { id: '3', action: 'Generated', collection: 'Advanced Mathematics', date: '3 days ago', cardsGenerated: 30 },
   ];
-
-  if (isLoading) {
-    return (
-      <div className='flex items-center justify-center h-64'>
-        <div className='animate-bounce-subtle'>Loading dashboard...</div>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -131,7 +126,11 @@ export default function Dashboard() {
           </div>
 
           {/* Display filtered collections or a message if none found */}
-          {collections && collections?.length > 0 ? (
+          {isPending ? (
+            <div className='flex items-center justify-center h-64'>
+              <div className='animate-bounce-subtle'>Loading collections...</div>
+            </div>
+          ) : collections && collections?.length > 0 ? (
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
               {collections?.map(collection => (
                 <div key={collection.id}>

@@ -65,7 +65,7 @@ export class RegisterPage {
 
     try {
       const response = await responsePromise;
-      
+
       if (!response.ok()) {
         if (response.status() === 400 || response.status() === 409) {
           await expect(this.errorMessage).toBeVisible({ timeout: 30000 });

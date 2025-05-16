@@ -13,16 +13,16 @@ const authFile = path.join(__dirname, '.auth/user.json');
 setup('setup test user', async ({ page, context }) => {
   try {
     await context.clearCookies();
-    
+
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
-    
+
     console.log('Starting registration...');
     const response = await registerPage.submitRegistration(
-      TEST_USER_NAME, 
-      TEST_USER_EMAIL, 
-      TEST_USER_PASSWORD, 
-      TEST_USER_PASSWORD
+      TEST_USER_NAME,
+      TEST_USER_EMAIL,
+      TEST_USER_PASSWORD,
+      TEST_USER_PASSWORD,
     );
     console.log('Registration response:', response);
 
@@ -36,11 +36,11 @@ setup('setup test user', async ({ page, context }) => {
     const loginPage = new LoginPage(page);
     await loginPage.gotoLogin();
     await loginPage.expectLoginFormVisible();
-    
+
     console.log('Starting login...');
     const loginResponse = await loginPage.login(TEST_USER_EMAIL, TEST_USER_PASSWORD);
     console.log('Login response:', loginResponse);
-    
+
     await loginPage.expectLoggedIn();
 
     // Save the authentication state
