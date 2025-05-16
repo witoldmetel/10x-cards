@@ -4,42 +4,41 @@ import { fileURLToPath } from 'url';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_NAME } from './test-data';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const authFile = path.join(__dirname, '.auth/user.json');
 
-const TEST_USER = {
-  email: 'test@example.com',
-  password: 'Test123!',
-  firstName: 'Test',
-  lastName: 'User'
-};
-
 setup('setup test user', async ({ page }) => {
   try {
-    // Try registration first
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
     
-    try {
-      // Attempt registration
-      await registerPage.register(TEST_USER.email, TEST_USER.password, TEST_USER.firstName, TEST_USER.lastName);
-      await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
-      
-      // If registration successful, logout
-      const dashboardPage = new DashboardPage(page);
-      await dashboardPage.logout('desktop');
-    } catch (registrationError: unknown) {
-      const error = registrationError as Error;
-      console.log('Registration failed, trying login instead:', error.message);
-    }
+    console.log('Starting registration...');
+    const response = await registerPage.submitRegistration(
+      TEST_USER_NAME, 
+      TEST_USER_EMAIL, 
+      TEST_USER_PASSWORD, 
+      TEST_USER_PASSWORD
+    );
+    console.log('Registration response:', response);
 
-    // Login with test user credentials
+    // After successful registration, we should be on the dashboard
+    await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 30000 });
+
+    // Click logout button using DashboardPage
+    const dashboardPage = new DashboardPage(page);
+    await dashboardPage.logout('desktop');
+
     const loginPage = new LoginPage(page);
     await loginPage.gotoLogin();
     await loginPage.expectLoginFormVisible();
-    await loginPage.login(TEST_USER.email, TEST_USER.password);
+    
+    console.log('Starting login...');
+    const loginResponse = await loginPage.login(TEST_USER_EMAIL, TEST_USER_PASSWORD);
+    console.log('Login response:', loginResponse);
+    
     await loginPage.expectLoggedIn();
 
     // Save the authentication state
