@@ -8,12 +8,7 @@ import {
   unarchiveFlashcard,
   submitStudySession,
 } from './api';
-import type {
-  CreateFlashcardDTO,
-  Flashcard,
-  UpdateFlashcardDTO,
-  GenerateFlashcardsRequest,
-} from './types';
+import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsRequest } from './types';
 
 import { UseMutationOptions } from '@tanstack/react-query';
 

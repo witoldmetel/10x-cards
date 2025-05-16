@@ -4,11 +4,23 @@ import { Link } from 'react-router';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCollectionStatistics } from '@/api/collections/queries';
 import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
 
 export function Statistics() {
   const { data: statistics, isPending } = useCollectionStatistics();
 
-  if (isPending || !statistics) {
+  if (isPending) {
+    return (
+      <div className='flex items-center justify-center h-48'>
+        <div className='flex flex-col items-center gap-4'>
+          <Spinner size='lg' className='animate-gradient-spin' />
+          <div className='text-muted-foreground'>Loading statistics....</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!statistics) {
     return null;
   }
 
