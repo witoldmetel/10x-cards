@@ -11,6 +11,7 @@ jobs:
   frontend:
     name: Frontend Checks
     runs-on: ubuntu-latest
+    environment: FE
     defaults:
       run:
         working-directory: ./Client
@@ -103,6 +104,7 @@ jobs:
   backend:
     name: Backend Checks
     runs-on: ubuntu-latest
+    environment: BE
     defaults:
       run:
         working-directory: ./API
@@ -159,26 +161,39 @@ jobs:
       #     retention-days: 30
 
   deploy:
-      name: Deploy to Render
-      needs: [frontend, backend]
-      if: github.ref == 'refs/heads/main'
-      runs-on: ubuntu-latest
-      
-      steps:
-        - name: Check if secrets exist
-          run: |
-            echo "DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}"
-            echo "RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}"
-            echo "RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}"
+    name: Deploy to Render
+    needs: [frontend, backend]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    
+    steps:
+      - name: Check if secrets exist
+        run: |
+          if [ -n "$RENDER_FRONTEND_DEPLOY_HOOK" ]; then
+            echo "✓ Frontend deploy hook is present"
+          else
+            echo "✗ Frontend deploy hook is missing"
+          fi
+          
+          if [ -n "$RENDER_BACKEND_DEPLOY_HOOK" ]; then
+            echo "✓ Backend deploy hook is present"
+          else
+            echo "✗ Backend deploy hook is missing"
+          fi
+        env:
+          RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+          RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
 
-        - name: Deploy Frontend
-          env:
-            RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
-          run: |
-            curl -X GET "$RENDER_FRONTEND_DEPLOY_HOOK"
+      - name: Deploy Frontend
+        env:
+          RENDER_FRONTEND_DEPLOY_HOOK: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+        run: |
+          curl -X GET "$RENDER_FRONTEND_DEPLOY_HOOK"
 
-        - name: Deploy Backend
-          env:
-            RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
-          run: |
-            curl -X GET "$RENDER_BACKEND_DEPLOY_HOOK"
+      - name: Deploy Backend
+        env:
+          RENDER_BACKEND_DEPLOY_HOOK: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
+        run: |
+          curl -X GET "$RENDER_BACKEND_DEPLOY_HOOK"
