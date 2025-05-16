@@ -82,7 +82,6 @@ jobs:
           dotnet tool install --global dotnet-ef
           dotnet ef database update --project ./TenXCards.Infrastructure --startup-project ./TenXCards.Api
         env:
-          PGPASSWORD: TenX@2024!SecurePass
           ConnectionStrings__DefaultConnection: "Server=localhost;Port=5432;Database=ten_x_cards_db;User Id=postgres;Password=TenX@2024!SecurePass;Pooling=true"
 
       - name: Start Backend API
