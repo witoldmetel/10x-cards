@@ -13,7 +13,7 @@ using TenXCards.Infrastructure.Data;
 namespace TenXCards.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250516142612_StudySession")]
+    [Migration("20250516152612_StudySession")]
     partial class StudySession
     {
         /// <inheritdoc />

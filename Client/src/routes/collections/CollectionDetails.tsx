@@ -16,6 +16,7 @@ import { FlashcardActions } from '@/components/flashcards/FlashcardActions/Flash
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog/EditCollectionDialog';
 import { useSubmitStudySession } from '@/api/flashcard/mutations';
+import { format } from 'date-fns';
 
 export default function CollectionDetails() {
   const navigate = useNavigate();
@@ -230,14 +231,14 @@ export default function CollectionDetails() {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Last Studied</p>
-              <p className='text-2xl font-medium'>Never</p>
+              <p className='text-2xl font-medium'>{collection.lastStudied ? format(new Date(collection.lastStudied), 'dd.MM.yyyy') : 'Never'}</p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
-                <p className='text-2xl font-medium'>{0}%</p>
+                <p className='text-2xl font-medium mr-2'>{collection.masteryLevel}%</p>
                 <div className='w-full max-w-[100px] bg-muted rounded-full h-2'>
-                  <div className='bg-primary rounded-full h-2' style={{ width: `${0}%` }}></div>
+                  <div className='bg-primary rounded-full h-2' style={{ width: `${collection.masteryLevel}%` }}></div>
                 </div>
               </div>
             </div>

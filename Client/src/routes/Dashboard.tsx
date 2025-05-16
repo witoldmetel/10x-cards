@@ -12,6 +12,7 @@ import { ReviewStatus } from '@/api/flashcard/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CollectionCard } from '@/components/collections/CollectionCard/CollectionCard';
 import { Statistics } from '@/components/collections/Statistics/Statistics';
+import { format } from 'date-fns';
 
 export type CollectionCardProps = CollectionResponse & {
   cardCount: number;
@@ -37,7 +38,7 @@ export default function Dashboard() {
       data?.collections?.map(collection => ({
         ...collection,
         cardCount: collection.flashcards.length,
-        lastStudied: 'Never',
+        lastStudied: collection.lastStudied ? format(new Date(collection.lastStudied), 'dd.MM.yyyy') : 'Never',
         dueCards: collection.flashcards.filter(
           f => f.collectionId === collection.id && f.reviewStatus === ReviewStatus.New,
         ).length,

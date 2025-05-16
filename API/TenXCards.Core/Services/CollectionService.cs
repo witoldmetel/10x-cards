@@ -293,10 +293,12 @@ namespace TenXCards.Core.Services
 
             var lastStudied = collections
                 .Where(c => c.LastStudied.HasValue)
-                .Max(c => c.LastStudied);
+                .Select(c => c.LastStudied)
+                .DefaultIfEmpty(null)
+                .Max();
 
-            var bestStreak = collections.Max(c => c.BestStreak);
-            var currentStreak = collections.Max(c => c.CurrentStreak);
+            var bestStreak = collections.Any() ? collections.Max(c => c.BestStreak) : 0;
+            var currentStreak = collections.Any() ? collections.Max(c => c.CurrentStreak) : 0;
 
             return new GlobalStatisticsDto
             {
