@@ -68,6 +68,8 @@ jobs:
     needs: lint
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    environment:
+      name: Production
     defaults:
       run:
         working-directory: ./Client
