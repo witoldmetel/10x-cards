@@ -2,7 +2,7 @@ import { Link, Navigate, Outlet, useLocation } from 'react-router';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { Home, Plus, Settings, LogOut, Archive, Menu, X, Brain } from 'lucide-react';
+import { Home, Plus, Settings, LogOut, Archive, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/tailwind';

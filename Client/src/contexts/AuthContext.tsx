@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
+
     if (!token) {
       handleLogout();
     }

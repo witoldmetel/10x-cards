@@ -16,7 +16,7 @@ import { FlashcardActions } from '@/components/flashcards/FlashcardActions/Flash
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog/EditCollectionDialog';
 
-export default function CollectionDetails() { 
+export default function CollectionDetails() {
   const navigate = useNavigate();
   const { collectionId } = useParams<{ collectionId: string }>();
 
