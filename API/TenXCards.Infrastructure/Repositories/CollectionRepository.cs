@@ -49,7 +49,7 @@ namespace TenXCards.Infrastructure.Repositories
             var total = await query.CountAsync();
 
             var items = await query
-                .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
+                .Include(c => c.Flashcards)
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip(queryParams.Offset)
                 .Take(queryParams.Limit)
@@ -65,7 +65,7 @@ namespace TenXCards.Infrastructure.Repositories
             return await _context.Collections
                 .Where(c => c.UserId == userId && c.ArchivedAt == null &&
                     _context.Flashcards.Any(f => f.CollectionId == c.Id && f.ArchivedAt == null))
-                .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
+                .Include(c => c.Flashcards)
                 .ToListAsync();
         }
 
@@ -82,7 +82,7 @@ namespace TenXCards.Infrastructure.Repositories
         {
             ValidateUserId(userId);
             return await _context.Collections
-                .Include(c => c.Flashcards.Where(f => f.ArchivedAt == null))
+                .Include(c => c.Flashcards)
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
         }
 

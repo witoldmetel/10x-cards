@@ -51,6 +51,16 @@ public record UpdateUserRequest
     public string? ApiModelKey { get; init; }
 }
 
+public record UpdatePasswordRequest
+{
+    [Required]
+    public string CurrentPassword { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(8)]
+    public string NewPassword { get; init; } = string.Empty;
+}
+
 public record PasswordResetRequest
 {
     [Required]

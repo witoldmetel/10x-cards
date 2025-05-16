@@ -161,6 +161,7 @@ builder.Services.AddScoped<IFlashcardService, FlashcardService>();
 builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IFlashcardRepository, FlashcardRepository>();
+builder.Services.AddScoped<IStudyService, StudyService>();
 
 // Configure OpenRouter
 builder.Services.Configure<TenXCards.Core.Models.OpenRouterOptions>(

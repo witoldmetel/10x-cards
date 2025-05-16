@@ -217,12 +217,12 @@ namespace TenXCards.Infrastructure.Repositories
                 query = query.Where(f => f.ReviewStatus == queryParams.ReviewStatus.Value);
             }
 
-            if (!string.IsNullOrWhiteSpace(queryParams.SearchPhrase))
+            if (!string.IsNullOrWhiteSpace(queryParams.SearchQuery))
             {
-                var searchPhrase = queryParams.SearchPhrase.ToLower();
+                var searchQuery = queryParams.SearchQuery.ToLower();
                 query = query.Where(f => 
-                    f.Front.ToLower().Contains(searchPhrase) || 
-                    f.Back.ToLower().Contains(searchPhrase));
+                    f.Front.ToLower().Contains(searchQuery) || 
+                    f.Back.ToLower().Contains(searchQuery));
             }
 
             return query;

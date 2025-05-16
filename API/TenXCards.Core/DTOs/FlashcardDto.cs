@@ -108,8 +108,8 @@ public record FlashcardsQueryParams
     [SwaggerSchema(Description = "Filter by review status")]
     public ReviewStatus? ReviewStatus { get; init; }
 
-    [SwaggerSchema(Description = "Search phrase to filter flashcards")]
-    public string? SearchPhrase { get; init; }
+    [SwaggerSchema(Description = "Search query to filter flashcards")]
+    public string? SearchQuery { get; init; }
 
     [SwaggerSchema(Description = "Filter by archived status")]
     public bool? Archived { get; init; }

@@ -121,7 +121,7 @@ docker-compose stop db
 
 - **GET /api/flashcards** - Get all active flashcards
   - Supports pagination (`page`, `limit`)
-  - Filtering by `reviewStatus`, `searchPhrase`, `tag`, `category`
+  - Filtering by `reviewStatus`, `searchQuery`, `tag`, `category`
   - Returns paginated response with metadata
 
 - **GET /api/flashcards/archived** - Get all archived flashcards
@@ -377,7 +377,7 @@ All endpoints support:
        public int Page { get; set; } = 1;
        public int Limit { get; set; } = 20;
        public ReviewStatus? ReviewStatus { get; set; }
-       public string SearchPhrase { get; set; }
+       public string searchQuery { get; set; }
        public string Tag { get; set; }
        public string Category { get; set; }
    }

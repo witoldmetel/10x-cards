@@ -1,11 +1,12 @@
 import { instance } from '@/lib/axios';
-import { COLLECTIONS_API_BASE } from './constants';
+import { COLLECTIONS_API_BASE, COLLECTION_API_ROUTES } from './constants';
 import type {
   CollectionResponse,
   CreateCollection,
   UpdateCollection,
   PaginatedCollectionsResponse,
   CollectionsQueryParams,
+  CollectionStatistics,
 } from './types';
 
 export async function getCollections(params?: CollectionsQueryParams): Promise<PaginatedCollectionsResponse> {
@@ -49,4 +50,10 @@ export async function unarchiveCollection(id: string): Promise<void> {
 
 export async function deleteCollection(id: string): Promise<void> {
   await instance.delete(`${COLLECTIONS_API_BASE}/${id}`);
+}
+
+export async function getCollectionStatistics(): Promise<CollectionStatistics> {
+  const { data } = await instance.get<CollectionStatistics>(COLLECTION_API_ROUTES.STATISTICS);
+
+  return data;
 }

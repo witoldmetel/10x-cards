@@ -10,11 +10,14 @@ import { ReviewStatus } from '@/api/flashcard/types';
 import { FlashcardView } from '@/components/flashcards/FlashcardView/FlashcardView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TagBadge } from '@/components/ui/tag-badge';
+import { Progress } from '@/components/ui/progress';
 
 import { toast } from 'sonner';
 import { FlashcardActions } from '@/components/flashcards/FlashcardActions/FlashcardActions';
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog/EditCollectionDialog';
+import { useSubmitStudySession } from '@/api/flashcard/mutations';
+import { format } from 'date-fns';
 
 export default function CollectionDetails() {
   const navigate = useNavigate();
@@ -28,6 +31,7 @@ export default function CollectionDetails() {
 
   const deleteCollectionMutation = useDeleteCollection();
   const archiveCollectionMutation = useArchiveCollection();
+  const submitStudySession = useSubmitStudySession();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -39,6 +43,9 @@ export default function CollectionDetails() {
     incorrect: 0,
     total: 0,
   });
+  const [sessionResults, setSessionResults] = useState<
+    Array<{ flashcardId: string; grade: number; studiedAt: string }>
+  >([]);
 
   const collectionFlashcards =
     collection?.flashcards.filter(
@@ -92,32 +99,53 @@ export default function CollectionDetails() {
   };
 
   const handleGradeCard = (grade: number) => {
+    const currentFlashcard = collectionFlashcards[currentCardIndex];
+
+    // Create new result for current card
+    const newResult = {
+      flashcardId: currentFlashcard.id,
+      grade,
+      studiedAt: new Date().toISOString(),
+    };
+
     // Update study stats
+    const newStats = { ...studyStats };
     if (grade >= 3) {
-      setStudyStats(prev => ({ ...prev, correct: prev.correct + 1 }));
+      newStats.correct = studyStats.correct + 1;
       toast.success('Card marked as correct');
     } else {
-      setStudyStats(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      newStats.incorrect = studyStats.incorrect + 1;
       toast.error('Card marked as incorrect');
     }
+    
+    setStudyStats(newStats);
 
-    if (currentCardIndex < collectionFlashcards?.length - 1) {
+    // Add result to session results
+    const updatedSessionResults = [...sessionResults, newResult];
+    setSessionResults(updatedSessionResults);
+
+    if (currentCardIndex < collectionFlashcards.length - 1) {
       // Move to next card
       setCurrentCardIndex(currentCardIndex + 1);
       setShowAnswer(false);
       toast.info('Next card loaded');
     } else {
       // End of study session
-      const { correct, total } = studyStats;
+      // Submit session results with the updated array that includes the last card
+      submitStudySession.mutate({
+        collectionId: collectionId!,
+        results: updatedSessionResults,
+      });
 
       // Show completion screen
       setIsStudying(false);
       setShowAnswer(false);
       setCurrentCardIndex(0);
+      setSessionResults([]);
 
-      // Show success message with detailed stats
+      // Show success message with detailed stats using the updated newStats
       toast.success(
-        `Study session completed! You got ${correct} out of ${total} cards correct (${Math.round((correct / total) * 100)}% accuracy)`,
+        `Study session completed! You got ${newStats.correct} out of ${newStats.total} cards correct (${Math.round((newStats.correct / newStats.total) * 100)}% accuracy)`,
       );
     }
   };
@@ -206,15 +234,13 @@ export default function CollectionDetails() {
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Last Studied</p>
-              <p className='text-2xl font-medium'>Never</p>
+              <p className='text-2xl font-medium'>{collection.lastStudied ? format(new Date(collection.lastStudied), 'dd.MM.yyyy') : 'Never'}</p>
             </div>
             <div>
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
-                <p className='text-2xl font-medium'>{0}%</p>
-                <div className='w-full max-w-[100px] bg-muted rounded-full h-2'>
-                  <div className='bg-primary rounded-full h-2' style={{ width: `${0}%` }}></div>
-                </div>
+                <p className='text-2xl font-medium mr-2'>{collection.masteryLevel}%</p>
+                <Progress value={collection.masteryLevel} className='h-2 w-24' />
               </div>
             </div>
           </div>

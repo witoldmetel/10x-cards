@@ -16,5 +16,6 @@ namespace TenXCards.Core.Services
         Task<bool> DeleteAsync(Guid id, Guid userId);
         Task<bool> ArchiveAsync(Guid id, Guid userId);
         Task<bool> UnarchiveAsync(Guid id, Guid userId);
+        Task<GlobalStatisticsDto> GetGlobalStatisticsAsync(Guid userId);
     }
 }

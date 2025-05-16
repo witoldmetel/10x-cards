@@ -6,8 +6,14 @@ import {
   updateFlashcard,
   archiveFlashcard,
   unarchiveFlashcard,
+  submitStudySession,
 } from './api';
-import type { CreateFlashcardDTO, Flashcard, UpdateFlashcardDTO, GenerateFlashcardsRequest } from './types';
+import type {
+  CreateFlashcardDTO,
+  Flashcard,
+  UpdateFlashcardDTO,
+  GenerateFlashcardsRequest,
+} from './types';
 
 import { UseMutationOptions } from '@tanstack/react-query';
 
@@ -26,6 +32,7 @@ export const useCreateFlashcard = () => {
       queryClient.invalidateQueries({ queryKey: ['collections', newFlashcard.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', newFlashcard.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 };
@@ -39,6 +46,7 @@ export const useUpdateFlashcard = () => {
       queryClient.invalidateQueries({ queryKey: ['collections', updatedFlashcard.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', updatedFlashcard.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 };
@@ -51,6 +59,7 @@ export const useDeleteFlashcard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 };
@@ -72,6 +81,7 @@ export const useGenerateFlashcardsAI = () => {
       queryClient.invalidateQueries({ queryKey: ['collections', variables.collectionId] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', variables.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
     onError: (error: unknown) => {
       const errorResponse = error as ErrorResponse;
@@ -89,6 +99,7 @@ export const useArchiveFlashcard = () => {
     onSuccess: (archivedFlashcard: Flashcard) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', archivedFlashcard.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 };
@@ -101,7 +112,20 @@ export const useUnarchiveFlashcard = (options?: UseMutationOptions<Flashcard, Er
     onSuccess: (unarchiveFlashcard: Flashcard) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', unarchiveFlashcard.collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
     ...options,
+  });
+};
+
+export const useSubmitStudySession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: submitStudySession,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
+    },
   });
 };

@@ -4,4 +4,5 @@ export const FLASHCARD_API_ROUTES = {
   ARCHIVED: '/flashcards/archived',
   ARCHIVED_STATISTICS: '/flashcards/archived/statistics',
   GENERATE: '/flashcards/generate',
+  STUDY_SESSION: '/study/session',
 } as const;

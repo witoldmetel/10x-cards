@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCollections, getCollection } from './api';
-import type { CollectionResponse, CollectionsQueryParams, PaginatedCollectionsResponse } from './types';
+import { getCollections, getCollection, getCollectionStatistics } from './api';
+import type {
+  CollectionResponse,
+  CollectionsQueryParams,
+  PaginatedCollectionsResponse,
+  CollectionStatistics,
+} from './types';
 
 export function useCollections(params?: CollectionsQueryParams) {
   return useQuery<PaginatedCollectionsResponse>({
@@ -10,10 +15,18 @@ export function useCollections(params?: CollectionsQueryParams) {
   });
 }
 
-export function useCollection(id: string) {
+export const useCollection = (id: string) => {
   return useQuery<CollectionResponse>({
     queryKey: ['collections', id],
     queryFn: () => getCollection(id),
     enabled: !!id,
   });
-}
+};
+
+export const useCollectionStatistics = () => {
+  return useQuery<CollectionStatistics>({
+    queryKey: ['statistics'],
+    queryFn: getCollectionStatistics,
+    enabled: true,
+  });
+};

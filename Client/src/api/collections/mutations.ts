@@ -19,6 +19,7 @@ export function useCreateCollection() {
 
       queryClient.invalidateQueries({ queryKey: ['collections', newCollection.id] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 }
@@ -30,6 +31,8 @@ export function useUpdateCollection() {
     mutationFn: ({ id, collection }: { id: string; collection: UpdateCollection }) => updateCollection(id, collection),
     onSuccess: (updatedCollection: CollectionResponse) => {
       queryClient.invalidateQueries({ queryKey: ['collections', updatedCollection.id] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
+
       queryClient.setQueryData(['collections', updatedCollection.id], updatedCollection);
 
       queryClient.setQueryData<PaginatedCollectionsResponse>(['collections'], oldData => {
@@ -53,6 +56,7 @@ export function useDeleteCollection() {
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards', deletedId] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 }
@@ -64,6 +68,7 @@ export function useArchiveCollection() {
     mutationFn: (id: string) => archiveCollection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
     },
   });
 }
@@ -75,6 +80,7 @@ export function useUnarchiveCollection({ onSuccess, onError }: { onSuccess: () =
     mutationFn: (id: string) => unarchiveCollection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
       onSuccess();
     },
     onError: () => {

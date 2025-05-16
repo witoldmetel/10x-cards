@@ -270,5 +270,17 @@ namespace TenXCards.API.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Get global statistics for all collections
+        /// </summary>
+        [HttpGet("statistics/global")]
+        [ProducesResponseType(typeof(GlobalStatisticsDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<GlobalStatisticsDto>> GetGlobalStatistics()
+        {
+            var userId = _userContextService.GetUserId();
+            var statistics = await _collectionService.GetGlobalStatisticsAsync(userId);
+            return Ok(statistics);
+        }
     }
 }

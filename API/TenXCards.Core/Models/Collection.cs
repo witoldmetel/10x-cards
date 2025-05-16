@@ -16,6 +16,8 @@ namespace TenXCards.Core.Models
         public int DueCards { get; set; } = 0;
         public DateTime? LastStudied { get; set; }
         public double MasteryLevel { get; set; } = 0;
+        public int CurrentStreak { get; set; } = 0;
+        public int BestStreak { get; set; } = 0;
         public required string Color { get; set; }
         public List<string> Tags { get; set; } = new();
         public List<string> Categories { get; set; } = new();
