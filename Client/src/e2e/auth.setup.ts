@@ -9,22 +9,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const authFile = path.join(__dirname, '.auth/user.json');
 
+const TEST_USER = {
+  email: 'test@example.com',
+  password: 'Test123!',
+  firstName: 'Test',
+  lastName: 'User'
+};
+
 setup('setup test user', async ({ page }) => {
   try {
+    // Try registration first
     const registerPage = new RegisterPage(page);
     await registerPage.goto();
     
-    // After successful registration, we should be on the dashboard
-    await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 30000 });
+    try {
+      // Attempt registration
+      await registerPage.register(TEST_USER.email, TEST_USER.password, TEST_USER.firstName, TEST_USER.lastName);
+      await expect(page).toHaveURL(/.*\/dashboard/, { timeout: 10000 });
+      
+      // If registration successful, logout
+      const dashboardPage = new DashboardPage(page);
+      await dashboardPage.logout('desktop');
+    } catch (registrationError: unknown) {
+      const error = registrationError as Error;
+      console.log('Registration failed, trying login instead:', error.message);
+    }
 
-    // Click logout button using DashboardPage
-    const dashboardPage = new DashboardPage(page);
-    await dashboardPage.logout('desktop');
-
+    // Login with test user credentials
     const loginPage = new LoginPage(page);
     await loginPage.gotoLogin();
     await loginPage.expectLoginFormVisible();
-    
+    await loginPage.login(TEST_USER.email, TEST_USER.password);
     await loginPage.expectLoggedIn();
 
     // Save the authentication state
