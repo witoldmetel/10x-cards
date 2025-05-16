@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { TagBadge } from '@/components/ui/tag-badge';
 import { CollectionIcon } from '@/components/collections/CollectionIcon/CollectionIcon';
 import { CollectionCardProps } from '@/routes/Dashboard';
+import { Progress } from '@/components/ui/progress';
 
 export function CollectionCard({ ...collection }: CollectionCardProps) {
   return (
@@ -49,9 +50,7 @@ export function CollectionCard({ ...collection }: CollectionCardProps) {
             <p className='font-medium'>{collection.masteryLevel}%</p>
           </div>
         </div>
-        <div className='w-full bg-muted rounded-full h-1.5 mt-4'>
-          <div className='bg-primary rounded-full h-1.5' style={{ width: `${collection.masteryLevel}%` }}></div>
-        </div>
+        <Progress value={collection.masteryLevel} className='mt-4 h-1.5' />
       </CardContent>
       <CardFooter>
         <Link to={`/collections/${collection.id}`} className='w-full'>

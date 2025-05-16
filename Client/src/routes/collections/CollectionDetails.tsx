@@ -10,6 +10,7 @@ import { ReviewStatus } from '@/api/flashcard/types';
 import { FlashcardView } from '@/components/flashcards/FlashcardView/FlashcardView';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TagBadge } from '@/components/ui/tag-badge';
+import { Progress } from '@/components/ui/progress';
 
 import { toast } from 'sonner';
 import { FlashcardActions } from '@/components/flashcards/FlashcardActions/FlashcardActions';
@@ -100,24 +101,28 @@ export default function CollectionDetails() {
   const handleGradeCard = (grade: number) => {
     const currentFlashcard = collectionFlashcards[currentCardIndex];
 
-    // Add result to session results
-    setSessionResults(prev => [
-      ...prev,
-      {
-        flashcardId: currentFlashcard.id,
-        grade,
-        studiedAt: new Date().toISOString(),
-      },
-    ]);
+    // Create new result for current card
+    const newResult = {
+      flashcardId: currentFlashcard.id,
+      grade,
+      studiedAt: new Date().toISOString(),
+    };
 
     // Update study stats
+    const newStats = { ...studyStats };
     if (grade >= 3) {
-      setStudyStats(prev => ({ ...prev, correct: prev.correct + 1 }));
+      newStats.correct = studyStats.correct + 1;
       toast.success('Card marked as correct');
     } else {
-      setStudyStats(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      newStats.incorrect = studyStats.incorrect + 1;
       toast.error('Card marked as incorrect');
     }
+    
+    setStudyStats(newStats);
+
+    // Add result to session results
+    const updatedSessionResults = [...sessionResults, newResult];
+    setSessionResults(updatedSessionResults);
 
     if (currentCardIndex < collectionFlashcards.length - 1) {
       // Move to next card
@@ -126,12 +131,10 @@ export default function CollectionDetails() {
       toast.info('Next card loaded');
     } else {
       // End of study session
-      const { correct, total } = studyStats;
-
-      // Submit session results
+      // Submit session results with the updated array that includes the last card
       submitStudySession.mutate({
         collectionId: collectionId!,
-        results: sessionResults,
+        results: updatedSessionResults,
       });
 
       // Show completion screen
@@ -140,9 +143,9 @@ export default function CollectionDetails() {
       setCurrentCardIndex(0);
       setSessionResults([]);
 
-      // Show success message with detailed stats
+      // Show success message with detailed stats using the updated newStats
       toast.success(
-        `Study session completed! You got ${correct} out of ${total} cards correct (${Math.round((correct / total) * 100)}% accuracy)`,
+        `Study session completed! You got ${newStats.correct} out of ${newStats.total} cards correct (${Math.round((newStats.correct / newStats.total) * 100)}% accuracy)`,
       );
     }
   };
@@ -237,9 +240,7 @@ export default function CollectionDetails() {
               <p className='text-muted-foreground text-sm'>Mastery Level</p>
               <div className='flex items-center gap-2'>
                 <p className='text-2xl font-medium mr-2'>{collection.masteryLevel}%</p>
-                <div className='w-full max-w-[100px] bg-muted rounded-full h-2'>
-                  <div className='bg-primary rounded-full h-2' style={{ width: `${collection.masteryLevel}%` }}></div>
-                </div>
+                <Progress value={collection.masteryLevel} className='h-2 w-24' />
               </div>
             </div>
           </div>

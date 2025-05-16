@@ -3,6 +3,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/comp
 import { Link } from 'react-router';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCollectionStatistics } from '@/api/collections/queries';
+import { Progress } from '@/components/ui/progress';
 
 export function Statistics() {
   const { data: statistics, isPending } = useCollectionStatistics();
@@ -65,7 +66,7 @@ export function Statistics() {
         </CardHeader>
         <CardFooter>
           <div className='w-full bg-muted rounded-full h-2 mt-2'>
-            <div className='bg-primary rounded-full h-2' style={{ width: `${statistics.masteryLevel}%` }}></div>
+            <Progress value={statistics.masteryLevel} className='rounded-full h-2' />
           </div>
         </CardFooter>
       </Card>
